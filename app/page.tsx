@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Tooltip from "../components/Tooltip";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -8,70 +9,108 @@ export default function Home() {
         <Image
           className="dark:invert"
           src="/logo.png"
-          /*"/next.svg"*/
-          alt="CParl logo"
-          width={100}
-          height={20}
+          alt="CPAL"
+          width={88}
+          height={88}
           priority
         />
+
         <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
           <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, please edit the page.tsx file.
+            To get started,
           </h1>
+
           <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
+            please{" "}
             <Tooltip
-              content={<span>Browse Next.js templates on Vercel.</span>}
-              delay={300}
-              placement="top"
+              content={
+                <span>
+                  your registered email address and password are required to
+                  login.
+                </span>
+              }
+              delay={100}
+              placement="bottom"
             >
-              <a
-                href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              <Link
+                href="/users"
                 className="font-medium text-zinc-950 dark:text-zinc-50"
               >
-                Templates
-              </a>
+                Login
+              </Link>
             </Tooltip>{" "}
-            or the{" "}
+            or{" "}
             <Tooltip
-              content={<span>Interactive Next.js learning course.</span>}
-              delay={300}
-              placement="top"
+              content={
+                <span>
+                  a unique email addressis the minimum requirement to register.
+                </span>
+              }
+              delay={100} /*ms*/
+              placement="bottom"
             >
-              <a
-                href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              <Link
+                href="/users"
                 className="font-medium text-zinc-950 dark:text-zinc-50"
               >
-                Learning
-              </a>
+                Register
+              </Link>
             </Tooltip>{" "}
-            center.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        <div className="flex w-full items-center flex-col gap-4 text-base font-medium sm:flex-row">
+          <Tooltip
+            content={
+              <span>
+                ron@cparl.com; +1 613 410-8880; 66 Riverstone Dr, Nepean ON
+              </span>
+            }
+            delay={100} /*ms*/
+            placement="bottom"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <Link
+              href="/users"
+              className="font-medium text-zinc-950 dark:text-zinc-50"
+            >
+              <span className="flex items-center gap-2 font-medium whitespace-nowrap">
+                <Image
+                  className="dark:invert"
+                  src="/globe.svg"
+                  alt="Globe logomark"
+                  width={16}
+                  height={16}
+                />
+                Contact Us
+              </span>
+            </Link>
+          </Tooltip>
+
+          <Tooltip
+            content={<span>including Privacy Policy...</span>}
+            delay={100} /*ms*/
+            placement="bottom"
           >
-            Documentation
-          </a>
+            <Link
+              href="/users"
+              className="font-medium text-zinc-950 dark:text-zinc-50"
+            >
+              <span className="flex items-center gap-2 font-medium text-zinc-950 dark:text-zinc-50 whitespace-nowrap">
+                <Image
+                  className="dark:invert"
+                  src="/file.svg"
+                  alt="Globe logomark"
+                  width={16}
+                  height={16}
+                />
+                Terms & Conditions
+              </span>
+            </Link>
+          </Tooltip>
+
+          <p className="ml-auto flex items-center text-[13px] leading-none text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+            Copyright © 2026 CPARL Inc. All rights reserved.
+          </p>
         </div>
       </main>
     </div>

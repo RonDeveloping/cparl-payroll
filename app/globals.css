@@ -23,7 +23,7 @@ body {
 }
 
 /* Inline-link short sunk dotted underline
-   Applies only to links inside textual elements (paragraphs, headings, list items)
+   applies only to links inside textual elements (paragraphs, headings, list items)
    so it doesn't affect button-like or full-width links. */
 main p a,
 main li a,
@@ -47,8 +47,8 @@ main h3 a::after {
   left: 50%;
   bottom: -0px; /* place right below the text (the closest) */
   transform: translateX(-50%);
-  width: 75%; /* shorter than the text */
-  border-bottom: 2px dotted #bfdbfe; /* light blue (tailwind blue-200) */
+  width: 90%; /* shorter than the text */
+  border-bottom: 1px dashed #6ba2e2; /* light blue */
   pointer-events: none;
   z-index: 0; /* behind the text */
 }
@@ -60,6 +60,6 @@ main h3 a::after {
   main h1 a::after,
   main h2 a::after,
   main h3 a::after {
-    border-bottom-color: #93c5fd; /* slightly stronger blue for dark */
+    border-bottom-color: #6887eb; /* slightly stronger blue for dark */
   }
 }
