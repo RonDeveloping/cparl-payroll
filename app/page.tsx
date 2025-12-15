@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Tooltip from "./components/Tooltip";
+import Tooltip from "../components/Tooltip";
 
 export default function Home() {
   return (
