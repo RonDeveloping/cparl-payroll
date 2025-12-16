@@ -1,7 +1,13 @@
+import "dotenv/config"; // // <- must be the first import before accessing process.env.DATABASE_URL
 import { PrismaClient } from "@prisma/client";
 // 1. Import the Node-PostgreSQL adapter
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
+
+// ✅ Validate DATABASE_URL first
+if (!process.env.DATABASE_URL || typeof process.env.DATABASE_URL !== "string") {
+  throw new Error("DATABASE_URL is missing or invalid");
+}
 
 const connectionString = process.env.DATABASE_URL;
 

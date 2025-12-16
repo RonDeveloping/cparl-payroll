@@ -13,9 +13,71 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
-
+//Model name User → table user in p
 model User {
   id    Int    @id @default(autoincrement())
   name  String
   email String @unique
 }
+
+model Person {
+  id    Int    @id @default(autoincrement())
+  firstName  String //Field firstName → column first_name ie. camelCase to snake_case
+  lastName  String
+  middleName  String?
+  emails Email[]
+  addresses   Address[]
+  phones Phone[]
+  bankAccounts BankAccount[]
+}
+
+model Email {
+  id        Int     @id @default(autoincrement())
+  email     String  @unique
+  isPrimary Boolean @default(false)
+
+  personId  Int //it is explicitly given; direct access to ID w/o fetching the relation; otherwise Prisma will create a hidden field.
+  person    Person  @relation(fields: [personId], references: [id]) //Premisa object relation for TS convenience
+}
+
+model Address {
+  id        Int     @id @default(autoincrement())
+  street    String
+  city      String
+  province     String @default("Ontario")
+  postalCode   String 
+  country   String @default("Canada")
+  isPrimary Boolean @default(false)
+
+  personId  Int
+  person    Person  @relation(fields: [personId], references: [id])
+}
+
+enum PhoneType {
+  MOBILE
+  HOME
+  WORK
+}
+
+model Phone {
+  id        Int     @id @default(autoincrement())
+  number    String  // e.g., "+1 613-410-8880"
+  type      PhoneType? @default(MOBILE) // e.g., "mobile", "home", "work" yet nullable
+  isPrimary Boolean @default(false) // optional primary flag
+
+  personId  Int
+  person    Person  @relation(fields: [personId], references: [id])
+}
+
+model BankAccount {
+  id               Int     @id @default(autoincrement())
+  institutionNumber Int
+  branchNumber      Int
+  accountNumber     String   // keep as string to preserve leading zeros
+  currency          String   @default("CAD")
+  isPrimary         Boolean  @default(false)
+
+  personId         Int
+  person           Person   @relation(fields: [personId], references: [id])
+}
+
