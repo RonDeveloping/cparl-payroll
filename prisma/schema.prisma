@@ -254,7 +254,7 @@ model JobAssignment {
 
   startDate    DateTime
   endDate      DateTime?
-
+  timeEntry TimeEntry[]
   payRate      Decimal
   payType      PayType // HOURLY / SALARY
 
@@ -364,8 +364,6 @@ model Deduction {
 
   createdAt   DateTime @default(now())
 
-  payrollRunEmployee PayrollRunEmployee
-    @relation(fields: [payrollRunPayrollRunEmployeeEmployee], references: [id])
 }
 
 enum DeductionType {
