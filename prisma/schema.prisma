@@ -365,7 +365,7 @@ model Deduction {
   createdAt   DateTime @default(now())
 
   payrollRunEmployee PayrollRunEmployee
-    @relation(fields: [payrollRunEmployeeId], references: [id])
+    @relation(fields: [payrollRunPayrollRunEmployeeEmployee], references: [id])
 }
 
 enum DeductionType {
