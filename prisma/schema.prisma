@@ -13,6 +13,7 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
 //Model name User → table user in p
 model User {
   id    Int    @id @default(autoincrement())
@@ -20,37 +21,105 @@ model User {
   email String @unique
 }
 
-model Person {
-  id    Int    @id @default(autoincrement())
-  firstName  String //Field firstName → column first_name ie. camelCase to snake_case
-  lastName  String
+// ===== CONTACT SERVICE =====
+model Contact {
+  id    String @id @default(cuid())
+  // ===== Legal identity (current) =====
+  givenName  String //Field firstName → column first_name ie. camelCase to snake_case
+  familyName  String
   middleName  String?
-  emails Email[]
+  // ===== Presentation identity (current) =====
+  suffix     String?
+  prefix     String?
+  nickName String? //e.g., "Bob" for "Robert"
+  displayName String? //e.g., "Dr. Robert Smith Jr."
+// ===== Metadata =====
+  isActive       Boolean  @default(true)
+  createdAt  DateTime @default(now()) //Prisma's way to say "let the DB set this" via @default(now())
+  updatedAt  DateTime @updatedAt
+// ===== Relations =====
+  legalNameHistory   LegalNameHistory[]
+  conversationalNameHistory   ConversationalNameHistory[]
+
   addresses   Address[]
+  emails Email[]
   phones Phone[]
-  bankAccounts BankAccount[]
 }
 
-model Email {
-  id        Int     @id @default(autoincrement())
-  email     String  @unique
-  isPrimary Boolean @default(false)
+model LegalNameHistory {
+  id            String   @id @default(cuid())
+  contactId     String
 
-  personId  Int //it is explicitly given; direct access to ID w/o fetching the relation; otherwise Prisma will create a hidden field.
-  person    Person  @relation(fields: [personId], references: [id]) //Premisa object relation for TS convenience
+  givenName     String
+  familyName    String
+  middleName    String?
+
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  changedBy     String?   // adminId / system
+  reason        String?   // optional
+
+  createdAt     DateTime @default(now()) //if a column is not in schema.prima, it's ignored by Prisma.
+
+  contact Contact @relation(fields: [contactId], references: [id])//so prisma generates the foreign key constraint for us:  ALTER TABLE "LegalNameHistory" ADD CONSTRAINT "LegalNameHistory_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") to ensure referential integrity.
+  @@index([contactId, effectiveFrom]) //composite index for efficient querying of time in history table
 }
+
+model ConversationalNameHistory{
+  id            String   @id @default(cuid())
+  contactId     String
+  suffix     String?
+  prefix     String?
+  nickName      String?
+  displayName   String?
+
+  source        ConversationalNameSource? //e.g., "user provided", "system generated"
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+
+  createdAt     DateTime @default(now())
+
+  contact Contact @relation(fields: [contactId], references: [id])
+  @@index([contactId, effectiveFrom])
+} 
+
+//Conflct resolution & precedence USER > SUPPORT > IMPORT > SYSTEM
+enum ConversationalNameSource {
+  USER
+  SUPPORT //e.g. manual change by support agent
+  IMPORT //sync from other services than contact management
+  SYSTEM //e.g., auto-generated based on rules such as first name variations plus last name etc.
+}
+
 
 model Address {
-  id        Int     @id @default(autoincrement())
+  id        String  @id @default(cuid())
+  contactId String  //it is explicitly given; direct access to ID w/o fetching the relation; otherwise Pris
   street    String
   city      String
   province     String @default("Ontario")
   postalCode   String 
   country   String @default("Canada")
+  addressHash String //addressHash = sha256(`${street}|${city}|${province}|${postalCode}|${country}`);
   isPrimary Boolean @default(false)
 
-  personId  Int
-  person    Person  @relation(fields: [personId], references: [id])
+  contact   Contact  @relation(fields: [contactId], references: [id]) //Premisa object relation for TS convenience
+  @@unique([contactId, addressHash]) //composite unique constraint to prevent duplicate addresses for same contact
+  @@index([contactId]) //speed up queries per contactID
+}
+
+model Email {
+  id        String  @id @default(cuid())
+  contactId String  //it is explicitly given; direct access to ID w/o fetching the relation; otherwise Prisma will create a hidden field.
+  isPrimary Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  email     String  
+  contact   Contact  @relation(fields: [contactId], references: [id]) //Premisa object relation for TS convenience
+  @@unique([contactId, email]) //composite unique constraint to prevent duplicate emails for same contact
+  @@index([contactId]) //speed up queries per contactID
 }
 
 enum PhoneType {
@@ -61,13 +130,252 @@ enum PhoneType {
 
 model Phone {
   id        Int     @id @default(autoincrement())
+  contactId String  //it is explicitly given; direct access to ID w/o fetching the relation; otherwise Prisma will create a hidden field.
   number    String  // e.g., "+1 613-410-8880"
   type      PhoneType? @default(MOBILE) // e.g., "mobile", "home", "work" yet nullable
   isPrimary Boolean @default(false) // optional primary flag
 
-  personId  Int
-  person    Person  @relation(fields: [personId], references: [id])
+  contact   Contact  @relation(fields: [contactId], references: [id]) //Premisa object relation for TS convenience
+  @@unique([contactId, number]) //composite unique constraint to prevent duplicate emails for same contact
+  @@index([contactId]) //speed up queries per contactID
 }
+
+// ===== PAYROLL SERVICE =====
+model Employee {
+  id               String @id @default(cuid())
+  tenantId  String
+  contactId        String
+  employeeNumber String? 
+
+  taxId      String //e.g., SSN, SIN
+  dateOfBirth DateTime
+  hireDate    DateTime
+  status      EmployeeStatus
+
+  terminationDate DateTime?
+  TerminationReason ROEReasonCode?
+  /* 
+  ALTER TABLE "Employee" 
+  ADD CONSTRAINT termination_consistency
+  CHECK ( (terminationDate IS NULL AND terminationReason IS NULL)
+        OR
+        (terminationDate IS NOT NULL AND terminationReason IS NOT NULL)
+);
+ or/and
+  such both or nothing rules can be enforced in app logic: terminationReason != null ⇒ terminationDate != null; Rehire ⇒ clear both
+*/
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Cached contact info (latest from Contact)
+  addressCached  Json //object
+  emailCached    String? //only one email for payroll contact
+  phoneCached    Json? //array of ojbect e.g. [{ "number": "+1-613-410-8880", "type": "MOBILE", "isPrimary": true }, {"number": "+1-613-555-1234", "type": "WORK", "isPrimary": false }]
+  nameCached     Json //object
+
+  employments Employment[]
+  payrollRuns PayrollRunEmployee[]
+
+  @@unique([tenantId, contactId]) //for tenant-scoped uniquenessone employee per contact per tenant
+  @@unique([tenantId, employeeNumber]) //PostgreSQL allows multiple NULLs, even with a unique constraint, so multiple employees per tenant can have employeeNumber = null
+  //@unique,@@unique can only be applied to scalar fields (not relations) and full-table level.
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  TERMINATED
+  ON_LEAVE
+}
+
+enum ROEReasonCode {
+  A_SHORTAGE_OF_WORK
+  B_STRIKE_LOCKOUT
+  C_RETURN_TO_SCHOOL
+  D_ILLNESS_INJURY
+  E_QUIT
+  F_MATERNITY
+  G_RETIREMENT
+  H_WORK_SHARING
+  J_DISMISSAL
+  M_DISMISSAL_PROBATION
+  N_LEAVE_OF_ABSENCE
+  P_PARENTAL
+  OTHER
+}
+
+model Employment {
+  id          String   @id @default(cuid())
+  tenantId  String
+  employeeId  String
+
+  title       String?
+  department  String?
+  
+  startDate   DateTime
+  endDate     DateTime?
+
+  taxJurisdiction String //e.g., "CA-ON" for Ontario, Canada
+
+  createdAt   DateTime @default(now())
+
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  
+  jobAssignments JobAssignment[] //e.g. casher $18/hr, stocker $20/hr (Most payroll systems — ADP, Ceridian, Workday payroll mode) — support multiple concurrent job assignments per employment record.
+
+  @@index([employeeId, startDate])//to speed up querying employment history per employee, ordered by startDate; we can't add an index on WHERE endDate IS NULL to speed up querying current employment record per employee via prisma so far
+}
+/*
+note: some rule must live at the database level, not the primsa schema level, to enforce data integrity. For example, to ensure that only one active employment record (where endDate IS NULL) exists per employee, we need to create a partial unique index in PostgreSQL.
+
+To create the partial unique index, run the following commands in your terminal:
+npx prisma migrate dev --name add-one-active-employment
+
+Then in the generated migration.sql file, add:
+CREATE UNIQUE INDEX "OneActiveEmploymentPerEmployee" ON "Employment" ("employeeId") WHERE "endDate" IS NULL; 
+
+This ensures that only one active employment record (where endDate IS NULL) exists per employee When violated, Prisma will throw: PrismaClientKnownRequestError#P2002
+
+This one active employment rule is for CPP/EI/tax aggregation purposes and for ROE continuity as well as benefit eligibility.
+*/
+
+enum PayType {
+  HOURLY
+  SALARY
+}
+
+model JobAssignment {
+  id           String   @id @default(cuid())
+  employmentId String
+
+  departmentId String? 
+  costCenterId  String?
+  projectCode   String?
+
+  startDate    DateTime
+  endDate      DateTime?
+
+  payRate      Decimal
+  payType      PayType // HOURLY / SALARY
+
+  employment   Employment @relation(fields: [employmentId], references: [id])
+
+  @@index([employmentId, startDate])
+}
+//TimeEntry → JobAssignment → Employment → Employee → PayrollRun
+
+model TimeEntry {
+  id              String   @id @default(cuid())
+  jobAssignmentId String
+  workDate        DateTime
+  hours           Decimal
+
+  jobAssignment   JobAssignment @relation(fields: [jobAssignmentId], references: [id])
+
+  @@index([jobAssignmentId, workDate])
+}
+
+model PayrollRun {
+  id          String   @id @default(cuid())
+  tenantId  String //Add only where filtering / reporting / safety benefits outweigh joins because of FK chain can validate tenant
+  periodStart DateTime
+  periodEnd   DateTime
+  runDate     DateTime
+
+  status      PayrollRunStatus
+
+  createdAt   DateTime @default(now())
+
+  employees   PayrollRunEmployee[]
+}
+/*
+SUM(hours × payRate)
+GROUP BY:
+- employeeId (taxes)
+- jobAssignmentId (costing)
+Taxes, CPP, EI → Employee level
+Earnings → JobAssignment level
+*/
+
+model PayrollLine {
+  id            String @id @default(cuid())
+  payrollRunId  String
+  employeeId    String
+  jobAssignmentId String?
+
+  amount        Decimal
+  earningType   EarningType
+
+  costCenterId  String?
+  departmentId  String?
+}
+
+enum EarningType {
+  REGULAR
+  OVERTIME
+  BONUS
+  COMMISSION
+  OTHER
+}
+
+enum PayrollRunStatus {
+  DRAFT
+  FINALIZED
+  PAID
+}
+
+model StatHoliday {
+  id        String   @id @default(cuid())
+  tenantId  String
+  date      DateTime
+  name      String
+  isPaid    Boolean
+}
+
+
+model PayrollRunEmployee {
+  id            String   @id @default(cuid())  
+  payrollRunId  String
+  employeeId    String
+
+  // Immutable snapshot fields copied from Employee
+  nameSnapshot     String
+  emailSnapshot    String?
+  addressSnapshot  String
+
+  grossPay      Decimal  @db.Decimal(10,2)
+  deductions    Decimal  @db.Decimal(10,2)
+  netPay        Decimal  @db.Decimal(10,2)
+
+  createdAt     DateTime @default(now())
+
+  payrollRun    PayrollRun @relation(fields: [payrollRunId], references: [id])
+  employee      Employee   @relation(fields: [employeeId], references: [id])
+
+  @@unique([payrollRunId, employeeId]) //one record per employee per payroll run
+}
+
+model Deduction {
+  id                    String   @id @default(cuid())
+  payrollRunEmployeeId  String
+
+  type        DeductionType
+  amount      Decimal @db.Decimal(10,2)
+
+  createdAt   DateTime @default(now())
+
+  payrollRunEmployee PayrollRunEmployee
+    @relation(fields: [payrollRunEmployeeId], references: [id])
+}
+
+enum DeductionType {
+  TAX
+  CPP
+  EI
+  BENEFIT
+  OTHER
+}
+
 
 model BankAccount {
   id               Int     @id @default(autoincrement())
@@ -77,7 +385,6 @@ model BankAccount {
   currency          String   @default("CAD")
   isPrimary         Boolean  @default(false)
 
-  personId         Int
-  person           Person   @relation(fields: [personId], references: [id])
+  employeeId         String
 }
 

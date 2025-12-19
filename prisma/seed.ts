@@ -1,6 +1,6 @@
-import prisma from "../lib/prisma.ts";
-// import { safe } from "../utils/safe.ts";
-import "dotenv/config"; // <- must be the first import before accessing process.env.DATABASE_URL
+import "dotenv/config"; // it loads .env and populates process.env so that npx run ts-node prisma/seed.ts works where Node process doesn't do the population automatically unlike in Next.js where .env is auto-loaded
+
+import prisma from "../lib/prisma.ts"; //new a prisma client instance using Database URL from .env in the first query; so it would be better placed after the first import.
 
 await prisma.person.create({
   data: {
