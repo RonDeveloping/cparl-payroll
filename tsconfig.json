@@ -1,10 +1,12 @@
+//Ctrl+Shift+P (Windows) -> TypeScript: Restart TS Server.
+
 {
   "compilerOptions": {
     "target": "ES2017",
 
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "allowImportingTsExtensions": true,
+    "module": "esnext", //"NodeNext",
+    "moduleResolution": "bundler", //bundler means Webpack or Turnopack, it tells TS "trust that the build tool (next.js) knows how to find these modules, which resolves internal package exports like next/link; "NodeNext" is too modern.
+    "allowImportingTsExtensions": false, //if true,import x.ts works
 
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,

@@ -291,7 +291,6 @@ model JobAssignment {
 
   @@index([employmentId, startDate])
 }
-//
 
 //assume always accessed via jobAssignment, so no tenantId here
 model TimeEntry {
@@ -334,7 +333,6 @@ model PayrollRunEmployee {
   payrollDisbursements PayrollDisbursement[]
   // Immutable snapshot fields copied from Employee
   nameSnapshot     String
-  emailSnapshot    String?
   addressSnapshot  String
 
   payrollrunlines PayrollLine[]
@@ -508,10 +506,6 @@ model JournalEntry {
   glAccountNumber   String?      // e.g., "5100" or "2100" for mapping to Chart of Accounts by computer
   glAccountName     String     // For human readability in exports
   
-  // Costing Dimensions
-  costCenterId      String?     // From Tenant Service (ID reference)
-  departmentId      String?     // From Tenant Service (ID reference)
-  
   type              EntryType   // DEBIT or CREDIT
   amount            Decimal     @db.Decimal(12,2)
   
@@ -543,16 +537,8 @@ model Remittance {
   // Totals for the filing
   totalGrossPayroll Decimal          @db.Decimal(12,2)
   totalEmployees    Int
-  
-  // The breakdown of what is being paid
-  taxAmount         Decimal          @db.Decimal(12,2) // Employee Income Tax
-  cppEmployee       Decimal          @db.Decimal(12,2)
-  cppEmployer       Decimal          @db.Decimal(12,2)
-  eiEmployee        Decimal          @db.Decimal(12,2)
-  eiEmployer        Decimal          @db.Decimal(12,2)
-  
   totalDue          Decimal          @db.Decimal(12,2)
-  
+
   status            RemittanceStatus @default(PENDING)
   paymentReference  String?          // Confirmation number from CRA My Business Account
   filedAt           DateTime?
@@ -617,7 +603,6 @@ model Tenant {
   
   // Organization Structure
   departments   Department[]
-  costCenters   CostCenter[]
   
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
@@ -661,16 +646,6 @@ model Department {
   code      String?  // e.g., "ENG", "MKT"
 
   @@unique([tenantId, code])
-}
-
-model CostCenter {
-  id        String   @id @default(cuid())
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  name      String
-  code      String   @unique // Accounting GL code
-
-  @@index([tenantId])
 }
 
 enum PayFrequency {
