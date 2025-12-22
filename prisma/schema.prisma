@@ -158,8 +158,9 @@ model Phone {
 }
 
 // ===== PAYROLL SERVICE =====
+//the tenantId acts as a Partition Key and provide row level multi-tenancy isolation by veryfying tenantId in all queries
 model Employee {
-  id               String @id @default(cuid())
+  id              String @id @default(cuid())
   tenantId  String
   contactId        String
   employeeNumber String? 
@@ -525,6 +526,25 @@ enum EntryType {
   DEBIT
   CREDIT
 }
+
+model PaySlip {
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Storage Metadata
+  s3Key        String   // Path: "tenant_id/year/month/file.pdf"
+  fileName     String   // e.g., "PaySlip_Jan_2025.pdf"
+  fileSize     Int
+  employeeId   String   
+  tenantId     String
+
+  @@index([employeeId])
+  @@index([tenantId])
+  @@index([tenantId, createdAt])
+  @@index([employeeId, createdAt])
+}
+
 
 model Remittance {
   id                String           @id @default(cuid())

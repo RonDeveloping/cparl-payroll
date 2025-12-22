@@ -1,23 +1,30 @@
 import "dotenv/config"; // it loads .env and populates process.env so that npx run ts-node prisma/seed.ts works where Node process doesn't do the population automatically unlike in Next.js where .env is auto-loaded
 
-import prisma from "../lib/prisma.ts"; //new a prisma client instance using Database URL from .env in the first query; so it would be better placed after the first import.
+import prisma from "../lib/prisma"; //new a prisma client instance using Database URL from .env in the first query; so it would be better placed after the first import.
 
-await prisma.person.create({
-  data: {
-    firstName: "Ron",
-    lastName: "Liu",
+import { safe } from "@/utils/safe";
 
-    emails: {
-      create: [
-        { email: "ron@cparl.com", isPrimary: true },
-        { email: "ron.liu@gmail.com" },
-      ],
-    },
+const useWhat = await safe(
+  prisma.contact.create({
+    data: {
+      givenName: "Ron",
+      familyName: "Liu",
+      /*
+      emails: {
+        create: [
+          { email: "ron@cparl.com", isPrimary: true },
+          { email: "ron.liu@gmail.com" },
+        ],
+      },
 
-    phones: {
-      create: [{ number: "+1 613 410 8880", type: "MOBILE", isPrimary: true }],
-    },
+      phones: {
+        create: [
+          { number: "+1 613 410 8880", type: "MOBILE", isPrimary: true },
+        ],
+      },
+      */
 
+      /*
     addresses: {
       create: [
         {
@@ -41,5 +48,10 @@ await prisma.person.create({
         },
       ],
     },
-  },
-});
+    */
+    },
+  })
+);
+
+console.log("Seeded contact:", useWhat);
+process.exit(0);
