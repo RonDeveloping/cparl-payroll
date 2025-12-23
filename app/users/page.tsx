@@ -2,8 +2,6 @@ import Counter from "./counter";
 import prisma from "../../lib/prisma";
 
 export default async function UsersPage() {
-  // const sql = postgres(process.env.DATABASE_URL || "");
-  // try {
   const users = await safe(prisma.user.findMany({ orderBy: { id: "desc" } }));
 
   return (

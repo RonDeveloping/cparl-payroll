@@ -1,10 +1,8 @@
 "use client"; //files are Server Components by default in Next.js 13+, so we need to add this directive to use Client Component features like useState and useContext
-"use client";
 
-import React from "react";
+// import React from "react";
 import { useTenant } from "./context/TenantContext";
 
-// 1. Change this to "export default function"
 export default function TenantPage() {
   const { tenant } = useTenant();
 
