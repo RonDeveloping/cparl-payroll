@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
+//The Navbar component itself is a client component that handles its own visibility state based on scroll position; this bar is a "Smart Header," which stays out of the way while the user is reading (scrolling down) but slides back in instantly the moment they start scrolling up.
 export default function Navbar() {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
@@ -12,10 +13,12 @@ export default function Navbar() {
       const currentScrollY = window.scrollY;
 
       // If scrolling down, hide it. If scrolling up, show it.
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setIsVisible(false);
+      if (currentScrollY < 10) {
+        setVisible(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 70) {
+        setVisible(false);
       } else {
-        setIsVisible(true);
+        setVisible(true);
       }
 
       setLastScrollY(currentScrollY);
@@ -27,14 +30,21 @@ export default function Navbar() {
 
   return (
     <nav
-      style={{
-        ...navStyles,
-        transform: isVisible ? "translateY(0)" : "translateY(-100%)",
-        transition: "transform 0.3s ease-in-out",
-      }}
+      className={`fixed top-0 left-0 w-full h-16 bg-zinc-900 text-white flex items-center justify-between px-8 z-50 transition-transform duration-500 ease-in-out ${
+        isVisible ? "translate-y-0" : "-translate-y-full"
+      }`}
     >
-      <div style={logoStyles}>BrandLogo</div>
-      <ul style={listStyles}>
+      <div className="text-xl font-bold">BrandLogo</div>
+      {/* Search Field */}
+      <div className="flex-1 max-w-md mx-10">
+        <input
+          type="text"
+          placeholder="Search..."
+          className="w-full px-4 py-1.5 rounded bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
+
+      <ul className="flex gap-6">
         <li>
           <Link href="/">Home</Link>
         </li>
@@ -45,24 +55,3 @@ export default function Navbar() {
     </nav>
   );
 }
-
-// Styles
-const navStyles: React.CSSProperties = {
-  position: "fixed",
-  top: 0,
-  width: "100%",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  padding: "1rem 2rem",
-  background: "#333",
-  color: "#fff",
-  zIndex: 1000,
-};
-
-const logoStyles: React.CSSProperties = { fontWeight: "bold" };
-const listStyles: React.CSSProperties = {
-  display: "flex",
-  gap: "15px",
-  listStyle: "none",
-};

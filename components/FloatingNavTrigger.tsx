@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 
+//It's a client component that handles its own visibility state based on scroll position and toggles a floating button
 export default function FloatingNavTrigger() {
   const [isVisible, setIsVisible] = useState(false);
 

@@ -1,5 +1,5 @@
-import Counter from "./counter";
-import prisma from "../../lib/prisma";
+import Counter from "@/components/counter";
+import prisma from "@/lib/prisma";
 
 export default async function UsersPage() {
   const users = await safe(prisma.user.findMany({ orderBy: { id: "desc" } }));
