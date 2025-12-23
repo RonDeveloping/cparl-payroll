@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
+
 //Icons library perfectly Tailwind CSS per Gemini
 import { LayoutDashboard, Settings, Home, Search } from "lucide-react";
 
@@ -40,57 +42,67 @@ export default function Navbar() {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* --- THE INDICATOR LINE/ TRIGGER ZONE (visible upon nav's hidden) --- */}
+      {/* ---INDICATOR LINE/TRIGGER ZONE (visible upon nav's hidden) starting with a blue on the left with transitions through a layered mix in the middle and ending in a green on the right  --- */}
       <div
         className={`fixed top-0 left-0 w-full z-[60] transition-opacity duration-300 ${
-          shouldShow ? "opacity-0" : "opacity-100 bg-black"
-        }`}
+          shouldShow ? "opacity-0" : "opacity-100"
+        } bg-gradient-to-r from-blue-200 via-emerald-100 to-green-200`}
         style={{ height: "6px" }} // Slightly thicker for easier hovering
       />
 
-      {/* --- THE NAVIGATION BAR --- */}
+      {/* --- THE NAVIGATION BAR (Off-White & Green)--- */}
       <nav
-        className={`fixed top-0 left-0 w-full h-16 bg-zinc-900 text-white flex items-center justify-between px-6 z-50 transition-transform duration-500 ease-in-out ${
+        className={`fixed top-0 left-0 w-full h-16bg-stone-50 border-b border-stone-200 text-stone-800 flex items-center justify-between px-6 z-50 transition-transform duration-500 ease-in-out ${
           shouldShow ? "translate-y-0" : "-translate-y-full"
         }`}
       >
-        <Link
-          href="/"
-          className="font-bold text-xl hover:text-blue-400 transition-colors"
-        >
-          BrandLogo
+        {/* Logo Section */}
+        <Link href="/" className="flex items-center gap-2">
+          <Image
+            className="dark:invert"
+            src="/logo.png"
+            alt="CPAL"
+            width={38}
+            height={38}
+            priority
+          />
+          <span className="font-bold text-xl text-emerald-700 hidden sm:block">
+            CPARL
+          </span>
         </Link>
 
+        {/* Search Field */}
         <div className="flex-1 max-w-md mx-8 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600/50 w-4 h-4" />
           <input
             type="text"
             placeholder="Search..."
-            className="w-full pl-10 pr-4 py-2 rounded-full bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-4 py-2 rounded-full bg-white border border-stone-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-sm"
           />
         </div>
 
-        <div className="flex items-center gap-4">
+        {/* Icon Navigation (Green) */}
+        <div className="flex items-center gap-2 sm:gap-4 text-emerald-600">
           <Link
             href="/"
             title="Home"
-            className="p-2 hover:bg-zinc-800 rounded-lg"
+            className="p-2 hover:bg-emerald-50 rounded-full transition-colors"
           >
-            <Home />
+            <Home className="w-6 h-6" />
           </Link>
           <Link
             href="/dashboard"
             title="Dashboard"
-            className="p-2 hover:bg-zinc-800 rounded-lg"
+            className="p-2 hover:bg-emerald-50 rounded-full transition-colors"
           >
-            <LayoutDashboard />
+            <LayoutDashboard className="w-6 h-6" />
           </Link>
           <Link
             href="/settings"
             title="Settings"
-            className="p-2 hover:bg-zinc-800 rounded-lg"
+            className="p-2 hover:bg-emerald-50 rounded-full transition-colors"
           >
-            <Settings />
+            <Settings className="w-6 h-6" />
           </Link>
         </div>
       </nav>
