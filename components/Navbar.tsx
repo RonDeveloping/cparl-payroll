@@ -1,57 +1,99 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+//Icons library perfectly Tailwind CSS per Gemini
+import { LayoutDashboard, Settings, Home, Search } from "lucide-react";
 
 //The Navbar component itself is a client component that handles its own visibility state based on scroll position; this bar is a "Smart Header," which stays out of the way while the user is reading (scrolling down) but slides back in instantly the moment they start scrolling up.
 export default function Navbar() {
-  const [isVisible, setVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const lastScrollY = useRef(0);
+  const [isScrolledDown, setIsScrolledDown] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const controlNavbar = () => {
       const currentScrollY = window.scrollY;
 
-      // If scrolling down, hide it. If scrolling up, show it.
-      if (currentScrollY < 10) {
-        setVisible(true);
-      } else if (currentScrollY > lastScrollY && currentScrollY > 70) {
-        setVisible(false);
-      } else {
-        setVisible(true);
+      // HIDE: If scrolling down past 70px
+      if (currentScrollY > lastScrollY.current && currentScrollY > 70) {
+        setIsScrolledDown(true);
+      }
+      // If scrolling up near top, reset
+      else if (currentScrollY < 1) {
+        setIsScrolledDown(false);
       }
 
-      setLastScrollY(currentScrollY);
+      lastScrollY.current = currentScrollY;
     };
 
     window.addEventListener("scroll", controlNavbar);
     return () => window.removeEventListener("scroll", controlNavbar);
-  }, [lastScrollY]);
+  }, []);
+
+  // Determine final visibility
+  const shouldShow = !isScrolledDown || isHovered;
 
   return (
-    <nav
-      className={`fixed top-0 left-0 w-full h-16 bg-zinc-900 text-white flex items-center justify-between px-8 z-50 transition-transform duration-500 ease-in-out ${
-        isVisible ? "translate-y-0" : "-translate-y-full"
-      }`}
+    <div
+      //wrapper ensures coverage by the hover state
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="text-xl font-bold">BrandLogo</div>
-      {/* Search Field */}
-      <div className="flex-1 max-w-md mx-10">
-        <input
-          type="text"
-          placeholder="Search..."
-          className="w-full px-4 py-1.5 rounded bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
-      </div>
+      {/* --- THE INDICATOR LINE/ TRIGGER ZONE (visible upon nav's hidden) --- */}
+      <div
+        className={`fixed top-0 left-0 w-full z-[60] transition-opacity duration-300 ${
+          shouldShow ? "opacity-0" : "opacity-100 bg-black"
+        }`}
+        style={{ height: "6px" }} // Slightly thicker for easier hovering
+      />
 
-      <ul className="flex gap-6">
-        <li>
-          <Link href="/">Home</Link>
-        </li>
-        <li>
-          <Link href="/dashboard">Dashboard</Link>
-        </li>
-      </ul>
-    </nav>
+      {/* --- THE NAVIGATION BAR --- */}
+      <nav
+        className={`fixed top-0 left-0 w-full h-16 bg-zinc-900 text-white flex items-center justify-between px-6 z-50 transition-transform duration-500 ease-in-out ${
+          shouldShow ? "translate-y-0" : "-translate-y-full"
+        }`}
+      >
+        <Link
+          href="/"
+          className="font-bold text-xl hover:text-blue-400 transition-colors"
+        >
+          BrandLogo
+        </Link>
+
+        <div className="flex-1 max-w-md mx-8 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search..."
+            className="w-full pl-10 pr-4 py-2 rounded-full bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div className="flex items-center gap-4">
+          <Link
+            href="/"
+            title="Home"
+            className="p-2 hover:bg-zinc-800 rounded-lg"
+          >
+            <Home />
+          </Link>
+          <Link
+            href="/dashboard"
+            title="Dashboard"
+            className="p-2 hover:bg-zinc-800 rounded-lg"
+          >
+            <LayoutDashboard />
+          </Link>
+          <Link
+            href="/settings"
+            title="Settings"
+            className="p-2 hover:bg-zinc-800 rounded-lg"
+          >
+            <Settings />
+          </Link>
+        </div>
+      </nav>
+    </div>
   );
 }
