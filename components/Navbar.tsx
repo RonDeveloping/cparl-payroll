@@ -5,7 +5,15 @@ import Link from "next/link";
 import Image from "next/image";
 
 //Icons library perfectly Tailwind CSS per Gemini
-import { LayoutDashboard, Settings, Home, Search } from "lucide-react";
+import {
+  LayoutDashboard,
+  Settings,
+  Home,
+  Search,
+  Plus,
+  HelpCircle,
+  UserCircle,
+} from "lucide-react";
 
 //The Navbar component itself is a client component that handles its own visibility state based on scroll position; this bar is a "Smart Header," which stays out of the way while the user is reading (scrolling down) but slides back in instantly the moment they start scrolling up.
 export default function Navbar() {
@@ -83,6 +91,14 @@ export default function Navbar() {
 
         {/* Icon Navigation (Green) */}
         <div className="flex items-center gap-2 sm:gap-4 text-emerald-600">
+          {/* NEW: Add Icon with a subtle border to make it pop */}
+          <Link
+            href="/create"
+            title="Add New"
+            className="p-2 border-2 border-emerald-100 hover:border-emerald-500 hover:bg-emerald-50 rounded-full transition-all"
+          >
+            <Plus className="w-6 h-6" />
+          </Link>
           <Link
             href="/"
             title="Home"
@@ -103,6 +119,22 @@ export default function Navbar() {
             className="p-2 hover:bg-emerald-50 rounded-full transition-colors"
           >
             <Settings className="w-6 h-6" />
+          </Link>
+          {/* NEW: Help Button */}
+          <Link
+            href="/help"
+            title="Help & Support"
+            className="p-2 hover:bg-emerald-50 rounded-full transition-colors"
+          >
+            <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+          </Link>
+          {/* NEW: User Profile Icon */}
+          <Link
+            href="/contacts"
+            title="Your Profile"
+            className="ml-1 p-1 hover:text-emerald-800 transition-colors border-l border-stone-200 pl-3"
+          >
+            <UserCircle className="w-7 h-7 sm:w-8 sm:h-8 stroke-[1.5]" />
           </Link>
         </div>
       </nav>

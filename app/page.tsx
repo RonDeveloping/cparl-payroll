@@ -33,7 +33,7 @@ export default function Home() {
               placement="bottom"
             >
               <Link
-                href="/users"
+                href="/contacts"
                 className="font-medium text-zinc-950 dark:text-zinc-50"
               >
                 Login

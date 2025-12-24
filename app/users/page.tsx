@@ -1,4 +1,4 @@
-import Counter from "@/components/counter";
+import Counter from "@/components/Counter";
 import prisma from "@/lib/prisma";
 
 export default async function UsersPage() {
