@@ -1,30 +1,55 @@
 "use client";
-import { z } from "zod";
+
+// 1. ALL IMPORTS FIRST
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Save, Building } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { contactSchema, ContactFormValues } from "@/lib/schemas/contact"; // Import the shared type
 
+import { UseFormRegister, FieldValues, Path } from "react-hook-form";
+import { updateOrCreateContact } from "@/lib/actions/contact";
+
+// 2. NOW THE COMPONENT
 export default function EditContactPage({
   params,
 }: {
-  params: { tenantId: string };
+  params: { contactId: string };
 }) {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm({
+  } = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
-      city: "Ottawa",
-      // These would be populated by your initial fetch
+      city: "Ottawa", //default value is handled here
+      province: "ON",
+      country: "Canada",
     },
   });
 
+  const router = useRouter();
+
   const onSubmit = async (data: ContactFormValues) => {
-    // Here you would call your Server Action to update Prisma
-    console.log("Updating Contact Service...", data);
+    try {
+      // Pass the current ID (might be undefined if creating)
+      const result = await updateOrCreateContact(data, params.contactId);
+
+      if (result && result.id) {
+        router.refresh();
+        // 2. Navigate to the profile of the contact (new or updated)
+        // This "passes" the ID back to the UI flow
+        router.push(`/contacts/${result.id}`);
+      }
+    } catch (error) {
+      // This catches the "Database error" thrown by safe.ts
+      console.error("Form submission failed", error);
+      alert(
+        "Could not save contact. Check if the email or address is a duplicate."
+      );
+    }
   };
 
   return (
@@ -141,8 +166,6 @@ export default function EditContactPage({
   );
 }
 
-import { UseFormRegister, FieldValues, Path } from "react-hook-form";
-
 // We use Generics <T> so this component works with ANY form schema
 interface InputGroupProps<T extends FieldValues> {
   label: string;
@@ -185,18 +208,3 @@ function InputGroup<T extends FieldValues>({
     </div>
   );
 }
-
-const contactSchema = z.object({
-  givenName: z.string().min(1, "First name is required"),
-  familyName: z.string().min(1, "Last name is required"),
-  nickName: z.string().optional(),
-  displayName: z.string().optional(),
-  email: z.string().email("Invalid email address").toLowerCase(),
-  phone: z.string().min(10, "Invalid phone number"),
-  street: z.string().min(1, "Street is required"),
-  city: z.string().default("Ottawa"),
-  postalCode: z.string().min(6, "Invalid Postal Code"),
-});
-
-// 2. Extract the TypeScript type from the schema
-type ContactFormValues = z.infer<typeof contactSchema>;

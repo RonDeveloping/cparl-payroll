@@ -25,17 +25,13 @@ export async function createPersonWithDetails(data: {
     isPrimary?: boolean;
   }[];
 }) {
-  return prisma.person.create({
+  return prisma.contact.create({
     data: {
-      firstName: data.firstName,
-      lastName: data.lastName,
+      givenName: data.firstName,
+      familyName: data.lastName,
 
       emails: { create: data.emails },
       phones: data.phones ? { create: data.phones } : undefined,
-      addresses: data.addresses ? { create: data.addresses } : undefined,
-      bankAccounts: data.bankAccounts
-        ? { create: data.bankAccounts }
-        : undefined,
     },
   });
 }

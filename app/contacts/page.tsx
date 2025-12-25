@@ -39,9 +39,11 @@ interface ProfilePageProps {
 }
 
 export default function ProfilePage({ contact }: ProfilePageProps) {
-  const primaryEmail = getPrimary(contact.emails);
-  const primaryPhone = getPrimary(contact.phones);
-  const primaryAddress = getPrimary(contact.addresses);
+  if (contact) {
+    const primaryEmail = getPrimary(contact.emails);
+    const primaryPhone = getPrimary(contact.phones);
+    const primaryAddress = getPrimary(contact.addresses);
+  }
 
   const profileData = {
     user: {

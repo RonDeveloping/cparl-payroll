@@ -99,10 +99,10 @@ model Address {
   id        String  @id @default(cuid())
   contactId String  //it is explicitly given; direct access to ID w/o fetching the relation; otherwise Pris
   street    String
-  city      String @default("Ottawa")
-  province     String @default("Ontario")
+  city      String 
+  province     String 
   postalCode   String 
-  country   String @default("Canada")
+  country   String 
   addressHash String //addressHash = sha256(`${street}|${city}|${province}|${postalCode}|${country}`);
   isPrimary Boolean @default(false)
 

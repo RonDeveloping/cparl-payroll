@@ -10,7 +10,9 @@
 export async function safe<T>(p: Promise<T>): Promise<T> {
   return p.catch((e) => {
     // 1. Log the original technical error for debugging purposes
-    console.error("Prisma/Database Error:", e);
+    console.log("--- START DATABASE ERROR ---");
+    console.log(e);
+    console.log("--- END DATABASE ERROR ---");
 
     // 2. Throw a standardized, non-technical error for the consumer (e.g., API response)
     throw new Error("Database error");
