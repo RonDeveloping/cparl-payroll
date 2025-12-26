@@ -21,9 +21,9 @@ export default function EditContactForm({
 }: EditContactFormProps) {
   //in the client component, unwrap a promise params with use() hook
   const params = use(paramsPromise);
-  const isNew = params.id === "new";
+  // const isNew = params.id === "new";
 
-  const safeBackPath = isNew ? "/contacts" : `/contacts/${params.id}`;
+  // const safeBackPath = isNew ? "/contacts" : `/contacts/${params.id}`;
 
   const router = useRouter();
   const {
@@ -55,10 +55,10 @@ export default function EditContactForm({
 
   return (
     <FormLayout
+      domain="contacts"
+      id={params.id}
       formId="contact-form"
       isSubmitting={isSubmitting}
-      safeBackPath={safeBackPath}
-      isNew={isNew}
     >
       <form
         id="contact-form"
