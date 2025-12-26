@@ -4,98 +4,6 @@ import { ContactFormValues } from "@/lib/schemas/contact"; // Import the shared 
 import prisma from "@/lib/prisma";
 import { safe } from "@/utils/safe";
 import crypto from "crypto";
-// import { revalidatePath } from "next/cache";
-
-interface AddressData {
-  street: string;
-  city: string;
-  province: string;
-  postalCode: string;
-  country: string;
-}
-
-export async function createContact(data: ContactFormValues) {
-  // 1. Generate the hash for the initial address
-  const addressString = `${data.street}|${data.city}|${data.province}|${data.postalCode}|${data.country}`;
-  const addressHash = crypto
-    .createHash("sha256")
-    .update(addressString)
-    .digest("hex");
-
-  return await safe(
-    prisma.contact.create({
-      data: {
-        // Identity Fields
-        givenName: data.givenName,
-        familyName: data.familyName,
-        nickName: data.nickName,
-        displayName: data.displayName,
-
-        // Nested Address Creation
-        addresses: {
-          create: {
-            street: data.street,
-            city: data.city,
-            province: data.province,
-            country: data.country,
-            postalCode: data.postalCode,
-            addressHash: addressHash,
-            isPrimary: true,
-          },
-        },
-      },
-    })
-  );
-}
-
-export async function updateContactAddress(
-  contactId: string,
-  data: AddressData
-) {
-  // 1. Create the address string for hashing as per your schema note
-  // street|city|province|postalCode|country
-  const addressString = `${data.street}|${data.city}|${data.province}|${data.postalCode}|${data.country}`;
-
-  // 2. Generate SHA-256 Hash
-  const newHash = crypto
-    .createHash("sha256")
-    .update(addressString)
-    .digest("hex");
-
-  // 3. Update the Primary Address
-  return await safe(
-    prisma.$transaction(async (tx) => {
-      // 1. Set all current addresses for this contact to NOT primary
-      // await tx.address.updateMany({
-      //   where: { contactId },
-      //   data: { isPrimary: false },
-      // });
-
-      // 2. UPSERT the new address based on the Hash
-      // This is a true upsert
-      return await tx.address.upsert({
-        where: {
-          contactId_addressHash: {
-            contactId: contactId,
-            addressHash: newHash,
-          },
-        },
-        update: {
-          ...data,
-          addressHash: newHash,
-          isPrimary: true,
-        },
-        create: {
-          ...data,
-          contactId,
-          addressHash: newHash,
-          isPrimary: true,
-        },
-      });
-    })
-  );
-  // revalidatePath(`/[tenantId]/contact/${contactId}`);
-}
 
 /**
  * Updates an existing contact or creates a new one.
@@ -103,52 +11,61 @@ export async function updateContactAddress(
  */
 export async function updateOrCreateContact(
   data: ContactFormValues,
-  contactId?: string
+  id: string
 ) {
-  // 1. Create a hash of the address to handle the unique constraint
+  // 1. NORMALIZE EVERYTHING (as case sensitive crucial for hashes)
+  const street = data.street.trim().toUpperCase();
+  const city = data.city.trim().toUpperCase();
+  const province = data.province.trim().toUpperCase();
+  const postal = data.postalCode.trim().toUpperCase();
+  const country = data.country.trim().toUpperCase();
+  //extract to a variable and then hash to maintain consistency
   const addressString =
-    `${data.street}|${data.city}|${data.province}|${data.postalCode}|${data.country}`.toLowerCase();
+    `${street}|${city}|${province}|${postal}|${country}`.toLowerCase();
   const addressHash = crypto
     .createHash("sha256")
     .update(addressString)
     .digest("hex");
 
+  const emailClean = data.email.toLowerCase().trim();
+
   return await safe(
     prisma.$transaction(async (tx) => {
-      // 2. IDENTITY LOGIC: Update or Create the Contact
-      // We pick only identity fields to avoid Prisma errors
-      const identityData = {
-        givenName: data.givenName,
-        familyName: data.familyName,
-        nickName: data.nickName,
-        displayName: data.displayName,
-        email: data.email,
-        phone: data.phone,
-      };
+      // 2. CONTACT UPSERT
+      const contact = await tx.contact.upsert({
+        where: { id: id === "new" || !id ? "placeholder-id" : id }, //"placeholder-id won't match a CUID for sure, which forces Prisma into the create block"
+        update: {
+          //if id matched in .upsert instruction
+          givenName: data.givenName,
+          familyName: data.familyName,
+          nickName: data.nickName,
+          displayName: data.displayName,
+        },
+        create: {
+          //if id missed in .upsert instruction
+          givenName: data.givenName,
+          familyName: data.familyName,
+          nickName: data.nickName,
+          displayName: data.displayName,
+        },
+      });
 
-      let contact;
+      // 3. EMAIL UPSERT (@@unique([contactId, email]))
+      await tx.email.upsert({
+        where: {
+          contactId_email: { contactId: contact.id, email: emailClean },
+        },
+        update: { isPrimary: true },
+        create: { contactId: contact.id, email: emailClean, isPrimary: true },
+      });
 
-      if (contactId && contactId !== "new") {
-        // Mode: UPDATE
-        contact = await tx.contact.update({
-          where: { id: contactId },
-          data: identityData,
-        });
-      } else {
-        // Mode: CREATE
-        contact = await tx.contact.create({
-          data: identityData,
-        });
-      }
-
-      // 3. ADDRESS LOGIC: Manage Primary status
-      // Reset all current addresses for this contact to NOT be primary
+      // 4. ADDRESS UPSERT (@@unique([contactId, addressHash]))
+      // First, set others to false
       await tx.address.updateMany({
         where: { contactId: contact.id },
         data: { isPrimary: false },
       });
 
-      // 4. ADDRESS LOGIC: Upsert the specific address
       await tx.address.upsert({
         where: {
           contactId_addressHash: {
@@ -156,27 +73,19 @@ export async function updateOrCreateContact(
             addressHash: addressHash,
           },
         },
-        update: {
-          street: data.street,
-          city: data.city,
-          province: data.province,
-          country: data.country,
-          postalCode: data.postalCode,
-          isPrimary: true,
-        },
+        update: { isPrimary: true },
         create: {
           contactId: contact.id,
           addressHash: addressHash,
-          street: data.street,
-          city: data.city,
-          province: data.province,
-          country: data.country,
-          postalCode: data.postalCode,
+          street,
+          city,
+          province,
+          country,
+          postalCode: postal,
           isPrimary: true,
         },
       });
 
-      // 5. Return the contact object back to the Client Component
       return contact;
     })
   );

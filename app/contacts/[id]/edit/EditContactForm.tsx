@@ -1,6 +1,7 @@
+//app/contacts/[id]/edit/EditContactForm.tsx
 "use client";
-
 // 1. ALL IMPORTS FIRST
+import { use } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Save, Building } from "lucide-react";
@@ -11,33 +12,36 @@ import { contactSchema, ContactFormValues } from "@/lib/schemas/contact"; // Imp
 import { UseFormRegister, FieldValues, Path } from "react-hook-form";
 import { updateOrCreateContact } from "@/lib/actions/contact";
 
+interface EditContactFormProps {
+  paramsPromise: Promise<{ id: string }>;
+  initialData: ContactFormValues;
+}
+
 // 2. NOW THE COMPONENT
-export default function EditContactPage({
-  params,
-}: {
-  params: { contactId: string };
-}) {
+export default function EditContactForm({
+  paramsPromise,
+  initialData,
+}: EditContactFormProps) {
+  //in the client component, unwrap a promise params with use() hook
+  const params = use(paramsPromise);
+  const isNew = params.id === "new";
+
+  const router = useRouter();
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
-    defaultValues: {
-      city: "Ottawa", //default value is handled here
-      province: "ON",
-      country: "Canada",
-    },
+    // Use 'values' so the form updates if initialData changes
+    defaultValues: initialData,
   });
-
-  const router = useRouter();
 
   const onSubmit = async (data: ContactFormValues) => {
     try {
-      // Pass the current ID (might be undefined if creating)
-      const result = await updateOrCreateContact(data, params.contactId);
+      const result = await updateOrCreateContact(data, params.id);
 
-      if (result && result.id) {
+      if (result?.id) {
         router.refresh();
         // 2. Navigate to the profile of the contact (new or updated)
         // This "passes" the ID back to the UI flow
@@ -46,9 +50,7 @@ export default function EditContactPage({
     } catch (error) {
       // This catches the "Database error" thrown by safe.ts
       console.error("Form submission failed", error);
-      alert(
-        "Could not save contact. Check if the email or address is a duplicate."
-      );
+      alert("Could not save contact. Check for duplicate.");
     }
   };
 
@@ -57,10 +59,11 @@ export default function EditContactPage({
       {/* Top Navigation Row */}
       <div className="flex items-center justify-between mb-8">
         <Link
-          href={`.`}
+          href={isNew ? "/contacts" : `/contacts/${params.id}`}
           className="flex items-center text-sm text-slate-500 hover:text-slate-800"
         >
-          <ArrowLeft size={16} className="mr-1" /> Back without updating
+          <ArrowLeft size={16} className="mr-1" />{" "}
+          {isNew ? "Back to List" : "Back to Profile"}
         </Link>
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-slate-400 uppercase font-bold">
@@ -74,7 +77,7 @@ export default function EditContactPage({
         {/* Section: Identity */}
         <section className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
           <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6 pb-2 border-b">
-            Identity
+            {isNew ? "Create New Contact" : "Edit Identity"}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputGroup
@@ -143,6 +146,7 @@ export default function EditContactPage({
         <div className="flex justify-end gap-4">
           <button
             type="button"
+            onClick={() => router.back()}
             className="px-6 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
           >
             Cancel
@@ -156,7 +160,8 @@ export default function EditContactPage({
               "Saving..."
             ) : (
               <>
-                <Save size={18} /> Save Changes
+                <Save size={18} />
+                {isNew ? "Create Contact" : "Save Changes"}
               </>
             )}
           </button>
@@ -176,6 +181,7 @@ interface InputGroupProps<T extends FieldValues> {
   type?: string; // Added for passwords, numbers, etc.
 }
 
+//Reusable Input Component
 function InputGroup<T extends FieldValues>({
   label,
   name,
