@@ -25,17 +25,18 @@ export function FormActions({
   isDisabled,
   formId,
 }: FormActionsProps) {
+  const saveActiveStyles =
+    "bg-slate-50 text-emerald-600 border-slate-200 hover:bg-white hover:border-emerald-200 shadow-sm active:scale-95";
+  const saveLockedStyles =
+    "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-70";
+  const isActionLocked = isSubmitting || isDisabled;
   const SaveButton = (
     <button
       type="submit"
       form={formId}
-      disabled={isDisabled || isSubmitting}
+      disabled={isActionLocked}
       className={`flex items-center gap-2 border px-8 py-2 rounded-lg font-semibold transition-all
-      ${
-        isDisabled || isSubmitting
-          ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
-          : "bg-slate-50 text-emerald-600 border-slate-200 hover:bg-white hover:border-emerald-200 active:scale-95 shadow-sm"
-      }`}
+      ${isActionLocked ? saveLockedStyles : saveActiveStyles}`}
     >
       {isSubmitting ? (
         savingLabel
@@ -47,26 +48,41 @@ export function FormActions({
       )}
     </button>
   );
-  //opacity-50
+
+  const backActiveStyles = "text-slate-500 hover:text-slate-800 cursor-pointer";
+  const backLabelFadeStyles = "text-slate-100 select-none";
+  //if add cursor-not-allowed pointer-events-none, back is blocked.change slate-100 to transparent will make the label disappear
+
+  const backLabelStyles = `flex items-center text-sm transition-colors ${
+    isDisabled ? backLabelFadeStyles : backActiveStyles
+  }`;
+
+  const BackActionContent = (
+    <div className="flex items-center group cursor-pointer">
+      {/* Arrow stays visible and slate-colored always */}
+      <ArrowLeft
+        size={16}
+        className="mr-1 text-slate-400 group-hover:text-slate-700"
+      />
+      <span
+        className={`text-sm font-medium transition-all duration-300 ${backLabelStyles}`}
+      >
+        {backLabel}
+      </span>
+    </div>
+  );
+  //check if fixed path exists and use the path(pro: SEO, prefetch); Otherwise use browse history(pro: keep filter setting); we could check isActionLocked and set href to "#" to match pointer-events-none when locked to prevent navigation
+  const BackAction = backHref ? (
+    <Link href={backHref}>{BackActionContent}</Link>
+  ) : (
+    <button type="button" onClick={onBackClick}>
+      {BackActionContent}
+    </button>
+  );
+
   return (
     <div className="flex justify-between items-center w-full">
-      {backHref ? (
-        <Link
-          href={backHref}
-          className="flex items-center text-sm text-slate-500 hover:text-slate-800"
-        >
-          <ArrowLeft size={16} className="mr-1" /> {backLabel}
-        </Link>
-      ) : (
-        <button
-          type="button"
-          onClick={onBackClick}
-          className="flex items-center text-sm text-slate-500 hover:text-slate-800"
-        >
-          <ArrowLeft size={16} className="mr-1" /> {backLabel}
-        </button>
-      )}
-
+      {BackAction}
       {SaveButton}
     </div>
   );
