@@ -25,12 +25,15 @@ export default function EditContactForm({
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty, dirtyFields },
   } = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
     // Use 'values' so the form updates if initialData changes, otherwise defaultValue won't update even initialData changes
     values: initialData,
   });
+
+  console.log("Is Form Dirty?", isDirty);
+  console.log("Which fields are dirty?", dirtyFields);
 
   const onCreateOrConfirm = async (data: ContactFormValues) => {
     try {
@@ -57,6 +60,7 @@ export default function EditContactForm({
       id={params.id}
       formId="contact-form"
       isSubmitting={isSubmitting}
+      isDirty={isDirty}
     >
       <form
         id="contact-form"

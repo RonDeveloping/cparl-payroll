@@ -1,3 +1,4 @@
+//@components\FormActions.tsx
 "use client";
 
 import { Save, ArrowLeft } from "lucide-react";
@@ -10,6 +11,7 @@ interface FormActionsProps {
   saveLabel: string;
   savingLabel?: string;
   isSubmitting: boolean;
+  isDisabled: boolean;
   formId?: string; // Important for buttons outside the <form> tag
 }
 
@@ -20,14 +22,20 @@ export function FormActions({
   saveLabel,
   savingLabel = "Saving...",
   isSubmitting,
+  isDisabled,
   formId,
 }: FormActionsProps) {
   const SaveButton = (
     <button
       type="submit"
       form={formId}
-      disabled={isSubmitting}
-      className="flex items-center gap-2 bg-slate-50 text-emerald-600 border border-slate-200 px-8 py-2 rounded-lg font-semibold hover:bg-white hover:border-emerald-200 transition-all disabled:opacity-50"
+      disabled={isDisabled || isSubmitting}
+      className={`flex items-center gap-2 border px-8 py-2 rounded-lg font-semibold transition-all
+      ${
+        isDisabled || isSubmitting
+          ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+          : "bg-slate-50 text-emerald-600 border-slate-200 hover:bg-white hover:border-emerald-200 active:scale-95 shadow-sm"
+      }`}
     >
       {isSubmitting ? (
         savingLabel
@@ -39,7 +47,7 @@ export function FormActions({
       )}
     </button>
   );
-
+  //opacity-50
   return (
     <div className="flex justify-between items-center w-full">
       {backHref ? (
