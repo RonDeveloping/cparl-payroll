@@ -21,10 +21,6 @@ export default function EditContactForm({
 }: EditContactFormProps) {
   //in the client component, unwrap a promise params with use() hook
   const params = use(paramsPromise);
-  // const isNew = params.id === "new";
-
-  // const safeBackPath = isNew ? "/contacts" : `/contacts/${params.id}`;
-
   const router = useRouter();
   const {
     register,
@@ -32,24 +28,26 @@ export default function EditContactForm({
     formState: { errors, isSubmitting },
   } = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
-    // Use 'values' so the form updates if initialData changes,otherwise defaultValue won't update even initialData changes
+    // Use 'values' so the form updates if initialData changes, otherwise defaultValue won't update even initialData changes
     values: initialData,
   });
 
-  const onSubmit = async (data: ContactFormValues) => {
+  const onCreateOrConfirm = async (data: ContactFormValues) => {
     try {
       const result = await updateOrCreateContact(data, params.id);
 
       if (result?.id) {
         router.refresh();
-        // 2. Navigate to the profile of the contact (new or updated)
-        // This "passes" the ID back to the UI flow
+        // Navigate to the profile of the contact (new or updated)
         router.push(`/contacts/${result.id}`);
+        // This "passes" the ID back to the UI flow
       }
     } catch (error) {
       // This catches the "Database error" thrown by safe.ts
       console.error("Form submission failed", error);
-      alert("Could not save contact. Check for duplicate.");
+      alert(
+        "Changes could not be saved; Please try again or Check for errors."
+      );
     }
   };
 
@@ -62,7 +60,7 @@ export default function EditContactForm({
     >
       <form
         id="contact-form"
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onCreateOrConfirm)}
         className="space-y-8"
       >
         {/* IDENTITY SECTION */}
@@ -149,47 +147,3 @@ export default function EditContactForm({
     </FormLayout>
   );
 }
-
-// We use Generics <T> so this component works with ANY form schema
-// interface InputGroupProps<T extends FieldValues> {
-//   label: string;
-//   name: Path<T>; // Ensures 'name' must exist in your Zod schema
-//   register: UseFormRegister<T>;
-//   error?: string;
-//   placeholder?: string;
-//   type?: string; // Added for passwords, numbers, etc.
-// }
-
-//Reusable Input Component
-// function InputGroup<T extends FieldValues>({
-//   label,
-//   name,
-//   register,
-//   error,
-//   placeholder,
-//   type = "text",
-// }: InputGroupProps<T>) {
-//   return (
-//     <div className="flex flex-col space-y-1">
-//       <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">
-//         {label}
-//       </label>
-//       <input
-//         {...register(name)}
-//         type={type}
-//         placeholder={placeholder}
-//         className={`w-full px-4 py-2 rounded-lg border transition-all text-sm outline-none
-//           ${
-//             error
-//               ? "border-red-500 focus:ring-2 focus:ring-red-100"
-//               : "border-slate-200 focus:ring-2 focus:ring-blue-500"
-//           }`}
-//       />
-//       {error && (
-//         <span className="text-[10px] text-red-500 font-medium ml-1">
-//           {error}
-//         </span>
-//       )}
-//     </div>
-//   );
-// }
