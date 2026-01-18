@@ -5,11 +5,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { contactSchema, ContactFormValues } from "@/lib/schemas/contact";
-import { updateOrCreateContact } from "@/lib/actions/contact";
+import { updateOrCreateContact } from "@/utils/contact";
 import FormLayout from "@/components/FormLayout";
-import InputGroup from "@/components/InputGroup";
 import { Clarification } from "@/components/Clarification";
 import { useState } from "react";
+import SectionDisclosure from "@/components/SectionDisclosure";
+import { getFieldChanges, ChangeEntry } from "@/utils/formChanges";
+import InputWithChanges from "@/components/InputWithChanges";
 
 interface EditContactFormProps {
   paramsPromise: Promise<{ id: string }>;
@@ -27,14 +29,28 @@ export default function EditContactForm({
     register,
     handleSubmit,
     formState: { errors, isSubmitting, isDirty, dirtyFields },
+    getValues,
   } = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
-    // Use 'values' so the form updates if initialData changes, otherwise defaultValue won't update even initialData changes
+    // Use 'values' as 'defaultValue' won't update even initialData changes
     values: initialData,
   });
 
-  console.log("Is Form Dirty?", isDirty);
-  console.log("Which fields are dirty?", dirtyFields);
+  const changes: ChangeEntry<unknown>[] = getFieldChanges(
+    initialData, // before
+    getValues(), // current values
+    dirtyFields, // react-hook-form dirtyFields
+  );
+
+  const changeCount = changes.length;
+
+  const [showB4Change, setShowB4Change] = useState(false);
+  const [showOptional, setShowOptional] = useState(() => {
+    // Auto-expand if optional fields already have data
+    return Boolean(
+      initialData.middleName || initialData.nickName || initialData.displayName,
+    );
+  });
 
   const onCreateOrConfirm = async (data: ContactFormValues) => {
     try {
@@ -62,6 +78,11 @@ export default function EditContactForm({
       formId="contact-form"
       isSubmitting={isSubmitting}
       isDirty={isDirty}
+      changeLabel=" Change(s) on the Contact Form"
+      changeCount={changeCount}
+      optionalExpanded={showOptional}
+      showChanges={showB4Change}
+      onEyeToggle={() => setShowB4Change((v) => !v)}
     >
       <form
         id="contact-form"
@@ -73,49 +94,70 @@ export default function EditContactForm({
           <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6 pb-2 border-b">
             Identity
           </h2>
+          {/* Primary identity */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Pass 'register' to track the value and 'error' to show validation messages */}
-            <InputGroup
+            <InputWithChanges
+              changes={changes}
+              showChanges={showB4Change}
               label="Given Name"
               name="givenName"
               register={register}
               error={errors.givenName?.message}
             />
-            <InputGroup
+            <InputWithChanges
+              changes={changes}
+              showChanges={showB4Change}
               label="Family Name"
               name="familyName"
               register={register}
               error={errors.familyName?.message}
             />
-            <InputGroup
-              label={
-                <Clarification
-                  term="Middle Name"
-                  description="This, if available, may help enhance identification in cases where multiple individuals share the same given names and family names. In rare cases, some financial institution might require a middle name for verification purposes. The field's optional but can be beneficial if you wish to provide a more complete identification."
-                />
-              }
-              name="middleName"
-              register={register}
-              error={errors.middleName?.message}
-            />
-            <InputGroup
-              label="Nickname"
-              name="nickName"
-              register={register}
-              placeholder="e.g. Bob"
-            />
-            <InputGroup
-              label={
-                <Clarification
-                  term="Display Name"
-                  description="This may help a reader pick whom it refers to in lists in a specific context more easily, such as 'Dr. Smith' in a clinic group. If left blank, 'Given Name' +'Middle Name' if available + 'Family Name' + aka 'Nickname' if available displays instead."
-                />
-              }
-              name="displayName"
-              register={register}
-              placeholder="e.g. Dr. Robert Smith"
-            />
           </div>
+          <SectionDisclosure
+            label="Optional"
+            expanded={showOptional}
+            onToggle={() => setShowOptional((v) => !v)}
+          />
+          {/* Optional fields */}
+          {showOptional && (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputWithChanges
+                changes={changes}
+                showChanges={showB4Change}
+                label={
+                  <Clarification
+                    term="Middle Name"
+                    description="This field can be beneficial if you wish to provide a more complete identification in cases where multiple individuals share the same given names and family names."
+                  />
+                }
+                name="middleName"
+                register={register}
+                error={errors.middleName?.message}
+              />
+              <InputWithChanges
+                changes={changes}
+                showChanges={showB4Change}
+                label="Nickname"
+                name="nickName"
+                register={register}
+                placeholder="e.g. Bob"
+              />
+              <InputWithChanges
+                changes={changes}
+                showChanges={showB4Change}
+                label={
+                  <Clarification
+                    term="Display Name"
+                    description="This may help a reader pick whom it refers to in lists in a specific context more easily, such as 'Dr. Smith' in a clinic group or a name not in English. If left blank, 'Given Name' +'Middle Name' if available + 'Family Name' + aka 'Nickname' if available displays instead."
+                  />
+                }
+                name="displayName"
+                register={register}
+                placeholder="e.g. Dr. Smith"
+              />
+            </div>
+          )}
         </section>
 
         {/* CONTACT & ADDRESS SECTION */}
@@ -124,7 +166,9 @@ export default function EditContactForm({
             Contact & Address
           </h2>
           <div className="space-y-4">
-            <InputGroup
+            <InputWithChanges
+              changes={changes}
+              showChanges={showB4Change}
               label="Primary Email"
               name="email"
               register={register}
@@ -132,13 +176,17 @@ export default function EditContactForm({
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <InputGroup
+              <InputWithChanges
+                changes={changes}
+                showChanges={showB4Change}
                 label="Phone Number"
                 name="phone"
                 register={register}
                 error={errors.phone?.message}
               />
-              <InputGroup
+              <InputWithChanges
+                changes={changes}
+                showChanges={showB4Change}
                 label="Postal Code"
                 name="postalCode"
                 register={register}
@@ -146,7 +194,9 @@ export default function EditContactForm({
               />
             </div>
 
-            <InputGroup
+            <InputWithChanges
+              changes={changes}
+              showChanges={showB4Change}
               label="Street Address"
               name="street"
               register={register}
@@ -154,13 +204,27 @@ export default function EditContactForm({
             />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <InputGroup label="City" name="city" register={register} />
-              <InputGroup
+              <InputWithChanges
+                changes={changes}
+                showChanges={showB4Change}
+                label="City"
+                name="city"
+                register={register}
+              />
+              <InputWithChanges
+                changes={changes}
+                showChanges={showB4Change}
                 label="Province"
                 name="province"
                 register={register}
               />
-              <InputGroup label="Country" name="country" register={register} />
+              <InputWithChanges
+                changes={changes}
+                showChanges={showB4Change}
+                label="Country"
+                name="country"
+                register={register}
+              />
             </div>
           </div>
         </section>

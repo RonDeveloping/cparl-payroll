@@ -1,18 +1,27 @@
 //@components\FormActions.tsx
 "use client";
 
-import { Save, ArrowLeft } from "lucide-react";
+import { Save, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 
 interface FormActionsProps {
+  /** navigation */
   onBackClick?: () => void;
   backHref?: string;
   backLabel: string;
+
+  /** save */
   saveLabel: string;
   savingLabel?: string;
   isSubmitting: boolean;
   isDisabled: boolean;
-  formId?: string; // Important for buttons outside the <form> tag
+  formId?: string; // Important for buttons outside the <form> tag to link to the form
+
+  /** change disclosure & toggle to show */
+  changeLabel?: string;
+  showB4Change?: boolean;
+  onOptionalToggle?: () => void;
+  changeCount?: number;
 }
 
 export function FormActions({
@@ -24,6 +33,10 @@ export function FormActions({
   isSubmitting,
   isDisabled,
   formId,
+  changeLabel = "No change to save",
+  showB4Change: showB4Change = false,
+  onOptionalToggle,
+  changeCount = 0,
 }: FormActionsProps) {
   const saveActiveStyles =
     "bg-slate-50 text-emerald-600 border-slate-200 hover:bg-white hover:border-emerald-200 shadow-sm active:scale-95";
@@ -80,9 +93,31 @@ export function FormActions({
     </button>
   );
 
+  const ShowChangesToggle =
+    changeLabel && onOptionalToggle ? (
+      <button
+        type="button"
+        onClick={onOptionalToggle}
+        aria-expanded={showB4Change}
+        className="flex items-center gap-2 text-xs font-semibold tracking-wider
+                 text-slate-500 hover:text-slate-800 transition-colors"
+      >
+        {showB4Change ? (
+          <EyeOff size={14} className="text-slate-400" />
+        ) : (
+          <Eye size={14} className="text-slate-400" />
+        )}
+
+        <span className="camel-case">
+          {changeCount} {changeLabel}
+        </span>
+      </button>
+    ) : null;
+
   return (
     <div className="flex justify-between items-center w-full">
       {BackAction}
+      {ShowChangesToggle}
       {SaveButton}
     </div>
   );

@@ -10,6 +10,11 @@ interface FormLayoutProps {
   isDirty: boolean;
   domain: string; // e.g., "contacts", "employees", "tenants"
   id: string; // The ID from params
+  changeLabel?: string;
+  changeCount?: number;
+  optionalExpanded?: boolean;
+  showChanges?: boolean;
+  onEyeToggle?: () => void;
 }
 
 export default function FormLayout({
@@ -19,6 +24,11 @@ export default function FormLayout({
   domain,
   id,
   isDirty,
+  changeLabel,
+  changeCount,
+  optionalExpanded,
+  showChanges,
+  onEyeToggle: onOptionalToggle,
 }: FormLayoutProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -43,6 +53,10 @@ export default function FormLayout({
         backHref={useHistoryBack ? undefined : safeBackPath} //next.js pre-fetches the data for the route in backHref as soon as the link enters the viewport where as onBackClick cann't be pre-fetched or SEOs. onBackClick={() => router.back()} usually for "Cancel" button on a Search Filter as it won't reset the filter and show what was underneath it exactly. But not good for bookmarked page or direct link as well as page being refreshed while editing(as history stack is reset). onBackClick is a fallback button logic if no backHref <Link>; with useRouter();
         backLabel={backLabel}
         saveLabel={saveLabel}
+        changeLabel={changeLabel}
+        changeCount={changeCount}
+        showB4Change={showChanges}
+        onOptionalToggle={onOptionalToggle}
       />
     </div>
   );

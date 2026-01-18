@@ -1,6 +1,6 @@
 "use server";
 
-import { ContactFormValues } from "@/lib/schemas/contact"; // Import the shared type
+import { ContactFormValues } from "@/lib/schemas/contact";
 import prisma from "@/lib/prisma";
 import { safe } from "@/utils/safe";
 import crypto from "crypto";
@@ -11,7 +11,7 @@ import crypto from "crypto";
  */
 export async function updateOrCreateContact(
   data: ContactFormValues,
-  id: string
+  id: string,
 ) {
   // 1. NORMALIZE EVERYTHING (as case sensitive crucial for hashes)
   const street = data.street.trim().toUpperCase();
@@ -87,6 +87,6 @@ export async function updateOrCreateContact(
       });
 
       return contact;
-    })
+    }),
   );
 }
