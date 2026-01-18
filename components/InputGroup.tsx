@@ -1,7 +1,8 @@
+import React from "react";
 import { UseFormRegister, FieldValues, Path } from "react-hook-form";
 
 interface InputGroupProps<T extends FieldValues> {
-  label: string;
+  label: React.ReactNode; //for accessibility, use ReactNode to allow more complex labels, not just string, such as clarfication icons.
   name: Path<T>;
   register: UseFormRegister<T>;
   error?: string;

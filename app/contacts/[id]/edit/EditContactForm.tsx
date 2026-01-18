@@ -4,11 +4,12 @@ import { use } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { contactSchema, ContactFormValues } from "@/lib/schemas/contact"; // Import the shared type
-
+import { contactSchema, ContactFormValues } from "@/lib/schemas/contact";
 import { updateOrCreateContact } from "@/lib/actions/contact";
 import FormLayout from "@/components/FormLayout";
 import InputGroup from "@/components/InputGroup";
+import { Clarification } from "@/components/Clarification";
+import { useState } from "react";
 
 interface EditContactFormProps {
   paramsPromise: Promise<{ id: string }>;
@@ -49,7 +50,7 @@ export default function EditContactForm({
       // This catches the "Database error" thrown by safe.ts
       console.error("Form submission failed", error);
       alert(
-        "Changes could not be saved; Please try again or Check for errors."
+        "Changes could not be saved; Please try again or Check for errors.",
       );
     }
   };
@@ -87,13 +88,29 @@ export default function EditContactForm({
               error={errors.familyName?.message}
             />
             <InputGroup
+              label={
+                <Clarification
+                  term="Middle Name"
+                  description="This, if available, may help enhance identification in cases where multiple individuals share the same given names and family names. In rare cases, some financial institution might require a middle name for verification purposes. The field's optional but can be beneficial if you wish to provide a more complete identification."
+                />
+              }
+              name="middleName"
+              register={register}
+              error={errors.middleName?.message}
+            />
+            <InputGroup
               label="Nickname"
               name="nickName"
               register={register}
               placeholder="e.g. Bob"
             />
             <InputGroup
-              label="Display Name"
+              label={
+                <Clarification
+                  term="Display Name"
+                  description="This may help a reader pick whom it refers to in lists in a specific context more easily, such as 'Dr. Smith' in a clinic group. If left blank, 'Given Name' +'Middle Name' if available + 'Family Name' + aka 'Nickname' if available displays instead."
+                />
+              }
               name="displayName"
               register={register}
               placeholder="e.g. Dr. Robert Smith"

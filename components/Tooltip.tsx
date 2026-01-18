@@ -52,7 +52,7 @@ export default function Tooltip({
   const tooltipClasses =
     "absolute left-1/2 z-50 w-max max-w-xs -translate-x-1/2 rounded px-3 py-1.5 text-sm shadow-lg transition-opacity duration-200" +
     (visible ? " opacity-100" : " opacity-0") +
-    " bg-blue-50/62 text-sky-900 dark:bg-blue-900/62 dark:text-white";
+    " bg-blue-50/62 text-sky-900 dark:bg-blue-900/62 dark:text-white normal-case tracking-normal font-normal";
 
   const positionClasses =
     placement === "top" ? "bottom-full mb-2" : "top-full mt-2";

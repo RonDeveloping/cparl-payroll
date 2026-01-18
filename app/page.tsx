@@ -42,9 +42,7 @@ export default function Home() {
             or{" "}
             <Tooltip
               content={
-                <span>
-                  a unique email addressis the minimum requirement to register.
-                </span>
+                <span>a unique email address is the minimum requirement.</span>
               }
               delay={100} /*ms*/
               placement="bottom"

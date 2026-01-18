@@ -3,6 +3,7 @@ import { z } from "zod";
 
 export const contactSchema = z.object({
   givenName: z.string().min(1, "First name is required"),
+  middleName: z.string().optional(),
   familyName: z.string().min(1, "Last name is required"),
   nickName: z.string().optional(),
   displayName: z.string().optional(),
