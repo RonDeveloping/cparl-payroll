@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export default function Counter() {
+export default function Counter1() {
   const [count, setCount] = useState(0);
 
   return (

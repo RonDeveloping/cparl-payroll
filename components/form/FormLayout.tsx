@@ -12,7 +12,7 @@ interface FormLayoutProps {
   id: string; // The ID from params
   changeLabel?: string;
   changeCount?: number;
-  optionalExpanded?: boolean;
+  // optionalExpanded?: boolean;
   showChanges?: boolean;
   onEyeToggle?: () => void;
 }
@@ -26,9 +26,9 @@ export default function FormLayout({
   isDirty,
   changeLabel,
   changeCount,
-  optionalExpanded,
+  // optionalExpanded,
   showChanges,
-  onEyeToggle: onOptionalToggle,
+  onEyeToggle: onEyeToggle,
 }: FormLayoutProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,7 +56,7 @@ export default function FormLayout({
         changeLabel={changeLabel}
         changeCount={changeCount}
         showB4Change={showChanges}
-        onOptionalToggle={onOptionalToggle}
+        onEyeToggle={onEyeToggle}
       />
     </div>
   );

@@ -2,7 +2,7 @@ import React from "react";
 import { UseFormRegister, FieldValues, Path } from "react-hook-form";
 
 interface InputGroupProps<T extends FieldValues> {
-  label: React.ReactNode; //for accessibility, use ReactNode to allow more complex labels, not just string, such as clarfication icons.
+  // label: React.ReactNode; //for accessibility, use ReactNode to allow more complex labels, not just string, such as clarfication icons.
   name: Path<T>;
   register: UseFormRegister<T>;
   error?: string;
@@ -11,7 +11,7 @@ interface InputGroupProps<T extends FieldValues> {
 }
 
 export default function InputGroup<T extends FieldValues>({
-  label,
+  // label,
   name,
   register,
   error,
@@ -20,9 +20,9 @@ export default function InputGroup<T extends FieldValues>({
 }: InputGroupProps<T>) {
   return (
     <div className="flex flex-col space-y-1">
-      <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">
+      {/* <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">
         {label}
-      </label>
+      </label> */}
       <input
         {...register(name)}
         type={type}
@@ -41,3 +41,7 @@ export default function InputGroup<T extends FieldValues>({
     </div>
   );
 }
+/*
+InputGroup
+ └─ renders input & error
+*/

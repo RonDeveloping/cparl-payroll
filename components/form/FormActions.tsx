@@ -20,7 +20,7 @@ interface FormActionsProps {
   /** change disclosure & toggle to show */
   changeLabel?: string;
   showB4Change?: boolean;
-  onOptionalToggle?: () => void;
+  onEyeToggle?: () => void;
   changeCount?: number;
 }
 
@@ -35,7 +35,7 @@ export function FormActions({
   formId,
   changeLabel = "No change to save",
   showB4Change: showB4Change = false,
-  onOptionalToggle,
+  onEyeToggle,
   changeCount = 0,
 }: FormActionsProps) {
   const saveActiveStyles =
@@ -94,10 +94,10 @@ export function FormActions({
   );
 
   const ShowChangesToggle =
-    changeLabel && onOptionalToggle ? (
+    changeLabel && onEyeToggle ? (
       <button
         type="button"
-        onClick={onOptionalToggle}
+        onClick={onEyeToggle}
         aria-expanded={showB4Change}
         className="flex items-center gap-2 text-xs font-semibold tracking-wider
                  text-slate-500 hover:text-slate-800 transition-colors"

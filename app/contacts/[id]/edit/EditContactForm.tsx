@@ -6,12 +6,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { contactSchema, ContactFormValues } from "@/lib/schemas/contact";
 import { updateOrCreateContact } from "@/utils/contact";
-import FormLayout from "@/components/FormLayout";
+import FormLayout from "@/components/form/FormLayout";
 import { Clarification } from "@/components/Clarification";
 import { useState } from "react";
 import SectionDisclosure from "@/components/SectionDisclosure";
 import { getFieldChanges, ChangeEntry } from "@/utils/formChanges";
-import InputWithChanges from "@/components/InputWithChanges";
+import InputWithChanges from "@/components/form/InputWithChanges";
+import { FormChangeProvider } from "@/components/form/FormChangeContext";
 
 interface EditContactFormProps {
   paramsPromise: Promise<{ id: string }>;
@@ -80,155 +81,125 @@ export default function EditContactForm({
       isDirty={isDirty}
       changeLabel=" Change(s) on the Contact Form"
       changeCount={changeCount}
-      optionalExpanded={showOptional}
+      // optionalExpanded={showOptional}
       showChanges={showB4Change}
       onEyeToggle={() => setShowB4Change((v) => !v)}
     >
-      <form
-        id="contact-form"
-        onSubmit={handleSubmit(onCreateOrConfirm)}
-        className="space-y-8"
+      <FormChangeProvider<ContactFormValues>
+        value={{
+          changes,
+          showChanges: showB4Change,
+          register,
+        }}
       >
-        {/* IDENTITY SECTION */}
-        <section className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-          <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6 pb-2 border-b">
-            Identity
-          </h2>
-          {/* Primary identity */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Pass 'register' to track the value and 'error' to show validation messages */}
-            <InputWithChanges
-              changes={changes}
-              showChanges={showB4Change}
-              label="Given Name"
-              name="givenName"
-              register={register}
-              error={errors.givenName?.message}
-            />
-            <InputWithChanges
-              changes={changes}
-              showChanges={showB4Change}
-              label="Family Name"
-              name="familyName"
-              register={register}
-              error={errors.familyName?.message}
-            />
-          </div>
-          <SectionDisclosure
-            label="Optional"
-            expanded={showOptional}
-            onToggle={() => setShowOptional((v) => !v)}
-          />
-          {/* Optional fields */}
-          {showOptional && (
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <InputWithChanges
-                changes={changes}
-                showChanges={showB4Change}
-                label={
-                  <Clarification
-                    term="Middle Name"
-                    description="This field can be beneficial if you wish to provide a more complete identification in cases where multiple individuals share the same given names and family names."
-                  />
-                }
-                name="middleName"
-                register={register}
-                error={errors.middleName?.message}
-              />
-              <InputWithChanges
-                changes={changes}
-                showChanges={showB4Change}
-                label="Nickname"
-                name="nickName"
-                register={register}
-                placeholder="e.g. Bob"
-              />
-              <InputWithChanges
-                changes={changes}
-                showChanges={showB4Change}
-                label={
-                  <Clarification
-                    term="Display Name"
-                    description="This may help a reader pick whom it refers to in lists in a specific context more easily, such as 'Dr. Smith' in a clinic group or a name not in English. If left blank, 'Given Name' +'Middle Name' if available + 'Family Name' + aka 'Nickname' if available displays instead."
-                  />
-                }
-                name="displayName"
-                register={register}
-                placeholder="e.g. Dr. Smith"
-              />
-            </div>
-          )}
-        </section>
-
-        {/* CONTACT & ADDRESS SECTION */}
-        <section className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-          <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6 pb-2 border-b">
-            Contact & Address
-          </h2>
-          <div className="space-y-4">
-            <InputWithChanges
-              changes={changes}
-              showChanges={showB4Change}
-              label="Primary Email"
-              name="email"
-              register={register}
-              error={errors.email?.message}
-            />
-
+        <form
+          id="contact-form"
+          onSubmit={handleSubmit(onCreateOrConfirm)}
+          className="space-y-8"
+        >
+          {/* IDENTITY SECTION */}
+          <section className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6 pb-2 border-b">
+              Identity
+            </h2>
+            {/* Primary identity */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <InputWithChanges
-                changes={changes}
-                showChanges={showB4Change}
-                label="Phone Number"
-                name="phone"
-                register={register}
-                error={errors.phone?.message}
+              {/* Pass 'register' to track the value and 'error' to show validation messages */}
+              <InputWithChanges<ContactFormValues>
+                label="Given Name"
+                name="givenName"
+                error={errors.givenName?.message}
               />
-              <InputWithChanges
-                changes={changes}
-                showChanges={showB4Change}
-                label="Postal Code"
-                name="postalCode"
-                register={register}
-                error={errors.postalCode?.message}
+              <InputWithChanges<ContactFormValues>
+                label="Family Name"
+                name="familyName"
+                error={errors.familyName?.message}
               />
             </div>
-
-            <InputWithChanges
-              changes={changes}
-              showChanges={showB4Change}
-              label="Street Address"
-              name="street"
-              register={register}
-              error={errors.street?.message}
+            <SectionDisclosure
+              label="Optional"
+              expanded={showOptional}
+              onToggle={() => setShowOptional((v) => !v)}
             />
+            {/* Optional fields */}
+            {showOptional && (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <InputWithChanges<ContactFormValues>
+                  label={
+                    <Clarification
+                      term="Middle Name"
+                      description="This field can be beneficial if you wish to provide a more complete identification in cases where multiple individuals share the same given names and family names."
+                    />
+                  }
+                  name="middleName"
+                  error={errors.middleName?.message}
+                />
+                <InputWithChanges<ContactFormValues>
+                  label="Nickname"
+                  name="nickName"
+                />
+                <InputWithChanges<ContactFormValues>
+                  label={
+                    <Clarification
+                      term="Display Name"
+                      description="This may help a reader pick whom it refers to in lists in a specific context more easily, such as 'Dr. Smith' in a clinic group or a name not in English. If left blank, 'Given Name' +'Middle Name' if available + 'Family Name' + aka 'Nickname' if available displays instead."
+                    />
+                  }
+                  name="displayName"
+                />
+              </div>
+            )}
+          </section>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <InputWithChanges
-                changes={changes}
-                showChanges={showB4Change}
-                label="City"
-                name="city"
-                register={register}
+          {/* CONTACT SECTION */}
+          <section className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6 pb-2 border-b">
+              Contact
+            </h2>
+            <div className="space-y-4">
+              <InputWithChanges<ContactFormValues>
+                label="Email"
+                name="email"
+                error={errors.email?.message}
               />
-              <InputWithChanges
-                changes={changes}
-                showChanges={showB4Change}
-                label="Province"
-                name="province"
-                register={register}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <InputWithChanges<ContactFormValues>
+                  label="Phone"
+                  name="phone"
+                  error={errors.phone?.message}
+                />
+
+                <InputWithChanges<ContactFormValues>
+                  label="Postal Code"
+                  name="postalCode"
+                  error={errors.postalCode?.message}
+                />
+              </div>
+
+              <InputWithChanges<ContactFormValues>
+                label="Street Address"
+                name="street"
+                error={errors.street?.message}
               />
-              <InputWithChanges
-                changes={changes}
-                showChanges={showB4Change}
-                label="Country"
-                name="country"
-                register={register}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <InputWithChanges<ContactFormValues>
+                  label="City"
+                  name="city"
+                />
+                <InputWithChanges<ContactFormValues>
+                  label="Province"
+                  name="province"
+                />
+                <InputWithChanges<ContactFormValues>
+                  label="Country"
+                  name="country"
+                />
+              </div>
             </div>
-          </div>
-        </section>
-      </form>
+          </section>
+        </form>
+      </FormChangeProvider>
     </FormLayout>
   );
 }
