@@ -4,6 +4,197 @@ import { use } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { useState, useMemo } from "react";
+
+import { contactSchema, ContactFormValues } from "@/lib/schemas/contact";
+import { updateOrCreateContact } from "@/utils/contact";
+import { getFieldChanges, ChangeEntry } from "@/utils/formChanges";
+
+import FormLayout from "@/components/form/FormLayout";
+import FormSection from "@/components/form/FormSection";
+import InputWithChanges from "@/components/form/InputWithChanges";
+import { FormChangeProvider } from "@/components/form/FormChangeContext";
+import SectionDisclosure from "@/components/SectionDisclosure";
+import { Clarification } from "@/components/Clarification";
+
+interface EditContactFormProps {
+  paramsPromise: Promise<{ id: string }>;
+  initialData: ContactFormValues;
+}
+
+export default function EditContactForm({
+  paramsPromise,
+  initialData,
+}: EditContactFormProps) {
+  const params = use(paramsPromise);
+  const router = useRouter();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isDirty, dirtyFields },
+    getValues,
+  } = useForm<ContactFormValues>({
+    resolver: zodResolver(contactSchema),
+    values: initialData,
+  });
+
+  const currentValues = getValues(); // always up-to-date
+  const changes: ChangeEntry<unknown>[] = useMemo(
+    () => getFieldChanges(initialData, currentValues, dirtyFields),
+    [initialData, currentValues, dirtyFields],
+  );
+
+  const changeCount = changes.length;
+  const [showB4Change, setShowB4Change] = useState(false);
+  const [showOptional, setShowOptional] = useState(
+    Boolean(
+      initialData.middleName || initialData.nickName || initialData.displayName,
+    ),
+  );
+
+  const toggleOptional = () => setShowOptional((v) => !v);
+
+  const onCreateOrConfirm = async (data: ContactFormValues) => {
+    try {
+      const result = await updateOrCreateContact(data, params.id);
+      if (result?.id) {
+        router.refresh();
+        router.push(`/contacts/${result.id}`);
+      }
+    } catch (error) {
+      console.error("Form submission failed", error);
+      alert(
+        "Changes could not be saved; please try again or check for errors.",
+      );
+    }
+  };
+
+  /** Field definitions for mapping */
+  type FieldDef = {
+    label: React.ReactNode;
+    name: keyof ContactFormValues;
+    error?: string | undefined;
+  };
+
+  type FieldDefWithError = FieldDef & { error: string | undefined };
+
+  const primaryIdentityFields: FieldDefWithError[] = [
+    {
+      label: "Given Name",
+      name: "givenName",
+      error: errors.givenName?.message,
+    },
+    {
+      label: "Family Name",
+      name: "familyName",
+      error: errors.familyName?.message,
+    },
+  ];
+
+  const optionalIdentityFields: FieldDef[] = [
+    {
+      label: (
+        <Clarification
+          term="Middle Name"
+          description="This field can be beneficial if you wish to provide a more complete identification..."
+        />
+      ),
+      name: "middleName",
+      error: errors.middleName?.message,
+    },
+    { label: "Nickname", name: "nickName" },
+    {
+      label: (
+        <Clarification
+          term="Display Name"
+          description="This may help a reader pick whom it refers to..."
+        />
+      ),
+      name: "displayName",
+    },
+  ];
+
+  const contactFields: FieldDef[] = [
+    { label: "Email", name: "email", error: errors.email?.message },
+    { label: "Phone", name: "phone", error: errors.phone?.message },
+    {
+      label: "Postal Code",
+      name: "postalCode",
+      error: errors.postalCode?.message,
+    },
+    { label: "Street Address", name: "street", error: errors.street?.message },
+    { label: "City", name: "city" },
+    { label: "Province", name: "province" },
+    { label: "Country", name: "country" },
+  ];
+
+  return (
+    <FormLayout
+      domain="contacts"
+      id={params.id}
+      formId="contact-form"
+      isSubmitting={isSubmitting}
+      isDirty={isDirty}
+      changeLabel=" Change(s) on the Contact Form"
+      changeCount={changeCount}
+      showChanges={showB4Change}
+      onEyeToggle={() => setShowB4Change((v) => !v)}
+    >
+      <FormChangeProvider<ContactFormValues>
+        value={{ changes, showChanges: showB4Change, register }}
+      >
+        <form
+          id="contact-form"
+          onSubmit={handleSubmit(onCreateOrConfirm)}
+          className="space-y-8"
+        >
+          {/* Identity Section */}
+          <FormSection title="Identity">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {primaryIdentityFields.map((f) => (
+                <InputWithChanges<ContactFormValues> key={f.name} {...f} />
+              ))}
+            </div>
+            <SectionDisclosure
+              label="Optional"
+              expanded={showOptional}
+              onToggle={toggleOptional}
+            />
+            {showOptional && (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {optionalIdentityFields.map((f) => (
+                  <InputWithChanges<ContactFormValues> key={f.name} {...f} />
+                ))}
+              </div>
+            )}
+          </FormSection>
+
+          {/* Contact Section */}
+          <FormSection title="Contact">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {contactFields.slice(0, 4).map((f) => (
+                <InputWithChanges<ContactFormValues> key={f.name} {...f} />
+              ))}
+            </div>
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+              {contactFields.slice(4).map((f) => (
+                <InputWithChanges<ContactFormValues> key={f.name} {...f} />
+              ))}
+            </div>
+          </FormSection>
+        </form>
+      </FormChangeProvider>
+    </FormLayout>
+  );
+}
+
+/*
+"use client";
+import { use } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { contactSchema, ContactFormValues } from "@/lib/schemas/contact";
 import { updateOrCreateContact } from "@/utils/contact";
 import FormLayout from "@/components/form/FormLayout";
@@ -97,14 +288,13 @@ export default function EditContactForm({
           onSubmit={handleSubmit(onCreateOrConfirm)}
           className="space-y-8"
         >
-          {/* IDENTITY SECTION */}
           <section className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
             <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6 pb-2 border-b">
               Identity
             </h2>
-            {/* Primary identity */}
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Pass 'register' to track the value and 'error' to show validation messages */}
+             
               <InputWithChanges<ContactFormValues>
                 label="Given Name"
                 name="givenName"
@@ -121,7 +311,7 @@ export default function EditContactForm({
               expanded={showOptional}
               onToggle={() => setShowOptional((v) => !v)}
             />
-            {/* Optional fields */}
+            
             {showOptional && (
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <InputWithChanges<ContactFormValues>
@@ -151,7 +341,6 @@ export default function EditContactForm({
             )}
           </section>
 
-          {/* CONTACT SECTION */}
           <section className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
             <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6 pb-2 border-b">
               Contact
@@ -203,3 +392,4 @@ export default function EditContactForm({
     </FormLayout>
   );
 }
+*/

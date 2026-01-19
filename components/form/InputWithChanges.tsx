@@ -28,8 +28,10 @@ export default function InputWithChanges<TFormValues extends FieldValues>({
 }: InputWithChangesProps<TFormValues>) {
   const { changes, showChanges, register } =
     useFormChangeContext<TFormValues>();
+
   // find if this input field changed
   const change = changes.find((c) => c.name === name);
+
   return (
     <div className="space-y-2">
       <div className="flex items-baseline justify-between">
