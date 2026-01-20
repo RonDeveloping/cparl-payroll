@@ -16,6 +16,8 @@ import InputWithChanges from "@/components/form/InputWithChanges";
 import { FormChangeProvider } from "@/components/form/FormChangeContext";
 import SectionDisclosure from "@/components/SectionDisclosure";
 import { Clarification } from "@/components/Clarification";
+import formatPostalCode from "@/lib/formatters/postalCode";
+import { registerWithOnBlurFormat } from "@/utils/formRegister";
 
 interface EditContactFormProps {
   paramsPromise: Promise<{ id: string }>;
@@ -42,6 +44,14 @@ export default function EditContactForm({
   });
 
   const currentValues = getValues(); // always up-to-date to help comparison in InputWithChanges to id change and show "before" value.
+
+  const registerFormatted = useMemo(
+    () =>
+      registerWithOnBlurFormat<ContactFormValues>(register, {
+        postalCode: formatPostalCode,
+      }),
+    [register],
+  );
 
   const changes: ChangeEntry<unknown>[] = useMemo(
     () => getFieldChanges(initialData, currentValues, dirtyFields),
@@ -155,7 +165,11 @@ export default function EditContactForm({
       onEyeToggle={() => setShowB4Change((v) => !v)}
     >
       <FormChangeProvider<ContactFormValues>
-        value={{ changes, showChanges: showB4Change, register }}
+        value={{
+          changes,
+          showChanges: showB4Change,
+          register: registerFormatted,
+        }}
       >
         <form
           id="contact-form"
