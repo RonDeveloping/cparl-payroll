@@ -38,6 +38,7 @@ export default function EditContactForm({
     resolver: zodResolver(contactSchema),
     values: initialData,
     shouldFocusError: false, // Prevents auto-focus on first error field upon submission
+    mode: "onBlur", // Validation triggers when a field loses focus
   });
 
   const currentValues = getValues(); // always up-to-date to help comparison in InputWithChanges to id change and show "before" value.

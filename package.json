@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "ts-node-esm prisma/seed.ts"
+    "seed": "ts-node-esm prisma/seed.ts",
+    "test": "vitest",
+    "test:ui": "vitest --ui"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -30,10 +32,13 @@
     "@types/pg": "^8.16.0",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19",
+    "@vitest/ui": "^4.0.17",
     "eslint": "^9",
     "eslint-config-next": "16.0.6",
+    "jsdom": "^27.4.0",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.17"
   }
 }
