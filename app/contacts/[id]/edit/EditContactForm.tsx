@@ -18,6 +18,7 @@ import SectionDisclosure from "@/components/SectionDisclosure";
 import { Clarification } from "@/components/Clarification";
 import formatPostalCode from "@/lib/formatters/postalCode";
 import { registerWithOnBlurFormat } from "@/utils/formRegister";
+import formatPhone from "@/lib/formatters/phone";
 
 interface EditContactFormProps {
   paramsPromise: Promise<{ id: string }>;
@@ -49,6 +50,7 @@ export default function EditContactForm({
     () =>
       registerWithOnBlurFormat<ContactFormValues>(register, {
         postalCode: formatPostalCode,
+        phone: formatPhone,
       }),
     [register],
   );
@@ -138,7 +140,12 @@ export default function EditContactForm({
   const mandotoryContactFields: FieldDefWithError[] = [
     { label: "Email", name: "email", error: errors.email?.message },
     {
-      label: "Postal Code",
+      label: (
+        <Clarification
+          term="Postal Code"
+          description="Communication may be tailored to your pon postal code."
+        />
+      ),
       name: "postalCode",
       error: errors.postalCode?.message,
     },
@@ -189,10 +196,10 @@ export default function EditContactForm({
               onToggle={() => setShowOptionalIdentity((v) => !v)}
             />
             <div
-              className={`overflow-hidden transition-[max-height] duration-300 ease-in-out
+              className={`overflow-hidden p-1 transition-[max-height] duration-300 ease-in-out
     ${showOptionalIdentity ? "max-h-[400px]" : "max-h-0"}`}
             >
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="mt-4 px-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                 {optionalIdentityFields.map((f) => (
                   <InputWithChanges<ContactFormValues> key={f.name} {...f} />
                 ))}
@@ -213,10 +220,10 @@ export default function EditContactForm({
               onToggle={() => setShowOptionalContact((v) => !v)}
             />
             <div
-              className={`overflow-hidden transition-[max-height] duration-300 ease-in-out
+              className={`overflow-hidden p-1 transition-[max-height] duration-300 ease-in-out
     ${showOptionalContact ? "max-h-[400px]" : "max-h-0"}`}
             >
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="mt-4 px-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                 {optionalContactFields.map((f) => (
                   <InputWithChanges<ContactFormValues> key={f.name} {...f} />
                 ))}

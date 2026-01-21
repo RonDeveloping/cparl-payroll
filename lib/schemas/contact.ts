@@ -9,7 +9,17 @@ export const contactSchema = z.object({
   nickName: z.string().optional(),
   displayName: z.string().optional(),
   email: z.string().email("Invalid email address").toLowerCase(),
-  phone: z.string().optional(),
+  phone: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) return true; // optional field
+        const digits = val.replace(/\D/g, "");
+        return digits.length == 10;
+      },
+      { message: "Phone number must contain 10 digits" },
+    ),
   street: z.string().optional(),
   city: z.string().min(1, "City is required"),
   province: z.string().min(1, "Province is required"),
