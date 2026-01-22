@@ -4,21 +4,19 @@ import { ContactFormValues } from "@/lib/schemas/contact";
 import prisma from "@/lib/prisma";
 import { safe } from "@/utils/safe";
 import crypto from "crypto";
+import { number } from "zod";
 
 /**
  * Updates an existing contact or creates a new one.
  * Returns the contact object so the frontend can redirect to the new ID.
  */
-export async function updateOrCreateContact(
-  data: ContactFormValues,
-  id: string,
-) {
+export async function upsertContactPEA(data: ContactFormValues, id: string) {
   // 1. NORMALIZE EVERYTHING (as case sensitive crucial for hashes)
-  const street = data.street.trim().toUpperCase();
-  const city = data.city.trim().toUpperCase();
-  const province = data.province.trim().toUpperCase();
-  const postal = data.postalCode.trim().toUpperCase();
-  const country = data.country.trim().toUpperCase();
+  const street = (data.street ?? "").trim().toUpperCase();
+  const city = (data.city ?? "").trim().toUpperCase();
+  const province = (data.province ?? "").trim().toUpperCase();
+  const postal = (data.postalCode ?? "").trim().toUpperCase();
+  const country = (data.country ?? "").trim().toUpperCase();
   //extract to a variable and then hash to maintain consistency
   const addressString =
     `${street}|${city}|${province}|${postal}|${country}`.toLowerCase();
@@ -28,6 +26,7 @@ export async function updateOrCreateContact(
     .digest("hex");
 
   const emailClean = data.email.toLowerCase().trim();
+  const phoneNumber = (data.phone ?? "").trim();
 
   return await safe(
     prisma.$transaction(async (tx) => {
@@ -50,7 +49,16 @@ export async function updateOrCreateContact(
         },
       });
 
-      // 3. EMAIL UPSERT (@@unique([contactId, email]))
+      // 3. PHONE UPSERT (@@unique([contactId, phone]))
+      await tx.phone.upsert({
+        where: {
+          contactId_number: { contactId: contact.id, number: phoneNumber },
+        },
+        update: { isPrimary: true },
+        create: { contactId: contact.id, number: phoneNumber, isPrimary: true },
+      });
+
+      // 4. EMAIL UPSERT (@@unique([contactId, email]))
       await tx.email.upsert({
         where: {
           contactId_email: { contactId: contact.id, email: emailClean },
@@ -59,7 +67,7 @@ export async function updateOrCreateContact(
         create: { contactId: contact.id, email: emailClean, isPrimary: true },
       });
 
-      // 4. ADDRESS UPSERT (@@unique([contactId, addressHash]))
+      // 5. ADDRESS UPSERT (@@unique([contactId, addressHash]))
       // First, set others to false
       await tx.address.updateMany({
         where: { contactId: contact.id },

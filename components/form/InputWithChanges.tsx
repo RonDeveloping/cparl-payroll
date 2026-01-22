@@ -35,7 +35,10 @@ export default function InputWithChanges<TFormValues extends FieldValues>({
   return (
     <div className="space-y-2">
       <div className="flex items-baseline justify-between">
-        <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">
+        <label
+          tabIndex={-1} // make label non-focusable to skip in tab order
+          className="text-[11px] font-bold text-slate-500 uppercase ml-1"
+        >
           {label}
         </label>
         {/* Change indicator */}

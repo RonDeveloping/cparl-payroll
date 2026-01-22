@@ -15,7 +15,6 @@ datasource db {
 }
 // ===== TENANT SERVICE =====
 
-
 // ===== USER SERVICE =====
 //Model name User → table user in p
 model User {
@@ -36,11 +35,11 @@ model Contact {
   prefix     String?
   nickName String? //e.g., "Bob" for "Robert"
   displayName String? //e.g., "Dr. Robert Smith Jr."
-// ===== Metadata =====
+
   isActive       Boolean  @default(true)
   createdAt  DateTime @default(now()) //Prisma's way to say "let the DB set this" via @default(now())
   updatedAt  DateTime @updatedAt
-// ===== Relations =====
+
   legalNameHistory   LegalNameHistory[]
   conversationalNameHistory   ConversationalNameHistory[]
 
@@ -93,7 +92,6 @@ enum ConversationalNameSource {
   IMPORT //sync from other services than contact management
   SYSTEM //e.g., auto-generated based on rules such as first name variations plus last name etc.
 }
-
 
 model Address {
   id        String  @id @default(cuid())

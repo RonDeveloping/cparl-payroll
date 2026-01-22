@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 
 import { contactSchema, ContactFormValues } from "@/lib/schemas/contact";
-import { updateOrCreateContact } from "@/utils/contact";
+import { upsertContactPEA } from "@/utils/contact";
 import { getFieldChanges, ChangeEntry } from "@/utils/formChanges";
 
 import FormLayout from "@/components/form/FormLayout";
@@ -78,10 +78,10 @@ export default function EditContactForm({
       initialData.country,
     ),
   );
-
+  // Form submission handler where this data is coming from RHF's handleSubmit of RHF state, not DOM
   const onCreateOrConfirm = async (data: ContactFormValues) => {
     try {
-      const result = await updateOrCreateContact(data, params.id);
+      const result = await upsertContactPEA(data, params.id);
       if (result?.id) {
         router.refresh();
         router.push(`/contacts/${result.id}`);
@@ -126,11 +126,13 @@ export default function EditContactForm({
       error: errors.middleName?.message,
     },
     { label: "Nickname", name: "nickName" },
+    { label: "Prefix", name: "prefix" },
+    { label: "Suffix", name: "suffix" },
     {
       label: (
         <Clarification
-          term="Display Name"
-          description="This may help a reader pick whom it refers to..."
+          term="Customized Display Name"
+          description="The default display name is 'Prefix'+'Given Name' + 'Middle Name' + 'Family Name' + 'Suffix'+ aka 'Nickname'. You can override that by providing a customized one, even in a different language, in this field."
         />
       ),
       name: "displayName",
@@ -180,7 +182,7 @@ export default function EditContactForm({
       >
         <form
           id="contact-form"
-          onSubmit={handleSubmit(onCreateOrConfirm)}
+          onSubmit={handleSubmit(onCreateOrConfirm)} //handleSubmit here in RHF reads the form data, validates and build a plain object called data, then calls onCreateOrConfirm with that data.
           className="space-y-4"
         >
           {/* Identity Section */}
@@ -196,6 +198,8 @@ export default function EditContactForm({
               onToggle={() => setShowOptionalIdentity((v) => !v)}
             />
             <div
+              inert={!showOptionalIdentity}
+              aria-hidden={!showOptionalIdentity} //remove from accessibility tree when hidden
               className={`overflow-hidden p-1 transition-[max-height] duration-300 ease-in-out
     ${showOptionalIdentity ? "max-h-[400px]" : "max-h-0"}`}
             >
@@ -220,6 +224,8 @@ export default function EditContactForm({
               onToggle={() => setShowOptionalContact((v) => !v)}
             />
             <div
+              inert={!showOptionalContact}
+              aria-hidden={!showOptionalContact} //remove from accessibility tree when hidden
               className={`overflow-hidden p-1 transition-[max-height] duration-300 ease-in-out
     ${showOptionalContact ? "max-h-[400px]" : "max-h-0"}`}
             >
@@ -253,12 +259,11 @@ export default function EditContactForm({
           onSubmit={handleSubmit(onCreateOrConfirm)}
           className="space-y-8"
         >
-          <section className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6 pb-2 border-b">
+          <section className="...">
               Identity
             </h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="...">
              
               <InputWithChanges<ContactFormValues>
                 label="Given Name"
@@ -278,12 +283,12 @@ export default function EditContactForm({
             />
             
             {showOptional && (
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="...">
                 <InputWithChanges<ContactFormValues>
                   label={
                     <Clarification
                       term="Middle Name"
-                      description="This field can be beneficial if you wish to provide a more complete identification in cases where multiple individuals share the same given names and family names."
+                      description="..."
                     />
                   }
                   name="middleName"
@@ -297,7 +302,7 @@ export default function EditContactForm({
                   label={
                     <Clarification
                       term="Display Name"
-                      description="This may help a reader pick whom it refers to in lists in a specific context more easily, such as 'Dr. Smith' in a clinic group or a name not in English. If left blank, 'Given Name' +'Middle Name' if available + 'Family Name' + aka 'Nickname' if available displays instead."
+                      description="..."
                     />
                   }
                   name="displayName"
@@ -306,8 +311,7 @@ export default function EditContactForm({
             )}
           </section>
 
-          <section className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6 pb-2 border-b">
+          <section className="...">
               Contact
             </h2>
             <div className="space-y-4">

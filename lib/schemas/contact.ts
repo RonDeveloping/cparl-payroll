@@ -7,6 +7,8 @@ export const contactSchema = z.object({
   middleName: z.string().optional(),
   familyName: z.string().min(1, "Last name is required"),
   nickName: z.string().optional(),
+  prefix: z.string().optional(),
+  suffix: z.string().optional(),
   displayName: z.string().optional(),
   email: z.string().email("Invalid email address").toLowerCase(),
   phone: z
@@ -21,9 +23,9 @@ export const contactSchema = z.object({
       { message: "Phone number must contain 10 digits" },
     ),
   street: z.string().optional(),
-  city: z.string().min(1, "City is required"),
-  province: z.string().min(1, "Province is required"),
-  country: z.string().min(1, "Country is required"),
+  city: z.string().optional(), //min(1, "City is required"),
+  province: z.string().optional(),
+  country: z.string().optional(),
   postalCode: z
     .string()
     .nonempty("Postal code cannot be empty")

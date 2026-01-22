@@ -3,6 +3,8 @@
 import prisma from "@/lib/prisma";
 import EditContactForm from "./EditContactForm"; // client component to handle the form state
 import { ContactFormValues } from "@/lib/schemas/contact";
+import formatPhone from "@/lib/formatters/phone";
+import formatPostalCode from "@/lib/formatters/postalCode";
 
 export default async function EditContactPage({
   params,
@@ -52,8 +54,8 @@ export default async function EditContactPage({
     country: "Canada",
     nickName: "",
     displayName: "",
-    phone: "",
-    postalCode: "",
+    phone: formatPhone(contact.phones[0]?.number) || "",
+    postalCode: formatPostalCode(contact.addresses[0]?.postalCode) || "",
   };
 
   return <EditContactForm paramsPromise={params} initialData={initialData} />;
