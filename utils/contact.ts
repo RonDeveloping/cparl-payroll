@@ -4,7 +4,7 @@ import { ContactFormValues } from "@/lib/schemas/contact";
 import prisma from "@/lib/prisma";
 import { safe } from "@/utils/safe";
 import crypto from "crypto";
-import { number } from "zod";
+// import { number } from "zod";
 
 /**
  * Updates an existing contact or creates a new one.
@@ -61,10 +61,10 @@ export async function upsertContactPEA(data: ContactFormValues, id: string) {
       // 4. EMAIL UPSERT (@@unique([contactId, email]))
       await tx.email.upsert({
         where: {
-          contactId_email: { contactId: contact.id, email: emailClean },
+          contactId_address: { contactId: contact.id, address: emailClean },
         },
         update: { isPrimary: true },
-        create: { contactId: contact.id, email: emailClean, isPrimary: true },
+        create: { contactId: contact.id, address: emailClean, isPrimary: true },
       });
 
       // 5. ADDRESS UPSERT (@@unique([contactId, addressHash]))

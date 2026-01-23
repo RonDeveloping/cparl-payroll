@@ -131,9 +131,9 @@ model Email {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  email     String  //Emails are case-insensitive in practice, but Prisma does not support case-insensitive unique constraints yet, so we enforce lowercase in application logic before saving.
+  address     String  //Emails are case-insensitive in practice, but Prisma does not support case-insensitive unique constraints yet, so we enforce lowercase in application logic before saving. @map("email")
   contact   Contact  @relation(fields: [contactId], references: [id]) //Premisa object relation for TS convenience
-  @@unique([contactId, email]) //composite unique constraint to prevent duplicate emails for same contact
+  @@unique([contactId, address]) //composite unique constraint to prevent duplicate emails for same contact
   @@index([contactId]) //speed up queries per contactID
 }
 
@@ -146,7 +146,7 @@ enum PhoneType {
 model Phone {
   id        String   @id @default(cuid())
   contactId String  //it is explicitly given; direct access to ID w/o fetching the relation; otherwise Prisma will create a hidden field.
-  number    String  // e.g., "+1 613-410-8880"
+  number    String  // e.g., "6134108080"
   type      PhoneType? @default(MOBILE) // e.g., "mobile", "home", "work" yet nullable
   isPrimary Boolean @default(false) // optional primary flag
 
