@@ -1,7 +1,7 @@
 //app\contacts\[id]\page.tsx
 import { redirect } from "next/navigation";
 import React from "react";
-import prisma from "@/lib/prisma";
+import prisma from "@/db/prisma/prisma";
 import {
   User,
   Building,
@@ -24,7 +24,7 @@ interface PrimarySelectable {
 
 // 2. Use a Generic <T> that extends that interface
 const getPrimary = <T extends PrimarySelectable>(
-  arr: T[] | undefined
+  arr: T[] | undefined,
 ): T | undefined => {
   if (!arr || arr.length === 0) return undefined;
   return arr.find((item) => item.isPrimary) || arr[0];

@@ -12,13 +12,15 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "db:sync": "prisma migrate dev && prisma generate",
-     "db:ui": "prisma studio",
+    "db:ui": "prisma studio",
     "db:push": "prisma db push && prisma generate",
-    "db:reset": "prisma migrate reset && prisma generate" ,
+    "db:reset": "prisma migrate reset && prisma generate",
     "db:watch": "prisma migrate dev --watch",
     "postinstall": "prisma generate"
   },
-  
+  "prisma": {
+    "schema": "db/prisma/schema.prisma"
+  },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-pg": "^7.1.0",
