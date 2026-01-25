@@ -1,6 +1,6 @@
 import "dotenv/config"; // it loads .env and populates process.env so that npx run ts-node prisma/seed.ts works where Node process doesn't do the population automatically unlike in Next.js where .env is auto-loaded
 
-import prisma from "./prisma"; //new a prisma client instance using Database URL from .env in the first query; so it would be better placed after the first import.
+import prisma from "../prismaDrizzle"; //new a prisma client instance using Database URL from .env in the first query; so it would be better placed after the first import.
 
 import { safe } from "@/utils/safe";
 

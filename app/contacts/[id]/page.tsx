@@ -1,7 +1,7 @@
 //app\contacts\[id]\page.tsx
 import { redirect } from "next/navigation";
 import React from "react";
-import prisma from "@/db/prisma/prisma";
+import prisma from "@/db/prismaDrizzle";
 import {
   User,
   Building,
@@ -117,7 +117,7 @@ export default async function ProfilePage({
               <div className="space-y-0">
                 <InfoItem
                   label=""
-                  value={initialData?.email?.email || "No email provided"}
+                  value={initialData?.email?.address || "No email provided"}
                   icon={<Mail size={16} />}
                 />
 

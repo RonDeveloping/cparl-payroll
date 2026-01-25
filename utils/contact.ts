@@ -1,7 +1,7 @@
 "use server";
 
 import { ContactFormValues } from "@/lib/schemas/contact";
-import prisma from "@/db/prisma/prisma";
+import prisma from "@/db/prismaDrizzle";
 import { safe } from "@/utils/safe";
 import crypto from "crypto";
 // import { number } from "zod";
