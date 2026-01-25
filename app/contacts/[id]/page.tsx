@@ -117,7 +117,9 @@ export default async function ProfilePage({
               <div className="space-y-0">
                 <InfoItem
                   label=""
-                  value={initialData?.email?.address || "No email provided"}
+                  value={
+                    initialData?.email?.emailAddress || "No email provided"
+                  }
                   icon={<Mail size={16} />}
                 />
 

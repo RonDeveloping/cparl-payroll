@@ -3,8 +3,8 @@
 import prisma from "@/db/prismaDrizzle";
 import EditContactForm from "./EditContactForm"; // client component to handle the form state
 import { ContactFormValues } from "@/lib/schemas/contact";
-import formatPhone from "@/lib/formatters/phone";
-import formatPostalCode from "@/lib/formatters/postalCode";
+import formatPhone from "@/utils/formatters/phone";
+import formatPostalCode from "@/utils/formatters/postalCode";
 
 export default async function EditContactPage({
   params,
@@ -47,7 +47,7 @@ export default async function EditContactPage({
   const initialData = {
     givenName: contact.givenName,
     familyName: contact.familyName,
-    email: contact.emails[0]?.address || "",
+    email: contact.emails[0]?.emailAddress || "",
     street: contact.addresses[0]?.street || "",
     city: contact.addresses[0]?.city || "",
     province: "ON",

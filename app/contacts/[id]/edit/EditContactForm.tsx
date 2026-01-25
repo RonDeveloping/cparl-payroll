@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 
 import { contactSchema, ContactFormValues } from "@/lib/schemas/contact";
-import { upsertContactPEA } from "@/utils/contact";
+import { upsertContactPEA } from "@/db/actions/contact";
 import { getFieldChanges, ChangeEntry } from "@/utils/formChanges";
 
 import FormLayout from "@/components/form/FormLayout";
@@ -16,9 +16,9 @@ import InputWithChanges from "@/components/form/InputWithChanges";
 import { FormChangeProvider } from "@/components/form/FormChangeContext";
 import SectionDisclosure from "@/components/SectionDisclosure";
 import { Clarification } from "@/components/Clarification";
-import formatPostalCode from "@/lib/formatters/postalCode";
+import formatPostalCode from "@/utils/formatters/postalCode";
 import { registerWithOnBlurFormat } from "@/utils/formRegister";
-import formatPhone from "@/lib/formatters/phone";
+import formatPhone from "@/utils/formatters/phone";
 
 interface EditContactFormProps {
   paramsPromise: Promise<{ id: string }>;

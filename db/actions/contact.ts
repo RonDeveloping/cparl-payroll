@@ -2,7 +2,7 @@
 
 import { ContactFormValues } from "@/lib/schemas/contact";
 import prisma from "@/db/prismaDrizzle";
-import { safe } from "@/utils/safe";
+import { safe } from "@/utils/validators/safe";
 import crypto from "crypto";
 // import { number } from "zod";
 
@@ -61,10 +61,17 @@ export async function upsertContactPEA(data: ContactFormValues, id: string) {
       // 4. EMAIL UPSERT (@@unique([contactId, email]))
       await tx.email.upsert({
         where: {
-          contactId_address: { contactId: contact.id, address: emailClean },
+          contactId_emailAddress: {
+            contactId: contact.id,
+            emailAddress: emailClean,
+          },
         },
         update: { isPrimary: true },
-        create: { contactId: contact.id, address: emailClean, isPrimary: true },
+        create: {
+          contactId: contact.id,
+          emailAddress: emailClean,
+          isPrimary: true,
+        },
       });
 
       // 5. ADDRESS UPSERT (@@unique([contactId, addressHash]))

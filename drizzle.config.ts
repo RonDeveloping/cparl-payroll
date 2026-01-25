@@ -1,6 +1,6 @@
 import "dotenv/config"; // Required to read your DATABASE_URL
-// import { Config } from "drizzle-kit";
-import { defineConfig } from "drizzle-kit";
+import { Config } from "drizzle-kit";
+// import { defineConfig } from "drizzle-kit";
 
 export default {
   out: "./db/drizzle/migrations", // Where Drizzle stores snapshots/metadata
@@ -9,4 +9,4 @@ export default {
   dbCredentials: {
     url: process.env.DATABASE_URL!,
   },
-};
+} satisfies Config;

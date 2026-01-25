@@ -1,6 +1,6 @@
 // lib/schemas/contact.ts
 import { z } from "zod";
-import { isValidCanadianPostalCode } from "../validators/postalCode";
+import { isValidCanadianPostalCode } from "../../utils/validators/postalCode";
 
 export const contactSchema = z.object({
   givenName: z.string().min(1, "First name is required"),
