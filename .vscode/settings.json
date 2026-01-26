@@ -2,7 +2,7 @@
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.expand": false,
   "explorer.fileNesting.patterns": {
-    "package.json": "drizzle.config.ts,prisma.config.ts,package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb, tsconfig.json, jsconfig.json, next.config.*, next-env.d.ts, postcss.config.*, tailwind.config.*, vitest.config.*, eslint.config.*, README.md, .gitignore, .prettierrc*, .eslintrc*"
+    "package.json": "drizzle.config.ts,prisma.config.ts,package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb, tsconfig.json, jsconfig.json, next.config.*, next-env.d.ts, postcss.config.*, tailwind.config.*, vitest.config.*, eslint.config.*, README.md, .gitignore, .prettierrc*, .eslintrc, .env*"
   },
   "files.exclude": {
     "**/.next": true,

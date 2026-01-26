@@ -1,10 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native"]
@@ -13,744 +6,490 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
-// ===== TENANT SERVICE =====
 
-// ===== USER SERVICE =====
-//Model name User → table user in p
+// ==========================================
+// ===== USER SERVICE (Authentication)  =====
+// ==========================================
+
 model User {
-  id    Int    @id @default(autoincrement())
-  name  String
-  email String @unique
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  displayName  String   @map("display_name")
+  securityEmail  String   @unique @map("security_email")
+  emailVerifiedAt       DateTime? @map("email_verified_at")
+  pendingSecurityEmail  String?   @map("pending_security_email")
+  passwordHash String?  @map("password_hash")
+  contactId    String   @unique @map("contact_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("user")
 }
 
-// ===== CONTACT SERVICE =====
+// ==========================================
+// ===== CONTACT SERVICE (Identity)     =====
+// ==========================================
+
 model Contact {
-  id    String @id @default(cuid())
-  // ===== Legal identity (current) =====
-  givenName  String //Field firstName → column first_name ie. camelCase to snake_case
-  familyName  String
-  middleName  String?
-  // ===== Presentation identity (current) =====
-  suffix     String?
-  prefix     String?
-  nickName String? //e.g., "Bob" for "Robert"
-  displayName String? //e.g., "Dr. Robert Smith Jr."
+  id          String   @id @default(cuid())
+  givenName   String   @map("given_name")
+  familyName  String   @map("family_name")
+  middleName  String?  @map("middle_name")
+  suffix      String?
+  prefix      String?
+  nickName    String?  @map("nick_name")
+  displayName String?  @map("display_name")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  isActive       Boolean  @default(true)
-  createdAt  DateTime @default(now()) //Prisma's way to say "let the DB set this" via @default(now())
-  updatedAt  DateTime @updatedAt
+  legalNameHistory          LegalNameHistory[]
+  conversationalNameHistory ConversationalNameHistory[]
+  addresses                 Address[]
+  emails                    Email[]
+  phones                    Phone[]
 
-  legalNameHistory   LegalNameHistory[]
-  conversationalNameHistory   ConversationalNameHistory[]
-
-  addresses   Address[]
-  emails Email[]
-  phones Phone[]
+  @@map("contact")
 }
 
 model LegalNameHistory {
-  id            String   @id @default(cuid())
-  contactId     String
-
-  givenName     String
-  familyName    String
-  middleName    String?
-
-  effectiveFrom DateTime
-  effectiveTo   DateTime?
-  changedBy     String?   // adminId / system
-  reason        String?   // optional
-
-  createdAt     DateTime @default(now()) //if a column is not in schema.prima, it's ignored by Prisma.
-
-  contact Contact @relation(fields: [contactId], references: [id])//so prisma generates the foreign key constraint for us:  ALTER TABLE "LegalNameHistory" ADD CONSTRAINT "LegalNameHistory_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") to ensure referential integrity.
-  @@index([contactId, effectiveFrom]) //composite index for efficient querying of time in history table
-}
-
-model ConversationalNameHistory{
-  id            String   @id @default(cuid())
-  contactId     String
-  suffix     String?
-  prefix     String?
-  nickName      String?
-  displayName   String?
-
-  source        ConversationalNameSource? //e.g., "user provided", "system generated"
-  effectiveFrom DateTime
-  effectiveTo   DateTime?
-
-  createdAt     DateTime @default(now())
+  id            String    @id @default(cuid())
+  contactId     String    @map("contact_id")
+  givenName     String    @map("given_name")
+  familyName    String    @map("family_name")
+  middleName    String?   @map("middle_name")
+  effectiveFrom DateTime  @map("effective_from")
+  effectiveTo   DateTime? @map("effective_to")
+  changedBy     String?   @map("changed_by")
+  reason        String?
+  createdAt     DateTime  @default(now()) @map("created_at")
 
   contact Contact @relation(fields: [contactId], references: [id])
-  @@index([contactId, effectiveFrom])
-} 
 
-//Conflct resolution & precedence USER > SUPPORT > IMPORT > SYSTEM
-enum ConversationalNameSource {
-  USER
-  SUPPORT //e.g. manual change by support agent
-  IMPORT //sync from other services than contact management
-  SYSTEM //e.g., auto-generated based on rules such as first name variations plus last name etc.
+  @@index([contactId, effectiveFrom])
+  @@map("legal_name_history")
+}
+
+model ConversationalNameHistory {
+  id            String                    @id @default(cuid())
+  contactId     String                    @map("contact_id")
+  suffix        String?
+  prefix        String?
+  nickName      String?                   @map("nick_name")
+  displayName   String?                   @map("display_name")
+  source        conversational_name_source?
+  effectiveFrom DateTime                  @map("effective_from")
+  effectiveTo   DateTime?                 @map("effective_to")
+  createdAt     DateTime                  @default(now()) @map("created_at")
+
+  contact Contact @relation(fields: [contactId], references: [id])
+
+  @@index([contactId, effectiveFrom])
+  @@map("conversational_name_history")
 }
 
 model Address {
-  id        String  @id @default(cuid())
-  contactId String  //it is explicitly given; direct access to ID w/o fetching the relation; otherwise Pris
-  street    String
-  city      String 
-  province     String 
-  postalCode   String 
-  country   String 
-  addressHash String //addressHash = sha256(`${street}|${city}|${province}|${postalCode}|${country}`);
-  isPrimary Boolean @default(false)
+  id          String  @id @default(cuid())
+  contactId   String  @map("contact_id")
+  street      String
+  city        String
+  province    String
+  postalCode  String  @map("postal_code")
+  country     String
+  addressHash String  @map("address_hash")
+  isPrimary   Boolean @default(false) @map("is_primary")
 
-  contact   Contact  @relation(fields: [contactId], references: [id]) //Premisa object relation for TS convenience
-  @@unique([contactId, addressHash]) //composite unique constraint to prevent duplicate addresses for same contact
-  @@index([contactId]) //speed up queries per contactID
+  contact Contact @relation(fields: [contactId], references: [id])
+
+  @@unique([contactId, addressHash])
+  @@index([contactId])
+  @@map("address")
 }
 
-/*
-Remeber in migration SQL file, add:
-CREATE UNIQUE INDEX one_primary_email_per_contact
-ON "Email"(contactId)
-WHERE isPrimary = true;
-
-CREATE UNIQUE INDEX one_primary_address_per_contact
-ON "Address"(contactId)
-WHERE isPrimary = true;
-
-CREATE UNIQUE INDEX one_primary_phone_per_contact
-ON "Phone"(contactId)
-WHERE isPrimary = true;
-*/
 model Email {
-  id        String  @id @default(cuid())
-  contactId String  //it is explicitly given; direct access to ID w/o fetching the relation; otherwise Prisma will create a hidden field.
-  isPrimary Boolean @default(false)
+  id           String   @id @default(cuid())
+  contactId    String   @map("contact_id")
+  isPrimary    Boolean  @default(false) @map("is_primary")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  emailAddress String   @map("email_address")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  contact Contact @relation(fields: [contactId], references: [id])
 
-  emailAddress     String  //Emails are case-insensitive in practice, but Prisma does not support case-insensitive unique constraints yet, so we enforce lowercase in application logic before saving. @map("email")
-  contact   Contact  @relation(fields: [contactId], references: [id]) //Premisa object relation for TS convenience
-  @@unique([contactId, emailAddress]) //composite unique constraint to prevent duplicate emails for same contact
-  @@index([contactId]) //speed up queries per contactID
-}
-
-enum PhoneType {
-  MOBILE
-  HOME
-  WORK
+  @@unique([contactId, emailAddress])
+  @@index([contactId])
+  @@map("email")
 }
 
 model Phone {
-  id        String   @id @default(cuid())
-  contactId String  //it is explicitly given; direct access to ID w/o fetching the relation; otherwise Prisma will create a hidden field.
-  number    String  // e.g., "6134108080"
-  type      PhoneType? @default(MOBILE) // e.g., "mobile", "home", "work" yet nullable
-  isPrimary Boolean @default(false) // optional primary flag
+  id        String      @id @default(cuid())
+  contactId String      @map("contact_id")
+  number    String
+  type      phone_type? @default(mobile)
+  isPrimary Boolean     @default(false) @map("is_primary")
 
-  contact   Contact  @relation(fields: [contactId], references: [id]) //Premisa object relation for TS convenience
-  @@unique([contactId, number]) //composite unique constraint to prevent duplicate emails for same contact
-  @@index([contactId]) //speed up queries per contactID
+  contact Contact @relation(fields: [contactId], references: [id])
+
+  @@unique([contactId, number])
+  @@index([contactId])
+  @@map("phone")
 }
 
-// ===== PAYROLL SERVICE =====
-//the tenantId acts as a Partition Key and provide row level multi-tenancy isolation by veryfying tenantId in all queries
+// ==========================================
+// ===== PAYROLL SERVICE (Logic)        =====
+// ==========================================
+
 model Employee {
-  id              String @id @default(cuid())
-  tenantId  String
-  contactId        String
-  employeeNumber String? 
+  id             String          @id @default(cuid())
+  tenantId       String          @map("tenant_id")
+  contactId      String          @map("contact_id")
+  employeeNumber String?         @map("employee_number")
+  taxIdEncrypted Bytes           @map("tax_id_encrypted")
+  taxIdLast4     String          @map("tax_id_last_4")
+  dateOfBirth    DateTime        @map("date_of_birth")
+  hireDate       DateTime        @map("hire_date")
+  status         employee_status
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
 
-  taxIdEncrypted     Bytes //e.g., SSN, SIN
-  taxIdLast4       String //last 4 digits for display/search purposes
-  dateOfBirth DateTime
-  hireDate    DateTime
-  status      EmployeeStatus
+  addressCached Json   @map("address_cached")
+  emailCached   String? @map("email_cached")
+  phoneCached   Json?  @map("phone_cached")
+  nameCached    Json   @map("name_cached")
 
-  terminationDate DateTime?
-  terminationReason ROEReasonCode?
-
+  employments  Employment[]
+  payrollRuns  PayrollRunEmployee[]
   bankAccounts BankAccount[]
-  /* 
-  ALTER TABLE "Employee" 
-  ADD CONSTRAINT termination_consistency
-  CHECK ( (terminationDate IS NULL AND terminationReason IS NULL)
-        OR
-        (terminationDate IS NOT NULL AND terminationReason IS NOT NULL)
-);
- or/and
-  such both or nothing rules can be enforced in app logic: terminationReason != null ⇒ terminationDate != null; Rehire ⇒ clear both
-*/
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  // Cached contact info (latest from Contact)
-  addressCached  Json //object
-  emailCached    String? //only one email for payroll contact
-  phoneCached    Json? //array of ojbect e.g. [{ "number": "+1-613-410-8880", "type": "MOBILE", "isPrimary": true }, {"number": "+1-613-555-1234", "type": "WORK", "isPrimary": false }]
-  nameCached     Json //object
-
-  employments Employment[]
-  payrollRuns PayrollRunEmployee[]
-
-  @@unique([tenantId, contactId]) //for tenant-scoped uniquenessone employee per contact per tenant
-  @@unique([tenantId, employeeNumber]) //PostgreSQL allows multiple NULLs, even with a unique constraint, so multiple employees per tenant can have employeeNumber = null
-  //@unique,@@unique can only be applied to scalar fields (not relations) and full-table level.
+  @@unique([tenantId, contactId])
+  @@unique([tenantId, employeeNumber])
+  @@map("employee")
 }
 
-enum EmployeeStatus {
-  ACTIVE
-  TERMINATED
-  ON_LEAVE
-}
-
-enum ROEReasonCode {
-  A_SHORTAGE_OF_WORK
-  B_STRIKE_LOCKOUT
-  C_RETURN_TO_SCHOOL
-  D_ILLNESS_INJURY
-  E_QUIT
-  F_MATERNITY
-  G_RETIREMENT
-  H_WORK_SHARING
-  J_DISMISSAL
-  M_DISMISSAL_PROBATION
-  N_LEAVE_OF_ABSENCE
-  P_PARENTAL
-  OTHER
-}
-
-//will enforce this in service logic: assert(employment.tenantId === employee.tenantId)
-//Ensure service layer validates that employee.tenantId === employment.tenantId.
 model Employment {
-  id          String   @id @default(cuid())
-  tenantId  String
-  employeeId  String
+  id           String    @id @default(cuid())
+  tenantId     String    @map("tenant_id")
+  employeeId   String    @map("employee_id")
+  title        String?
+  department   String?
+  startDate    DateTime  @map("start_date")
+  endDate      DateTime? @map("end_date")
+  countryCode  String    @default("CA") @map("country_code")
+  provinceCode String    @map("province_code")
+  createdAt    DateTime  @default(now()) @map("created_at")
 
-  title       String?
-  department  String?
-  
-  startDate   DateTime
-  endDate     DateTime?
+  employee       Employee        @relation(fields: [employeeId], references: [id])
+  jobAssignments JobAssignment[]
 
-  countryCode   String @default("CA")
-  provinceCode  String
-
-  createdAt   DateTime @default(now())
-
-  employee    Employee @relation(fields: [employeeId], references: [id])
-  
-  jobAssignments JobAssignment[] //e.g. casher $18/hr, stocker $20/hr (Most payroll systems — ADP, Ceridian, Workday payroll mode) — support multiple concurrent job assignments per employment record.
-  
-  @@index([tenantId, employeeId, startDate]) //tenant-scoped reporting; historical queries and ROE generation
-
-  @@index([employeeId, startDate])//to speed up querying employment history per employee, ordered by startDate; we can't add an index on WHERE endDate IS NULL to speed up querying current employment record per employee via prisma so far
-}
-/*
-note: some rule must live at the database level, not the primsa schema level, to enforce data integrity. For example, to ensure that only one active employment record (where endDate IS NULL) exists per employee, we need to create a partial unique index in PostgreSQL.
-
-To create the partial unique index, run the following commands in your terminal:
-npx prisma migrate dev --name add-one-active-employment
-
-Then in the generated migration.sql file, add:
-CREATE UNIQUE INDEX "OneActiveEmploymentPerEmployee" ON "Employment" ("employeeId") WHERE "endDate" IS NULL; 
-
-This ensures that only one active employment record (where endDate IS NULL) exists per employee When violated, Prisma will throw: PrismaClientKnownRequestError#P2002
-
-This one active employment rule is for CPP/EI/tax aggregation purposes and for ROE continuity as well as benefit eligibility.
-*/
-
-enum PayType {
-  HOURLY
-  SALARY
+  @@index([tenantId, employeeId, startDate])
+  @@index([employeeId, startDate])
+  @@map("employment")
 }
 
-//assume always accessed via Employment, so no tenantId here
-//JobAssignment.startDate >= Employment.startDate
-//JobAssignment.endDate   <= Employment.endDate (if not null) Note enforcable in Prisma must live in service logic or DB constraints/triggers
 model JobAssignment {
-  id           String   @id @default(cuid())
-  employmentId String
+  id           String    @id @default(cuid())
+  employmentId String    @map("employment_id")
+  startDate    DateTime  @map("start_date")
+  endDate      DateTime? @map("end_date")
+  payRate      Decimal   @db.Decimal(10, 2) @map("pay_rate")
+  payType      pay_type  @map("pay_type")
 
-  departmentId String? 
-  costCenterId  String?
-  projectCode   String?
-
-  startDate    DateTime
-  endDate      DateTime?
-  timeEntry TimeEntry[]
-  payRate      Decimal @db.Decimal(10,2) //e.g., 18.50
-  payType      PayType // HOURLY / SALARY
-  employment   Employment @relation(fields: [employmentId], references: [id])
-  
+  employment   Employment    @relation(fields: [employmentId], references: [id])
+  timeEntries  TimeEntry[]
   payrollLines PayrollLine[]
 
   @@index([employmentId, startDate])
+  @@map("job_assignment")
 }
 
-//assume always accessed via jobAssignment, so no tenantId here
 model TimeEntry {
   id              String   @id @default(cuid())
-  jobAssignmentId String
-  workDate        DateTime
-  hours           Decimal @db.Decimal(6,2) //e.g., 8.50
+  jobAssignmentId String   @map("job_assignment_id")
+  workDate        DateTime @map("work_date")
+  hours           Decimal  @db.Decimal(6, 2)
 
-  jobAssignment   JobAssignment @relation(fields: [jobAssignmentId], references: [id])
+  jobAssignment JobAssignment @relation(fields: [jobAssignmentId], references: [id])
 
   @@index([jobAssignmentId, workDate])
+  @@map("time_entry")
 }
 
 model PayrollRun {
-  id          String   @id @default(cuid())
-  tenantId  String //Add only where filtering / reporting / safety benefits outweigh joins otherwise use of FK chain to validate tenant
-  periodStart DateTime
-  periodEnd   DateTime
-  runDate     DateTime
+  id          String             @id @default(cuid())
+  tenantId    String             @map("tenant_id")
+  periodStart DateTime           @map("period_start")
+  periodEnd   DateTime           @map("period_end")
+  runDate     DateTime           @map("run_date")
+  status      payroll_run_status
+  createdAt   DateTime           @default(now()) @map("created_at")
 
-  status      PayrollRunStatus
+  payrollRunEmployees PayrollRunEmployee[]
 
-  createdAt   DateTime @default(now())
-
-  payrollRunEmployees   PayrollRunEmployee[]
-
-  @@unique([tenantId, periodStart, periodEnd]) //prevent duplicate payroll runs for same period per tenant
-
+  @@unique([tenantId, periodStart, periodEnd])
+  @@map("payroll_run")
 }
-/*
-SUM(hours × payRate) GROUP BY: - employeeId (taxes) - jobAssignmentId (costing)
-Taxes, CPP, EI → Employee level
-Earnings → JobAssignment level
-*/
 
 model PayrollRunEmployee {
-  id            String   @id @default(cuid())  
-  payrollRunId  String
-  employeeId    String
-  payrollDisbursements PayrollDisbursement[]
-  // Immutable snapshot fields copied from Employee
-  nameSnapshot     String
-  addressSnapshot  String
+  id              String   @id @default(cuid())
+  payrollRunId    String   @map("payroll_run_id")
+  employeeId      String   @map("employee_id")
+  nameSnapshot    String   @map("name_snapshot")
+  addressSnapshot String   @map("address_snapshot")
+  grossPay        Decimal  @db.Decimal(10, 2) @map("gross_pay")
+  deductions      Decimal  @db.Decimal(10, 2)
+  netPay          Decimal  @db.Decimal(10, 2) @map("net_pay")
+  createdAt       DateTime @default(now()) @map("created_at")
 
-  payrollrunlines PayrollLine[]
-
-  grossPay      Decimal  @db.Decimal(10,2)
-  deductions    Decimal  @db.Decimal(10,2)
-  netPay        Decimal  @db.Decimal(10,2)
-
-  createdAt     DateTime @default(now())
-
-  payrollRun    PayrollRun @relation(fields: [payrollRunId], references: [id])
-  employee      Employee   @relation(fields: [employeeId], references: [id])
+  payrollRun    PayrollRun            @relation(fields: [payrollRunId], references: [id])
+  employee      Employee              @relation(fields: [employeeId], references: [id])
+  payrollLines  PayrollLine[]
   deductionsList Deduction[]
+  disbursements PayrollDisbursement[]
 
-  @@unique([payrollRunId, employeeId]) //one record per employee per payroll run
+  @@unique([payrollRunId, employeeId])
+  @@map("payroll_run_employee")
 }
 
-//Tenant guaranteed by PayrollRun + Employee; One earning type, for one employee, in one payroll run, attributable to one costing source.
 model PayrollLine {
-  id            String @id @default(cuid())
-  payrollRunEmployeeId  String
-  jobAssignmentId String?
+  id                   String       @id @default(cuid())
+  payrollRunEmployeeId String       @map("payroll_run_employee_id")
+  jobAssignmentId      String?      @map("job_assignment_id")
+  rate                 Decimal      @db.Decimal(10, 2)
+  units                Decimal      @db.Decimal(6, 2)
+  amount               Decimal      @db.Decimal(10, 2)
+  earningType          earning_type @map("earning_type")
 
-  rate       Decimal @db.Decimal(10,2) //e.g., payRate from JobAssignment at time of payroll run creation
-  units      Decimal @db.Decimal(6,2)  //e.g., total hours from TimeEntry for the payroll period; 1 for salary 
-  amount        Decimal @db.Decimal(10,2)
-  earningType   EarningType
+  payrollRunEmployee PayrollRunEmployee @relation(fields: [payrollRunEmployeeId], references: [id])
+  jobAssignment      JobAssignment?     @relation(fields: [jobAssignmentId], references: [id])
 
-  costCenterId  String?
-  departmentId  String?
-
-  payrollRunEmployee     PayrollRunEmployee   @relation(fields: [payrollRunEmployeeId], references: [id])
-  jobAssignment  JobAssignment? @relation(fields: [jobAssignmentId], references: [id])
+  @@map("payroll_line")
 }
-
-enum EarningType {
-  REGULAR
-  OVERTIME
-  BONUS
-  COMMISSION
-  OTHER
-}
-
-enum PayrollRunStatus {
-  DRAFT
-  FINALIZED
-  PAID
-}
-
-model StatHoliday {
-  id        String   @id @default(cuid())
-  tenantId  String
-  date      DateTime
-  name      String
-  isPaid    Boolean
-
-  // Logic: "ON", "BC", "QC", or "CA" for FEDERAL employee holidays
-  provinceCode String  @default("CA") 
-
-  @@index([tenantId, date])
-  @@unique([tenantId, date, provinceCode])
-}
-
 
 model Deduction {
-  id                    String   @id @default(cuid())
-  payrollRunEmployeeId  String
-
-  type        DeductionType
-  amount      Decimal @db.Decimal(10,2)
-
-  createdAt   DateTime @default(now())
+  id                   String         @id @default(cuid())
+  payrollRunEmployeeId String         @map("payroll_run_employee_id")
+  type                 deduction_type
+  amount               Decimal        @db.Decimal(10, 2)
+  createdAt            DateTime       @default(now()) @map("created_at")
 
   payrollRunEmployee PayrollRunEmployee @relation(fields: [payrollRunEmployeeId], references: [id])
 
-  @@unique([payrollRunEmployeeId, type]) //reinforce: one deduction type per payroll run employee
-}
-
-enum DeductionType {
-  TAX
-  CPP
-  EI
-  BENEFIT
-  OTHER
+  @@unique([payrollRunEmployeeId, type])
+  @@map("deduction")
 }
 
 model BankAccount {
-  id               String   @id @default(cuid())
-  institutionNumber Int
-  branchNumber      Int
-  accountNumber     String   // keep as string to preserve leading zeros
-  currency          String   @default("CAD")
-  isPrimary         Boolean  @default(false)
+  id                String            @id @default(cuid())
+  employeeId        String            @map("employee_id")
+  institutionNumber Int               @map("institution_number")
+  branchNumber      Int               @map("branch_number")
+  accountNumber     String            @map("account_number")
+  currency          String            @default("CAD")
+  isPrimary         Boolean           @default(false) @map("is_primary")
+  type              distribution_type @default(remainder)
+  value             Decimal?          @db.Decimal(10, 2)
+  isActive          Boolean           @default(true) @map("is_active")
 
-  // Distribution Logic
-  label             String?  // "Main", "Alimony", "Savings"
-  type              DistributionType @default(REMAINDER)
-  value             Decimal? @db.Decimal(10,2) // The $ or % amount
-  priority          Int      @default(1) // Process Fixed/Percentage before Remainder
-  
-  isActive          Boolean  @default(true)
+  employee Employee @relation(fields: [employeeId], references: [id])
 
-  employee         Employee @relation(fields: [employeeId], references: [id])
-  //Prisma uses the @relation line to understand how to perform JOINs
-  employeeId       String
   @@index([employeeId])
+  @@map("bank_account")
 }
 
 model PayrollDisbursement {
-  id                   String   @id @default(cuid())
-  payrollRunEmployeeId String
-  
-  // Snapshot of bank details at time of payment
-  institutionNumber    Int
-  branchNumber         Int
-  accountNumber        String   // Masked or encrypted in production
-  bankLabel            String?  // e.g., "Personal Savings" or "Alimony"
-  
-  amount               Decimal  @db.Decimal(10,2)
-  status               DisbursementStatus @default(PENDING)
-  
-  // Tracking for bank file (ACH/EFT) generation
-  referenceNumber      String?  // Trace ID from the bank
-  processedAt          DateTime?
+  id                   String              @id @default(cuid())
+  payrollRunEmployeeId String              @map("payroll_run_employee_id")
+  institutionNumber    Int                 @map("institution_number")
+  branchNumber         Int                 @map("branch_number")
+  accountNumber        String              @map("account_number")
+  amount               Decimal             @db.Decimal(10, 2)
+  status               disbursement_status @default(pending)
+  processedAt          DateTime?           @map("processed_at")
 
-  payrollRunEmployee   PayrollRunEmployee @relation(fields: [payrollRunEmployeeId], references: [id])
+  payrollRunEmployee PayrollRunEmployee @relation(fields: [payrollRunEmployeeId], references: [id])
 
   @@index([payrollRunEmployeeId])
+  @@map("payroll_disbursement")
 }
 
-enum DisbursementStatus {
-  PENDING
-  SENT
-  FAILED
-  RECONCILED
-}
-
-enum DistributionType {
-  FIXED_AMOUNT // e.g., $500 for Alimony
-  PERCENTAGE   // e.g., 10% for Savings
-  REMAINDER    // e.g., The rest goes here (the true "Primary")
-}
-/* of Distribution Validation: 
-CREAT UNIQUE INDEX "OneRemainderAccountPerEmployee"
-ON "BankAccount"("employeeId)
-WHERE "type" = 'REMAINDER'; AND "isActive" = true;
-*/
-model PayrollJournal {
-  id              String         @id @default(cuid())
-  payrollRunId    String         @unique
-  tenantId        String        
-  
-  status          JournalStatus  @default(PENDING)
-  postedAt        DateTime?
-  
-  // Total checks for the entire journal
-  totalDebit      Decimal        @db.Decimal(12,2)
-  totalCredit     Decimal        @db.Decimal(12,2)
-  
-  entries         JournalEntry[]
-  
-  createdAt       DateTime       @default(now())
-  @@index([tenantId])
-}
-
-model JournalEntry {
-  id                String      @id @default(cuid())
-  payrollJournalId  String
-  
-  // Accounting Keys
-  glAccountNumber   String?      // e.g., "5100" or "2100" for mapping to Chart of Accounts by computer
-  glAccountName     String     // For human readability in exports
-  
-  type              EntryType   // DEBIT or CREDIT
-  amount            Decimal     @db.Decimal(12,2)
-  
-  description       String?     // e.g., "Gross Wages - Engineering - Period End 2023-10-01"
-
-  journal           PayrollJournal @relation(fields: [payrollJournalId], references: [id])
-}
-
-enum JournalStatus {
-  PENDING
-  POSTED      // Successfully synced to accounting software
-  FAILED
-  VOIDED
-}
-
-enum EntryType {
-  DEBIT
-  CREDIT
-}
-
-model PaySlip {
-  id           String   @id @default(uuid())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  // Storage Metadata
-  s3Key        String   // Path: "tenant_id/year/month/file.pdf"
-  fileName     String   // e.g., "PaySlip_Jan_2025.pdf"
-  fileSize     Int
-  employeeId   String   
-  tenantId     String
-
-  @@index([employeeId])
-  @@index([tenantId])
-  @@index([tenantId, createdAt])
-  @@index([employeeId, createdAt])
-}
-
-
-model Remittance {
-  id                String           @id @default(cuid())
-  tenantId          String          
-  
-  // The reporting period
-  periodYear        Int              // e.g., 2025
-  periodMonth       Int              // e.g., 12
-  
-  // Totals for the filing
-  totalGrossPayroll Decimal          @db.Decimal(12,2)
-  totalEmployees    Int
-  totalDue          Decimal          @db.Decimal(12,2)
-
-  status            RemittanceStatus @default(PENDING)
-  paymentReference  String?          // Confirmation number from CRA My Business Account
-  filedAt           DateTime?
-  
-  // Links back to the source data
-  payrollRuns       RemittanceToPayrollRun[]
-
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-
-  @@unique([tenantId, periodYear, periodMonth])
-  @@index([tenantId, status])
-}
-
-/*If a PayrollRun is voided or adjusted after a remittance has been created, you have a major reconcilation problem.
-The Solution: Use a "Locked" state. Once a PayrollRun is linked to a Remittance that is FILED, that payroll run must be strictly read-only. Any corrections must happen in a future PayrollRun as an "Adjustment."
-*/
-
-// Join table to track which payroll runs are included in this remittance
-model RemittanceToPayrollRun {
-  remittanceId  String
-  payrollRunId String
-  
-  remittance    Remittance @relation(fields: [remittanceId], references: [id])
-  
-  @@id([remittanceId, payrollRunId])
-}
-
-enum RemittanceStatus {
-  PENDING
-  REVIEWED
-  FILED
-  PAID
-  CANCELLED
-}
-
-//=== Tenant services model ===
-
-/*The API Join (Simplest) on BFF (Backend for Frontend)
-Call Tenant Service to get Tenant metadata. Call Payroll Service with GET /employees?tenantId=XYZ. Merge the results in the API response.
-*/
+// ==========================================
+// ===== TENANT SERVICE (Settings)      =====
+// ==========================================
 
 model Tenant {
-  id            String   @id @default(cuid())
-  name          String
-  slug          String   @unique // e.g., "acme-corp" for URL routing
-  
-  // Legal/Tax Identity
-  legalName     String
-  businessNumber String?  // e.g., CRA 9-digit number
-  industry      String?
-  
-  // Payroll Defaults
-  baseCurrency  String   @default("CAD")
-  standardWorkDayHours Decimal @default(8.0) @db.Decimal(4,2)
-  standardWorkWeekHours Decimal @default(40.0) @db.Decimal(4,2)
-  
-  // Configuration
+  id             String   @id @default(cuid())
+  name           String
+  slug           String   @unique
+  legalName      String   @map("legal_name")
+  businessNumber String?  @map("business_number")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
   settings      TenantSettings?
   payrollCycles PayrollCycle[]
-  remittanceFrequency PayFrequency @default(MONTHLY)
-  
-  // Organization Structure
   departments   Department[]
-  
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+
+  @@map("tenant")
 }
 
 model TenantSettings {
-  id                String  @id @default(cuid())
-  tenantId          String  @unique
-  tenant            Tenant  @relation(fields: [tenantId], references: [id])
+  id       String @id @default(cuid())
+  tenantId String @unique @map("tenant_id")
+  timezone String @default("America/Toronto")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
   
-  // Feature Flags
-  enableGarnishments Boolean @default(true)
-  autoApproveTime    Boolean @default(false)
-  
-  // Regional settings
-  timezone          String  @default("America/Toronto")
-  dateFormat        String  @default("YYYY-MM-DD")
+  @@map("tenant_settings")
 }
 
 model PayrollCycle {
-  id          String      @id @default(cuid())
-  tenantId    String
-  tenant      Tenant      @relation(fields: [tenantId], references: [id])
-  
-  name        String      // e.g., "Weekly Bi-weekly", "Monthly Executive"
-  frequency   PayFrequency
-  
-  // Used to project future pay dates
-  firstPeriodStart  DateTime
-  firstPayDate      DateTime
+  id        String        @id @default(cuid())
+  tenantId  String        @map("tenant_id")
+  name      String
+  frequency pay_frequency
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId])
+  @@map("payroll_cycle")
 }
 
 model Department {
-  id        String   @id @default(cuid())
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  name      String
-  code      String?  // e.g., "ENG", "MKT"
+  id       String  @id @default(cuid())
+  tenantId String  @map("tenant_id")
+  name     String
+  code     String?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@unique([tenantId, code])
-}
-
-enum PayFrequency {
-  WEEKLY
-  BIWEEKLY
-  SEMIMONTHLY
-  MONTHLY
+  @@map("department")
 }
 
 model ChartOfAccount {
-  id            String      @id @default(cuid())
-  tenantId      String
-  
-  code          String      // e.g., "5100", "2150"
-  name          String      // e.g., "Wages & Salaries", "CPP Payable"
-  description   String?
-  
-  type          AccountType
-  category      AccountCategory
-  
-  isActive      Boolean     @default(true)
-  
-  // Mapping logic: Which payroll items point here?
-  glMappings     GLMapping[]
+  id        String           @id @default(cuid())
+  tenantId  String           @map("tenant_id")
+  code      String
+  name      String
+  type      account_type
+  category  account_category
+  isActive  Boolean          @default(true) @map("is_active")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
 
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  glMappings GLMapping[]
 
-  @@unique([tenantId, code]) // Each tenant has unique codes
+  @@unique([tenantId, code])
   @@index([tenantId])
+  @@map("chart_of_account")
 }
 
 model GLMapping {
-  id                String       @id @default(cuid())
-  tenantId          String
-  chartOfAccountId  String
-  
-  // The trigger for this mapping
-  mappingType       MappingType
-  
-  // Specificity (Optional: e.g. "Bonus" for "Engineering" goes to a different account)
-  earningType       EarningType?
-  deductionType     DeductionType?
-  departmentId      String?      // Reference to Tenant Service Dept
-  
+  id                String        @id @default(cuid())
+  tenantId          String        @map("tenant_id")
+  chartOfAccountId  String        @map("chart_of_account_id")
+  mappingType       mapping_type  @map("mapping_type")
+  earningType       earning_type? @map("earning_type")
+  deductionType     deduction_type? @map("deduction_type")
+  departmentId      String?       @map("department_id")
+
   chartOfAccount    ChartOfAccount @relation(fields: [chartOfAccountId], references: [id])
 
   @@index([tenantId, mappingType])
+  @@map("gl_mapping")
 }
 
-enum AccountType {
-  ASSET
-  LIABILITY
-  EQUITY
-  REVENUE
-  EXPENSE
+// ==========================================
+// ===== ENUMS (Lowercase for Postgres) =====
+// ==========================================
+
+enum conversational_name_source {
+  user
+  support
+  import
+  system
 }
 
-enum AccountCategory {
-  CASH
-  PAYROLL_EXPENSE
-  TAX_PAYABLE
-  BENEFIT_PAYABLE
-  WAGES_PAYABLE
-  OTHER
+enum phone_type {
+  mobile
+  home
+  work
 }
 
-enum MappingType {
-  EARNING
-  DEDUCTION
-  EMPLOYER_TAX
-  NET_PAY_CLEARING
+enum employee_status {
+  active
+  terminated
+  on_leave
 }
 
-/*
-mapping flow
-1	Line Level	Look at earningType (e.g., "Regular") or deductionType (e.g., "Tax").
-2	Employee Level	Look at the departmentId and costCenterId associated with that specific JobAssignment.
-3	Mapping Level	Find the GLMapping that matches both the type and the department.
-4	Journal Level	Add the amount to the running total for that specific GL Account.
+enum pay_type {
+  hourly
+  salary
+}
 
-journalEntries look like:
-5100 - Wages (Eng)	DEBIT	$6,000	Total Regular Pay - Engineering
-5100 - Wages (Sales)	DEBIT	$4,000	Total Regular Pay - Sales
-2100 - Tax Payable	CREDIT	$2,500	Total Income Tax Withheld
-2150 - CPP Payable	CREDIT	$1,000	Total CPP (Employee + Employer)
-1010 - Bank Clearing	CREDIT	$6,500	Total Net Pay to be disbursed
+enum earning_type {
+  regular
+  overtime
+  bonus
+  commission
+  other
+}
 
-Granularity: Analyzes every PayrollLine/Deduction, but exports a Summarized Total per GL Account.
-*/
+enum payroll_run_status {
+  draft
+  finalized
+  paid
+}
+
+enum deduction_type {
+  tax
+  cpp
+  ei
+  benefit
+  other
+}
+
+enum distribution_type {
+  fixed_amount
+  percentage
+  remainder
+}
+
+enum disbursement_status {
+  pending
+  sent
+  failed
+  reconciled
+}
+
+enum pay_frequency {
+  weekly
+  biweekly
+  semimonthly
+  monthly
+}
+
+enum account_type {
+  asset
+  liability
+  equity
+  revenue
+  expense
+}
+
+enum account_category {
+  cash
+  payroll_expense
+  tax_payable
+  benefit_payable
+  wages_payable
+  other
+}
+
+enum mapping_type {
+  earning
+  deduction
+  employer_tax
+  net_pay_clearing
+}
