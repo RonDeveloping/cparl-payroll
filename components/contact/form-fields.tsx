@@ -5,16 +5,17 @@ import { ContactFormValues } from "@/lib/validations/contact";
 import FormSection from "@/components/form/FormSection";
 import InputWithChanges from "@/components/form/InputWithChanges";
 import SectionDisclosure from "@/components/section-disclosure";
-import { Clarification } from "@/components/Clarification";
+import { Clarification } from "@/components/clarification";
+import { IDENTITY_FIELDS, CONTACT_FIELDS } from "@/constants/contact-fields";
 
-/** Field definitions for mapping */
-type FieldDef = {
-  label: React.ReactNode;
-  name: keyof ContactFormValues;
-  error?: string | undefined;
-};
+// /** Field definitions for mapping */
+// type FieldDef = {
+//   label: React.ReactNode;
+//   name: keyof ContactFormValues;
+//   error?: string | undefined;
+// };
 
-type FieldDefWithError = FieldDef & { error: string | undefined };
+// type FieldDefWithError = FieldDef & { error: string | undefined };
 
 interface ContactFormFieldsProps {
   errors: FieldErrors<ContactFormValues>;
@@ -35,73 +36,77 @@ export function ContactFormFields({
 }: ContactFormFieldsProps) {
   // Move your field definition arrays here (mandatoryIdentityFields, etc.)
   // because they are specific to the UI layout.
-  const mandotoryIdentityFields: FieldDefWithError[] = [
-    {
-      label: "Given Name",
-      name: "givenName",
-      error: errors.givenName?.message,
-    },
-    {
-      label: "Family Name",
-      name: "familyName",
-      error: errors.familyName?.message,
-    },
-  ];
+  // const mandotoryIdentityFields: FieldDefWithError[] = [
+  //   {
+  //     label: "Given Name",
+  //     name: "givenName",
+  //     error: errors.givenName?.message,
+  //   },
+  //   {
+  //     label: "Family Name",
+  //     name: "familyName",
+  //     error: errors.familyName?.message,
+  //   },
+  // ];
 
-  const optionalIdentityFields: FieldDef[] = [
-    {
-      label: (
-        <Clarification
-          term="Middle Name"
-          description="This field can be beneficial if you wish to provide a more complete identification..."
-        />
-      ),
-      name: "middleName",
-      error: errors.middleName?.message,
-    },
-    { label: "Nickname", name: "nickName" },
-    { label: "Prefix", name: "prefix" },
-    { label: "Suffix", name: "suffix" },
-    {
-      label: (
-        <Clarification
-          term="Customized Display Name"
-          description="The default display name is 'Prefix'+'Given Name' + 'Middle Name' + 'Family Name' + 'Suffix'+ aka 'Nickname'. You can override that by providing a customized one, even in a different language, in this field."
-        />
-      ),
-      name: "displayName",
-    },
-  ];
+  // const optionalIdentityFields: FieldDef[] = [
+  //   {
+  //     label: (
+  //       <Clarification
+  //         term="Middle Name"
+  //         description="This field can be beneficial if you wish to provide a more complete identification..."
+  //       />
+  //     ),
+  //     name: "middleName",
+  //     error: errors.middleName?.message,
+  //   },
+  //   { label: "Nickname", name: "nickName" },
+  //   { label: "Prefix", name: "prefix" },
+  //   { label: "Suffix", name: "suffix" },
+  //   {
+  //     label: (
+  //       <Clarification
+  //         term="Customized Display Name"
+  //         description="The default display name is 'Prefix'+'Given Name' + 'Middle Name' + 'Family Name' + 'Suffix'+ aka 'Nickname'. You can override that by providing a customized one, even in a different language, in this field."
+  //       />
+  //     ),
+  //     name: "displayName",
+  //   },
+  // ];
 
-  const mandotoryContactFields: FieldDefWithError[] = [
-    { label: "Email", name: "email", error: errors.email?.message },
-    {
-      label: (
-        <Clarification
-          term="Postal Code"
-          description="Communication may be tailored to your pon postal code."
-        />
-      ),
-      name: "postalCode",
-      error: errors.postalCode?.message,
-    },
-  ];
+  // const mandotoryContactFields: FieldDefWithError[] = [
+  //   { label: "Email", name: "email", error: errors.email?.message },
+  //   {
+  //     label: (
+  //       <Clarification
+  //         term="Postal Code"
+  //         description="Communication may be tailored to your pon postal code."
+  //       />
+  //     ),
+  //     name: "postalCode",
+  //     error: errors.postalCode?.message,
+  //   },
+  // ];
 
-  const optionalContactFields: FieldDef[] = [
-    { label: "Phone", name: "phone", error: errors.phone?.message },
-    { label: "Street Address", name: "street", error: errors.street?.message },
-    { label: "City", name: "city" },
-    { label: "Province", name: "province" },
-    { label: "Country", name: "country" },
-  ];
+  // const optionalContactFields: FieldDef[] = [
+  //   { label: "Phone", name: "phone", error: errors.phone?.message },
+  //   { label: "Street Address", name: "street", error: errors.street?.message },
+  //   { label: "City", name: "city" },
+  //   { label: "Province", name: "province" },
+  //   { label: "Country", name: "country" },
+  // ];
 
   return (
     <>
       {/* Identity Section */}
       <FormSection title="Identity">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {mandotoryIdentityFields.map((f) => (
-            <InputWithChanges<ContactFormValues> key={f.name} {...f} />
+          {IDENTITY_FIELDS.mandatory.map((field) => (
+            <InputWithChanges<ContactFormValues>
+              key={field.name}
+              {...field}
+              error={errors[field.name]?.message}
+            />
           ))}
         </div>
         <SectionDisclosure
@@ -116,8 +121,12 @@ export function ContactFormFields({
           ${showOptionalIdentity ? "max-h-[400px]" : "max-h-0"}`}
         >
           <div className="mt-4 px-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {optionalIdentityFields.map((f) => (
-              <InputWithChanges<ContactFormValues> key={f.name} {...f} />
+            {IDENTITY_FIELDS.optional.map((field) => (
+              <InputWithChanges<ContactFormValues>
+                key={field.name}
+                {...field}
+                error={errors[field.name]?.message}
+              />
             ))}
           </div>
         </div>
@@ -126,8 +135,12 @@ export function ContactFormFields({
       {/* Contact Section */}
       <FormSection title="Contact">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {mandotoryContactFields.map((f) => (
-            <InputWithChanges<ContactFormValues> key={f.name} {...f} />
+          {CONTACT_FIELDS.mandatory.map((field) => (
+            <InputWithChanges<ContactFormValues>
+              key={field.name}
+              {...field}
+              error={errors[field.name]?.message}
+            />
           ))}
         </div>
         <SectionDisclosure
@@ -142,8 +155,12 @@ export function ContactFormFields({
           ${showOptionalContact ? "max-h-[400px]" : "max-h-0"}`}
         >
           <div className="mt-4 px-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {optionalContactFields.map((f) => (
-              <InputWithChanges<ContactFormValues> key={f.name} {...f} />
+            {CONTACT_FIELDS.optional.map((field) => (
+              <InputWithChanges<ContactFormValues>
+                key={field.name}
+                {...field}
+                error={errors[field.name]?.message}
+              />
             ))}
           </div>
         </div>
