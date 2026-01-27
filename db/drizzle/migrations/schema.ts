@@ -5,116 +5,86 @@ import {
   text,
   integer,
   uniqueIndex,
-  serial,
+  boolean,
   index,
   foreignKey,
-  boolean,
-  numeric,
   jsonb,
-  primaryKey,
+  numeric,
   pgEnum,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { bytea } from "../customTypes";
 
-export const accountCategory = pgEnum("AccountCategory", [
-  "CASH",
-  "PAYROLL_EXPENSE",
-  "TAX_PAYABLE",
-  "BENEFIT_PAYABLE",
-  "WAGES_PAYABLE",
-  "OTHER",
+export const accountCategory = pgEnum("account_category", [
+  "cash",
+  "payroll_expense",
+  "tax_payable",
+  "benefit_payable",
+  "wages_payable",
+  "other",
 ]);
-export const accountType = pgEnum("AccountType", [
-  "ASSET",
-  "LIABILITY",
-  "EQUITY",
-  "REVENUE",
-  "EXPENSE",
+export const accountType = pgEnum("account_type", [
+  "asset",
+  "liability",
+  "equity",
+  "revenue",
+  "expense",
 ]);
-export const conversationalNameSource = pgEnum("ConversationalNameSource", [
-  "USER",
-  "SUPPORT",
-  "IMPORT",
-  "SYSTEM",
+export const conversationalNameSource = pgEnum("conversational_name_source", [
+  "user",
+  "support",
+  "import",
+  "system",
 ]);
-export const deductionType = pgEnum("DeductionType", [
-  "TAX",
-  "CPP",
-  "EI",
-  "BENEFIT",
-  "OTHER",
+export const deductionType = pgEnum("deduction_type", [
+  "tax",
+  "cpp",
+  "ei",
+  "benefit",
+  "other",
 ]);
-export const disbursementStatus = pgEnum("DisbursementStatus", [
-  "PENDING",
-  "SENT",
-  "FAILED",
-  "RECONCILED",
+export const disbursementStatus = pgEnum("disbursement_status", [
+  "pending",
+  "sent",
+  "failed",
+  "reconciled",
 ]);
-export const distributionType = pgEnum("DistributionType", [
-  "FIXED_AMOUNT",
-  "PERCENTAGE",
-  "REMAINDER",
+export const distributionType = pgEnum("distribution_type", [
+  "fixed_amount",
+  "percentage",
+  "remainder",
 ]);
-export const earningType = pgEnum("EarningType", [
-  "REGULAR",
-  "OVERTIME",
-  "BONUS",
-  "COMMISSION",
-  "OTHER",
+export const earningType = pgEnum("earning_type", [
+  "regular",
+  "overtime",
+  "bonus",
+  "commission",
+  "other",
 ]);
-export const employeeStatus = pgEnum("EmployeeStatus", [
-  "ACTIVE",
-  "TERMINATED",
-  "ON_LEAVE",
+export const employeeStatus = pgEnum("employee_status", [
+  "active",
+  "terminated",
+  "on_leave",
 ]);
-export const entryType = pgEnum("EntryType", ["DEBIT", "CREDIT"]);
-export const journalStatus = pgEnum("JournalStatus", [
-  "PENDING",
-  "POSTED",
-  "FAILED",
-  "VOIDED",
+export const mappingType = pgEnum("mapping_type", [
+  "earning",
+  "deduction",
+  "employer_tax",
+  "net_pay_clearing",
 ]);
-export const mappingType = pgEnum("MappingType", [
-  "EARNING",
-  "DEDUCTION",
-  "EMPLOYER_TAX",
-  "NET_PAY_CLEARING",
+export const payFrequency = pgEnum("pay_frequency", [
+  "weekly",
+  "biweekly",
+  "semimonthly",
+  "monthly",
 ]);
-export const payFrequency = pgEnum("PayFrequency", [
-  "WEEKLY",
-  "BIWEEKLY",
-  "SEMIMONTHLY",
-  "MONTHLY",
+export const payType = pgEnum("pay_type", ["hourly", "salary"]);
+export const payrollRunStatus = pgEnum("payroll_run_status", [
+  "draft",
+  "finalized",
+  "paid",
 ]);
-export const payType = pgEnum("PayType", ["HOURLY", "SALARY"]);
-export const payrollRunStatus = pgEnum("PayrollRunStatus", [
-  "DRAFT",
-  "FINALIZED",
-  "PAID",
-]);
-export const phoneType = pgEnum("PhoneType", ["MOBILE", "HOME", "WORK"]);
-export const roeReasonCode = pgEnum("ROEReasonCode", [
-  "A_SHORTAGE_OF_WORK",
-  "B_STRIKE_LOCKOUT",
-  "C_RETURN_TO_SCHOOL",
-  "D_ILLNESS_INJURY",
-  "E_QUIT",
-  "F_MATERNITY",
-  "G_RETIREMENT",
-  "H_WORK_SHARING",
-  "J_DISMISSAL",
-  "M_DISMISSAL_PROBATION",
-  "N_LEAVE_OF_ABSENCE",
-  "P_PARENTAL",
-  "OTHER",
-]);
-export const remittanceStatus = pgEnum("RemittanceStatus", [
-  "PENDING",
-  "REVIEWED",
-  "FILED",
-  "PAID",
-  "CANCELLED",
-]);
+export const phoneType = pgEnum("phone_type", ["mobile", "home", "work"]);
 
 export const prismaMigrations = pgTable("_prisma_migrations", {
   id: varchar({ length: 36 }).primaryKey().notNull(),
@@ -133,240 +103,83 @@ export const prismaMigrations = pgTable("_prisma_migrations", {
 });
 
 export const user = pgTable(
-  "User",
-  {
-    id: serial().primaryKey().notNull(),
-    name: text().notNull(),
-    email: text().notNull(),
-  },
-  (table) => [
-    uniqueIndex("User_email_key").using(
-      "btree",
-      table.email.asc().nullsLast().op("text_ops"),
-    ),
-  ],
-);
-
-export const address = pgTable(
-  "Address",
+  "user",
   {
     id: text().primaryKey().notNull(),
-    street: text().notNull(),
-    city: text().notNull(),
-    province: text().notNull(),
-    postalCode: text().notNull(),
-    country: text().notNull(),
-    isPrimary: boolean().default(false).notNull(),
-    addressHash: text().notNull(),
-    contactId: text().notNull(),
-  },
-  (table) => [
-    uniqueIndex("Address_contactId_addressHash_key").using(
-      "btree",
-      table.contactId.asc().nullsLast().op("text_ops"),
-      table.addressHash.asc().nullsLast().op("text_ops"),
-    ),
-    index("Address_contactId_idx").using(
-      "btree",
-      table.contactId.asc().nullsLast().op("text_ops"),
-    ),
-    foreignKey({
-      columns: [table.contactId],
-      foreignColumns: [contact.id],
-      name: "Address_contactId_fkey",
-    })
-      .onUpdate("cascade")
-      .onDelete("restrict"),
-  ],
-);
-
-export const email = pgTable(
-  "Email",
-  {
-    id: text().primaryKey().notNull(),
-    isPrimary: boolean().default(false).notNull(),
-    contactId: text().notNull(),
-    createdAt: timestamp({ precision: 3, mode: "string" })
+    slug: text().notNull(),
+    displayName: text("display_name").notNull(),
+    securityEmail: text("security_email").notNull(),
+    emailVerifiedAt: timestamp("email_verified_at", {
+      precision: 3,
+      mode: "string",
+    }),
+    pendingSecurityEmail: text("pending_security_email"),
+    passwordHash: text("password_hash"),
+    contactId: text("contact_id").notNull(),
+    createdAt: timestamp("created_at", { precision: 3, mode: "string" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
-    updatedAt: timestamp({ precision: 3, mode: "string" }).notNull(),
-    address: text().notNull(),
+    updatedAt: timestamp("updated_at", {
+      precision: 3,
+      mode: "string",
+    }).notNull(),
   },
   (table) => [
-    uniqueIndex("Email_contactId_address_key").using(
-      "btree",
-      table.contactId.asc().nullsLast().op("text_ops"),
-      table.address.asc().nullsLast().op("text_ops"),
-    ),
-    index("Email_contactId_idx").using(
+    uniqueIndex("user_contact_id_key").using(
       "btree",
       table.contactId.asc().nullsLast().op("text_ops"),
     ),
-    foreignKey({
-      columns: [table.contactId],
-      foreignColumns: [contact.id],
-      name: "Email_contactId_fkey",
-    })
-      .onUpdate("cascade")
-      .onDelete("restrict"),
-  ],
-);
-
-export const bankAccount = pgTable(
-  "BankAccount",
-  {
-    id: text().primaryKey().notNull(),
-    institutionNumber: integer().notNull(),
-    branchNumber: integer().notNull(),
-    accountNumber: text().notNull(),
-    currency: text().default("CAD").notNull(),
-    isPrimary: boolean().default(false).notNull(),
-    employeeId: text().notNull(),
-    isActive: boolean().default(true).notNull(),
-    label: text(),
-    priority: integer().default(1).notNull(),
-    type: distributionType().default("REMAINDER").notNull(),
-    value: numeric({ precision: 10, scale: 2 }),
-  },
-  (table) => [
-    index("BankAccount_employeeId_idx").using(
+    uniqueIndex("user_security_email_key").using(
       "btree",
-      table.employeeId.asc().nullsLast().op("text_ops"),
+      table.securityEmail.asc().nullsLast().op("text_ops"),
     ),
-    foreignKey({
-      columns: [table.employeeId],
-      foreignColumns: [employee.id],
-      name: "BankAccount_employeeId_fkey",
-    })
-      .onUpdate("cascade")
-      .onDelete("restrict"),
-  ],
-);
-
-export const phone = pgTable(
-  "Phone",
-  {
-    id: text().primaryKey().notNull(),
-    number: text().notNull(),
-    type: phoneType().default("MOBILE"),
-    isPrimary: boolean().default(false).notNull(),
-    contactId: text().notNull(),
-  },
-  (table) => [
-    index("Phone_contactId_idx").using(
+    uniqueIndex("user_slug_key").using(
       "btree",
-      table.contactId.asc().nullsLast().op("text_ops"),
-    ),
-    uniqueIndex("Phone_contactId_number_key").using(
-      "btree",
-      table.contactId.asc().nullsLast().op("text_ops"),
-      table.number.asc().nullsLast().op("text_ops"),
-    ),
-    foreignKey({
-      columns: [table.contactId],
-      foreignColumns: [contact.id],
-      name: "Phone_contactId_fkey",
-    })
-      .onUpdate("cascade")
-      .onDelete("restrict"),
-  ],
-);
-
-export const statHoliday = pgTable(
-  "StatHoliday",
-  {
-    id: text().primaryKey().notNull(),
-    tenantId: text().notNull(),
-    date: timestamp({ precision: 3, mode: "string" }).notNull(),
-    name: text().notNull(),
-    isPaid: boolean().notNull(),
-    provinceCode: text().default("CA").notNull(),
-  },
-  (table) => [
-    index("StatHoliday_tenantId_date_idx").using(
-      "btree",
-      table.tenantId.asc().nullsLast().op("text_ops"),
-      table.date.asc().nullsLast().op("text_ops"),
-    ),
-    uniqueIndex("StatHoliday_tenantId_date_provinceCode_key").using(
-      "btree",
-      table.tenantId.asc().nullsLast().op("text_ops"),
-      table.date.asc().nullsLast().op("text_ops"),
-      table.provinceCode.asc().nullsLast().op("text_ops"),
+      table.slug.asc().nullsLast().op("text_ops"),
     ),
   ],
 );
 
-export const paySlip = pgTable(
-  "PaySlip",
-  {
-    id: text().primaryKey().notNull(),
-    createdAt: timestamp({ precision: 3, mode: "string" })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: timestamp({ precision: 3, mode: "string" }).notNull(),
-    s3Key: text().notNull(),
-    fileName: text().notNull(),
-    fileSize: integer().notNull(),
-    employeeId: text().notNull(),
-    tenantId: text().notNull(),
-  },
-  (table) => [
-    index("PaySlip_employeeId_createdAt_idx").using(
-      "btree",
-      table.employeeId.asc().nullsLast().op("text_ops"),
-      table.createdAt.asc().nullsLast().op("timestamp_ops"),
-    ),
-    index("PaySlip_employeeId_idx").using(
-      "btree",
-      table.employeeId.asc().nullsLast().op("text_ops"),
-    ),
-    index("PaySlip_tenantId_createdAt_idx").using(
-      "btree",
-      table.tenantId.asc().nullsLast().op("timestamp_ops"),
-      table.createdAt.asc().nullsLast().op("timestamp_ops"),
-    ),
-    index("PaySlip_tenantId_idx").using(
-      "btree",
-      table.tenantId.asc().nullsLast().op("text_ops"),
-    ),
-  ],
-);
-
-export const contact = pgTable("Contact", {
+export const contact = pgTable("contact", {
   id: text().primaryKey().notNull(),
-  givenName: text().notNull(),
-  familyName: text().notNull(),
-  middleName: text(),
+  givenName: text("given_name").notNull(),
+  familyName: text("family_name").notNull(),
+  middleName: text("middle_name"),
   suffix: text(),
   prefix: text(),
-  nickName: text(),
-  displayName: text(),
-  isActive: boolean().default(true).notNull(),
-  createdAt: timestamp({ precision: 3, mode: "string" })
+  nickName: text("nick_name"),
+  displayName: text("display_name"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at", { precision: 3, mode: "string" })
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
-  updatedAt: timestamp({ precision: 3, mode: "string" }).notNull(),
+  updatedAt: timestamp("updated_at", {
+    precision: 3,
+    mode: "string",
+  }).notNull(),
 });
 
 export const legalNameHistory = pgTable(
-  "LegalNameHistory",
+  "legal_name_history",
   {
     id: text().primaryKey().notNull(),
-    contactId: text().notNull(),
-    givenName: text().notNull(),
-    familyName: text().notNull(),
-    middleName: text(),
-    effectiveFrom: timestamp({ precision: 3, mode: "string" }).notNull(),
-    effectiveTo: timestamp({ precision: 3, mode: "string" }),
-    changedBy: text(),
+    contactId: text("contact_id").notNull(),
+    givenName: text("given_name").notNull(),
+    familyName: text("family_name").notNull(),
+    middleName: text("middle_name"),
+    effectiveFrom: timestamp("effective_from", {
+      precision: 3,
+      mode: "string",
+    }).notNull(),
+    effectiveTo: timestamp("effective_to", { precision: 3, mode: "string" }),
+    changedBy: text("changed_by"),
     reason: text(),
-    createdAt: timestamp({ precision: 3, mode: "string" })
+    createdAt: timestamp("created_at", { precision: 3, mode: "string" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
   },
   (table) => [
-    index("LegalNameHistory_contactId_effectiveFrom_idx").using(
+    index("legal_name_history_contact_id_effective_from_idx").using(
       "btree",
       table.contactId.asc().nullsLast().op("text_ops"),
       table.effectiveFrom.asc().nullsLast().op("text_ops"),
@@ -374,7 +187,7 @@ export const legalNameHistory = pgTable(
     foreignKey({
       columns: [table.contactId],
       foreignColumns: [contact.id],
-      name: "LegalNameHistory_contactId_fkey",
+      name: "legal_name_history_contact_id_fkey",
     })
       .onUpdate("cascade")
       .onDelete("restrict"),
@@ -382,23 +195,26 @@ export const legalNameHistory = pgTable(
 );
 
 export const conversationalNameHistory = pgTable(
-  "ConversationalNameHistory",
+  "conversational_name_history",
   {
     id: text().primaryKey().notNull(),
-    contactId: text().notNull(),
+    contactId: text("contact_id").notNull(),
     suffix: text(),
     prefix: text(),
-    nickName: text(),
-    displayName: text(),
+    nickName: text("nick_name"),
+    displayName: text("display_name"),
     source: conversationalNameSource(),
-    effectiveFrom: timestamp({ precision: 3, mode: "string" }).notNull(),
-    effectiveTo: timestamp({ precision: 3, mode: "string" }),
-    createdAt: timestamp({ precision: 3, mode: "string" })
+    effectiveFrom: timestamp("effective_from", {
+      precision: 3,
+      mode: "string",
+    }).notNull(),
+    effectiveTo: timestamp("effective_to", { precision: 3, mode: "string" }),
+    createdAt: timestamp("created_at", { precision: 3, mode: "string" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
   },
   (table) => [
-    index("ConversationalNameHistory_contactId_effectiveFrom_idx").using(
+    index("conversational_name_history_contact_id_effective_from_idx").using(
       "btree",
       table.contactId.asc().nullsLast().op("text_ops"),
       table.effectiveFrom.asc().nullsLast().op("text_ops"),
@@ -406,7 +222,104 @@ export const conversationalNameHistory = pgTable(
     foreignKey({
       columns: [table.contactId],
       foreignColumns: [contact.id],
-      name: "ConversationalNameHistory_contactId_fkey",
+      name: "conversational_name_history_contact_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("restrict"),
+  ],
+);
+
+export const address = pgTable(
+  "address",
+  {
+    id: text().primaryKey().notNull(),
+    contactId: text("contact_id").notNull(),
+    street: text().notNull(),
+    city: text().notNull(),
+    province: text().notNull(),
+    postalCode: text("postal_code").notNull(),
+    country: text().notNull(),
+    addressHash: text("address_hash").notNull(),
+    isPrimary: boolean("is_primary").default(false).notNull(),
+  },
+  (table) => [
+    uniqueIndex("address_contact_id_address_hash_key").using(
+      "btree",
+      table.contactId.asc().nullsLast().op("text_ops"),
+      table.addressHash.asc().nullsLast().op("text_ops"),
+    ),
+    index("address_contact_id_idx").using(
+      "btree",
+      table.contactId.asc().nullsLast().op("text_ops"),
+    ),
+    foreignKey({
+      columns: [table.contactId],
+      foreignColumns: [contact.id],
+      name: "address_contact_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("restrict"),
+  ],
+);
+
+export const email = pgTable(
+  "email",
+  {
+    id: text().primaryKey().notNull(),
+    contactId: text("contact_id").notNull(),
+    isPrimary: boolean("is_primary").default(false).notNull(),
+    createdAt: timestamp("created_at", { precision: 3, mode: "string" })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp("updated_at", {
+      precision: 3,
+      mode: "string",
+    }).notNull(),
+    emailAddress: text("email_address").notNull(),
+  },
+  (table) => [
+    uniqueIndex("email_contact_id_email_address_key").using(
+      "btree",
+      table.contactId.asc().nullsLast().op("text_ops"),
+      table.emailAddress.asc().nullsLast().op("text_ops"),
+    ),
+    index("email_contact_id_idx").using(
+      "btree",
+      table.contactId.asc().nullsLast().op("text_ops"),
+    ),
+    foreignKey({
+      columns: [table.contactId],
+      foreignColumns: [contact.id],
+      name: "email_contact_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("restrict"),
+  ],
+);
+
+export const phone = pgTable(
+  "phone",
+  {
+    id: text().primaryKey().notNull(),
+    contactId: text("contact_id").notNull(),
+    number: text().notNull(),
+    type: phoneType().default("mobile"),
+    isPrimary: boolean("is_primary").default(false).notNull(),
+  },
+  (table) => [
+    index("phone_contact_id_idx").using(
+      "btree",
+      table.contactId.asc().nullsLast().op("text_ops"),
+    ),
+    uniqueIndex("phone_contact_id_number_key").using(
+      "btree",
+      table.contactId.asc().nullsLast().op("text_ops"),
+      table.number.asc().nullsLast().op("text_ops"),
+    ),
+    foreignKey({
+      columns: [table.contactId],
+      foreignColumns: [contact.id],
+      name: "phone_contact_id_fkey",
     })
       .onUpdate("cascade")
       .onDelete("restrict"),
@@ -414,36 +327,42 @@ export const conversationalNameHistory = pgTable(
 );
 
 export const employee = pgTable(
-  "Employee",
+  "employee",
   {
     id: text().primaryKey().notNull(),
-    tenantId: text().notNull(),
-    contactId: text().notNull(),
-    employeeNumber: text(),
-    // TODO: failed to parse database type 'bytea'
-    taxIdEncrypted: text().notNull(),
-    taxIdLast4: text().notNull(),
-    dateOfBirth: timestamp({ precision: 3, mode: "string" }).notNull(),
-    hireDate: timestamp({ precision: 3, mode: "string" }).notNull(),
+    tenantId: text("tenant_id").notNull(),
+    contactId: text("contact_id").notNull(),
+    employeeNumber: text("employee_number"),
+    taxIdEncrypted: bytea("tax_id_encrypted").notNull(),
+    taxIdLast4: text("tax_id_last_4").notNull(),
+    dateOfBirth: timestamp("date_of_birth", {
+      precision: 3,
+      mode: "string",
+    }).notNull(),
+    hireDate: timestamp("hire_date", {
+      precision: 3,
+      mode: "string",
+    }).notNull(),
     status: employeeStatus().notNull(),
-    terminationDate: timestamp({ precision: 3, mode: "string" }),
-    terminationReason: roeReasonCode(),
-    createdAt: timestamp({ precision: 3, mode: "string" })
+    createdAt: timestamp("created_at", { precision: 3, mode: "string" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
-    updatedAt: timestamp({ precision: 3, mode: "string" }).notNull(),
-    addressCached: jsonb().notNull(),
-    emailCached: text(),
-    phoneCached: jsonb(),
-    nameCached: jsonb().notNull(),
+    updatedAt: timestamp("updated_at", {
+      precision: 3,
+      mode: "string",
+    }).notNull(),
+    addressCached: jsonb("address_cached").notNull(),
+    emailCached: text("email_cached"),
+    phoneCached: jsonb("phone_cached"),
+    nameCached: jsonb("name_cached").notNull(),
   },
   (table) => [
-    uniqueIndex("Employee_tenantId_contactId_key").using(
+    uniqueIndex("employee_tenant_id_contact_id_key").using(
       "btree",
       table.tenantId.asc().nullsLast().op("text_ops"),
       table.contactId.asc().nullsLast().op("text_ops"),
     ),
-    uniqueIndex("Employee_tenantId_employeeNumber_key").using(
+    uniqueIndex("employee_tenant_id_employee_number_key").using(
       "btree",
       table.tenantId.asc().nullsLast().op("text_ops"),
       table.employeeNumber.asc().nullsLast().op("text_ops"),
@@ -452,28 +371,31 @@ export const employee = pgTable(
 );
 
 export const employment = pgTable(
-  "Employment",
+  "employment",
   {
     id: text().primaryKey().notNull(),
-    tenantId: text().notNull(),
-    employeeId: text().notNull(),
+    tenantId: text("tenant_id").notNull(),
+    employeeId: text("employee_id").notNull(),
     title: text(),
     department: text(),
-    startDate: timestamp({ precision: 3, mode: "string" }).notNull(),
-    endDate: timestamp({ precision: 3, mode: "string" }),
-    countryCode: text().default("CA").notNull(),
-    provinceCode: text().notNull(),
-    createdAt: timestamp({ precision: 3, mode: "string" })
+    startDate: timestamp("start_date", {
+      precision: 3,
+      mode: "string",
+    }).notNull(),
+    endDate: timestamp("end_date", { precision: 3, mode: "string" }),
+    countryCode: text("country_code").default("CA").notNull(),
+    provinceCode: text("province_code").notNull(),
+    createdAt: timestamp("created_at", { precision: 3, mode: "string" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
   },
   (table) => [
-    index("Employment_employeeId_startDate_idx").using(
+    index("employment_employee_id_start_date_idx").using(
       "btree",
       table.employeeId.asc().nullsLast().op("text_ops"),
       table.startDate.asc().nullsLast().op("timestamp_ops"),
     ),
-    index("Employment_tenantId_employeeId_startDate_idx").using(
+    index("employment_tenant_id_employee_id_start_date_idx").using(
       "btree",
       table.tenantId.asc().nullsLast().op("timestamp_ops"),
       table.employeeId.asc().nullsLast().op("timestamp_ops"),
@@ -482,7 +404,7 @@ export const employment = pgTable(
     foreignKey({
       columns: [table.employeeId],
       foreignColumns: [employee.id],
-      name: "Employment_employeeId_fkey",
+      name: "employment_employee_id_fkey",
     })
       .onUpdate("cascade")
       .onDelete("restrict"),
@@ -490,20 +412,20 @@ export const employment = pgTable(
 );
 
 export const jobAssignment = pgTable(
-  "JobAssignment",
+  "job_assignment",
   {
     id: text().primaryKey().notNull(),
-    employmentId: text().notNull(),
-    departmentId: text(),
-    costCenterId: text(),
-    projectCode: text(),
-    startDate: timestamp({ precision: 3, mode: "string" }).notNull(),
-    endDate: timestamp({ precision: 3, mode: "string" }),
-    payRate: numeric({ precision: 10, scale: 2 }).notNull(),
-    payType: payType().notNull(),
+    employmentId: text("employment_id").notNull(),
+    startDate: timestamp("start_date", {
+      precision: 3,
+      mode: "string",
+    }).notNull(),
+    endDate: timestamp("end_date", { precision: 3, mode: "string" }),
+    payRate: numeric("pay_rate", { precision: 10, scale: 2 }).notNull(),
+    payType: payType("pay_type").notNull(),
   },
   (table) => [
-    index("JobAssignment_employmentId_startDate_idx").using(
+    index("job_assignment_employment_id_start_date_idx").using(
       "btree",
       table.employmentId.asc().nullsLast().op("text_ops"),
       table.startDate.asc().nullsLast().op("text_ops"),
@@ -511,7 +433,7 @@ export const jobAssignment = pgTable(
     foreignKey({
       columns: [table.employmentId],
       foreignColumns: [employment.id],
-      name: "JobAssignment_employmentId_fkey",
+      name: "job_assignment_employment_id_fkey",
     })
       .onUpdate("cascade")
       .onDelete("restrict"),
@@ -519,15 +441,18 @@ export const jobAssignment = pgTable(
 );
 
 export const timeEntry = pgTable(
-  "TimeEntry",
+  "time_entry",
   {
     id: text().primaryKey().notNull(),
-    jobAssignmentId: text().notNull(),
-    workDate: timestamp({ precision: 3, mode: "string" }).notNull(),
+    jobAssignmentId: text("job_assignment_id").notNull(),
+    workDate: timestamp("work_date", {
+      precision: 3,
+      mode: "string",
+    }).notNull(),
     hours: numeric({ precision: 6, scale: 2 }).notNull(),
   },
   (table) => [
-    index("TimeEntry_jobAssignmentId_workDate_idx").using(
+    index("time_entry_job_assignment_id_work_date_idx").using(
       "btree",
       table.jobAssignmentId.asc().nullsLast().op("text_ops"),
       table.workDate.asc().nullsLast().op("text_ops"),
@@ -535,7 +460,7 @@ export const timeEntry = pgTable(
     foreignKey({
       columns: [table.jobAssignmentId],
       foreignColumns: [jobAssignment.id],
-      name: "TimeEntry_jobAssignmentId_fkey",
+      name: "time_entry_job_assignment_id_fkey",
     })
       .onUpdate("cascade")
       .onDelete("restrict"),
@@ -543,20 +468,26 @@ export const timeEntry = pgTable(
 );
 
 export const payrollRun = pgTable(
-  "PayrollRun",
+  "payroll_run",
   {
     id: text().primaryKey().notNull(),
-    tenantId: text().notNull(),
-    periodStart: timestamp({ precision: 3, mode: "string" }).notNull(),
-    periodEnd: timestamp({ precision: 3, mode: "string" }).notNull(),
-    runDate: timestamp({ precision: 3, mode: "string" }).notNull(),
+    tenantId: text("tenant_id").notNull(),
+    periodStart: timestamp("period_start", {
+      precision: 3,
+      mode: "string",
+    }).notNull(),
+    periodEnd: timestamp("period_end", {
+      precision: 3,
+      mode: "string",
+    }).notNull(),
+    runDate: timestamp("run_date", { precision: 3, mode: "string" }).notNull(),
     status: payrollRunStatus().notNull(),
-    createdAt: timestamp({ precision: 3, mode: "string" })
+    createdAt: timestamp("created_at", { precision: 3, mode: "string" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
   },
   (table) => [
-    uniqueIndex("PayrollRun_tenantId_periodStart_periodEnd_key").using(
+    uniqueIndex("payroll_run_tenant_id_period_start_period_end_key").using(
       "btree",
       table.tenantId.asc().nullsLast().op("text_ops"),
       table.periodStart.asc().nullsLast().op("text_ops"),
@@ -566,22 +497,22 @@ export const payrollRun = pgTable(
 );
 
 export const payrollRunEmployee = pgTable(
-  "PayrollRunEmployee",
+  "payroll_run_employee",
   {
     id: text().primaryKey().notNull(),
-    payrollRunId: text().notNull(),
-    employeeId: text().notNull(),
-    nameSnapshot: text().notNull(),
-    addressSnapshot: text().notNull(),
-    grossPay: numeric({ precision: 10, scale: 2 }).notNull(),
+    payrollRunId: text("payroll_run_id").notNull(),
+    employeeId: text("employee_id").notNull(),
+    nameSnapshot: text("name_snapshot").notNull(),
+    addressSnapshot: text("address_snapshot").notNull(),
+    grossPay: numeric("gross_pay", { precision: 10, scale: 2 }).notNull(),
     deductions: numeric({ precision: 10, scale: 2 }).notNull(),
-    netPay: numeric({ precision: 10, scale: 2 }).notNull(),
-    createdAt: timestamp({ precision: 3, mode: "string" })
+    netPay: numeric("net_pay", { precision: 10, scale: 2 }).notNull(),
+    createdAt: timestamp("created_at", { precision: 3, mode: "string" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
   },
   (table) => [
-    uniqueIndex("PayrollRunEmployee_payrollRunId_employeeId_key").using(
+    uniqueIndex("payroll_run_employee_payroll_run_id_employee_id_key").using(
       "btree",
       table.payrollRunId.asc().nullsLast().op("text_ops"),
       table.employeeId.asc().nullsLast().op("text_ops"),
@@ -589,14 +520,14 @@ export const payrollRunEmployee = pgTable(
     foreignKey({
       columns: [table.payrollRunId],
       foreignColumns: [payrollRun.id],
-      name: "PayrollRunEmployee_payrollRunId_fkey",
+      name: "payroll_run_employee_payroll_run_id_fkey",
     })
       .onUpdate("cascade")
       .onDelete("restrict"),
     foreignKey({
       columns: [table.employeeId],
       foreignColumns: [employee.id],
-      name: "PayrollRunEmployee_employeeId_fkey",
+      name: "payroll_run_employee_employee_id_fkey",
     })
       .onUpdate("cascade")
       .onDelete("restrict"),
@@ -604,30 +535,28 @@ export const payrollRunEmployee = pgTable(
 );
 
 export const payrollLine = pgTable(
-  "PayrollLine",
+  "payroll_line",
   {
     id: text().primaryKey().notNull(),
-    payrollRunEmployeeId: text().notNull(),
-    jobAssignmentId: text(),
+    payrollRunEmployeeId: text("payroll_run_employee_id").notNull(),
+    jobAssignmentId: text("job_assignment_id"),
     rate: numeric({ precision: 10, scale: 2 }).notNull(),
     units: numeric({ precision: 6, scale: 2 }).notNull(),
     amount: numeric({ precision: 10, scale: 2 }).notNull(),
-    earningType: earningType().notNull(),
-    costCenterId: text(),
-    departmentId: text(),
+    earningType: earningType("earning_type").notNull(),
   },
   (table) => [
     foreignKey({
       columns: [table.payrollRunEmployeeId],
       foreignColumns: [payrollRunEmployee.id],
-      name: "PayrollLine_payrollRunEmployeeId_fkey",
+      name: "payroll_line_payroll_run_employee_id_fkey",
     })
       .onUpdate("cascade")
       .onDelete("restrict"),
     foreignKey({
       columns: [table.jobAssignmentId],
       foreignColumns: [jobAssignment.id],
-      name: "PayrollLine_jobAssignmentId_fkey",
+      name: "payroll_line_job_assignment_id_fkey",
     })
       .onUpdate("cascade")
       .onDelete("set null"),
@@ -635,18 +564,18 @@ export const payrollLine = pgTable(
 );
 
 export const deduction = pgTable(
-  "Deduction",
+  "deduction",
   {
     id: text().primaryKey().notNull(),
-    payrollRunEmployeeId: text().notNull(),
+    payrollRunEmployeeId: text("payroll_run_employee_id").notNull(),
     type: deductionType().notNull(),
     amount: numeric({ precision: 10, scale: 2 }).notNull(),
-    createdAt: timestamp({ precision: 3, mode: "string" })
+    createdAt: timestamp("created_at", { precision: 3, mode: "string" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
   },
   (table) => [
-    uniqueIndex("Deduction_payrollRunEmployeeId_type_key").using(
+    uniqueIndex("deduction_payroll_run_employee_id_type_key").using(
       "btree",
       table.payrollRunEmployeeId.asc().nullsLast().op("text_ops"),
       table.type.asc().nullsLast().op("text_ops"),
@@ -654,7 +583,36 @@ export const deduction = pgTable(
     foreignKey({
       columns: [table.payrollRunEmployeeId],
       foreignColumns: [payrollRunEmployee.id],
-      name: "Deduction_payrollRunEmployeeId_fkey",
+      name: "deduction_payroll_run_employee_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("restrict"),
+  ],
+);
+
+export const bankAccount = pgTable(
+  "bank_account",
+  {
+    id: text().primaryKey().notNull(),
+    employeeId: text("employee_id").notNull(),
+    institutionNumber: integer("institution_number").notNull(),
+    branchNumber: integer("branch_number").notNull(),
+    accountNumber: text("account_number").notNull(),
+    currency: text().default("CAD").notNull(),
+    isPrimary: boolean("is_primary").default(false).notNull(),
+    type: distributionType().default("remainder").notNull(),
+    value: numeric({ precision: 10, scale: 2 }),
+    isActive: boolean("is_active").default(true).notNull(),
+  },
+  (table) => [
+    index("bank_account_employee_id_idx").using(
+      "btree",
+      table.employeeId.asc().nullsLast().op("text_ops"),
+    ),
+    foreignKey({
+      columns: [table.employeeId],
+      foreignColumns: [employee.id],
+      name: "bank_account_employee_id_fkey",
     })
       .onUpdate("cascade")
       .onDelete("restrict"),
@@ -662,140 +620,51 @@ export const deduction = pgTable(
 );
 
 export const payrollDisbursement = pgTable(
-  "PayrollDisbursement",
+  "payroll_disbursement",
   {
     id: text().primaryKey().notNull(),
-    payrollRunEmployeeId: text().notNull(),
-    institutionNumber: integer().notNull(),
-    branchNumber: integer().notNull(),
-    accountNumber: text().notNull(),
-    bankLabel: text(),
+    payrollRunEmployeeId: text("payroll_run_employee_id").notNull(),
+    institutionNumber: integer("institution_number").notNull(),
+    branchNumber: integer("branch_number").notNull(),
+    accountNumber: text("account_number").notNull(),
     amount: numeric({ precision: 10, scale: 2 }).notNull(),
-    status: disbursementStatus().default("PENDING").notNull(),
-    referenceNumber: text(),
-    processedAt: timestamp({ precision: 3, mode: "string" }),
+    status: disbursementStatus().default("pending").notNull(),
+    processedAt: timestamp("processed_at", { precision: 3, mode: "string" }),
   },
   (table) => [
-    index("PayrollDisbursement_payrollRunEmployeeId_idx").using(
+    index("payroll_disbursement_payroll_run_employee_id_idx").using(
       "btree",
       table.payrollRunEmployeeId.asc().nullsLast().op("text_ops"),
     ),
     foreignKey({
       columns: [table.payrollRunEmployeeId],
       foreignColumns: [payrollRunEmployee.id],
-      name: "PayrollDisbursement_payrollRunEmployeeId_fkey",
+      name: "payroll_disbursement_payroll_run_employee_id_fkey",
     })
       .onUpdate("cascade")
       .onDelete("restrict"),
-  ],
-);
-
-export const payrollJournal = pgTable(
-  "PayrollJournal",
-  {
-    id: text().primaryKey().notNull(),
-    payrollRunId: text().notNull(),
-    tenantId: text().notNull(),
-    status: journalStatus().default("PENDING").notNull(),
-    postedAt: timestamp({ precision: 3, mode: "string" }),
-    totalDebit: numeric({ precision: 12, scale: 2 }).notNull(),
-    totalCredit: numeric({ precision: 12, scale: 2 }).notNull(),
-    createdAt: timestamp({ precision: 3, mode: "string" })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-  },
-  (table) => [
-    uniqueIndex("PayrollJournal_payrollRunId_key").using(
-      "btree",
-      table.payrollRunId.asc().nullsLast().op("text_ops"),
-    ),
-    index("PayrollJournal_tenantId_idx").using(
-      "btree",
-      table.tenantId.asc().nullsLast().op("text_ops"),
-    ),
-  ],
-);
-
-export const journalEntry = pgTable(
-  "JournalEntry",
-  {
-    id: text().primaryKey().notNull(),
-    payrollJournalId: text().notNull(),
-    glAccountNumber: text(),
-    glAccountName: text().notNull(),
-    type: entryType().notNull(),
-    amount: numeric({ precision: 12, scale: 2 }).notNull(),
-    description: text(),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.payrollJournalId],
-      foreignColumns: [payrollJournal.id],
-      name: "JournalEntry_payrollJournalId_fkey",
-    })
-      .onUpdate("cascade")
-      .onDelete("restrict"),
-  ],
-);
-
-export const remittance = pgTable(
-  "Remittance",
-  {
-    id: text().primaryKey().notNull(),
-    tenantId: text().notNull(),
-    periodYear: integer().notNull(),
-    periodMonth: integer().notNull(),
-    totalGrossPayroll: numeric({ precision: 12, scale: 2 }).notNull(),
-    totalEmployees: integer().notNull(),
-    totalDue: numeric({ precision: 12, scale: 2 }).notNull(),
-    status: remittanceStatus().default("PENDING").notNull(),
-    paymentReference: text(),
-    filedAt: timestamp({ precision: 3, mode: "string" }),
-    createdAt: timestamp({ precision: 3, mode: "string" })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: timestamp({ precision: 3, mode: "string" }).notNull(),
-  },
-  (table) => [
-    uniqueIndex("Remittance_tenantId_periodYear_periodMonth_key").using(
-      "btree",
-      table.tenantId.asc().nullsLast().op("int4_ops"),
-      table.periodYear.asc().nullsLast().op("int4_ops"),
-      table.periodMonth.asc().nullsLast().op("int4_ops"),
-    ),
-    index("Remittance_tenantId_status_idx").using(
-      "btree",
-      table.tenantId.asc().nullsLast().op("enum_ops"),
-      table.status.asc().nullsLast().op("enum_ops"),
-    ),
   ],
 );
 
 export const tenant = pgTable(
-  "Tenant",
+  "tenant",
   {
     id: text().primaryKey().notNull(),
     name: text().notNull(),
     slug: text().notNull(),
-    legalName: text().notNull(),
-    businessNumber: text(),
-    industry: text(),
-    baseCurrency: text().default("CAD").notNull(),
-    standardWorkDayHours: numeric({ precision: 4, scale: 2 })
-      .default("8.0")
-      .notNull(),
-    standardWorkWeekHours: numeric({ precision: 4, scale: 2 })
-      .default("40.0")
-      .notNull(),
-    remittanceFrequency: payFrequency().default("MONTHLY").notNull(),
-    isActive: boolean().default(true).notNull(),
-    createdAt: timestamp({ precision: 3, mode: "string" })
+    legalName: text("legal_name").notNull(),
+    businessNumber: text("business_number"),
+    isActive: boolean("is_active").default(true).notNull(),
+    createdAt: timestamp("created_at", { precision: 3, mode: "string" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
-    updatedAt: timestamp({ precision: 3, mode: "string" }).notNull(),
+    updatedAt: timestamp("updated_at", {
+      precision: 3,
+      mode: "string",
+    }).notNull(),
   },
   (table) => [
-    uniqueIndex("Tenant_slug_key").using(
+    uniqueIndex("tenant_slug_key").using(
       "btree",
       table.slug.asc().nullsLast().op("text_ops"),
     ),
@@ -803,24 +672,21 @@ export const tenant = pgTable(
 );
 
 export const tenantSettings = pgTable(
-  "TenantSettings",
+  "tenant_settings",
   {
     id: text().primaryKey().notNull(),
-    tenantId: text().notNull(),
-    enableGarnishments: boolean().default(true).notNull(),
-    autoApproveTime: boolean().default(false).notNull(),
+    tenantId: text("tenant_id").notNull(),
     timezone: text().default("America/Toronto").notNull(),
-    dateFormat: text().default("YYYY-MM-DD").notNull(),
   },
   (table) => [
-    uniqueIndex("TenantSettings_tenantId_key").using(
+    uniqueIndex("tenant_settings_tenant_id_key").using(
       "btree",
       table.tenantId.asc().nullsLast().op("text_ops"),
     ),
     foreignKey({
       columns: [table.tenantId],
       foreignColumns: [tenant.id],
-      name: "TenantSettings_tenantId_fkey",
+      name: "tenant_settings_tenant_id_fkey",
     })
       .onUpdate("cascade")
       .onDelete("restrict"),
@@ -828,24 +694,22 @@ export const tenantSettings = pgTable(
 );
 
 export const payrollCycle = pgTable(
-  "PayrollCycle",
+  "payroll_cycle",
   {
     id: text().primaryKey().notNull(),
-    tenantId: text().notNull(),
+    tenantId: text("tenant_id").notNull(),
     name: text().notNull(),
     frequency: payFrequency().notNull(),
-    firstPeriodStart: timestamp({ precision: 3, mode: "string" }).notNull(),
-    firstPayDate: timestamp({ precision: 3, mode: "string" }).notNull(),
   },
   (table) => [
-    index("PayrollCycle_tenantId_idx").using(
+    index("payroll_cycle_tenant_id_idx").using(
       "btree",
       table.tenantId.asc().nullsLast().op("text_ops"),
     ),
     foreignKey({
       columns: [table.tenantId],
       foreignColumns: [tenant.id],
-      name: "PayrollCycle_tenantId_fkey",
+      name: "payroll_cycle_tenant_id_fkey",
     })
       .onUpdate("cascade")
       .onDelete("restrict"),
@@ -853,15 +717,15 @@ export const payrollCycle = pgTable(
 );
 
 export const department = pgTable(
-  "Department",
+  "department",
   {
     id: text().primaryKey().notNull(),
-    tenantId: text().notNull(),
+    tenantId: text("tenant_id").notNull(),
     name: text().notNull(),
     code: text(),
   },
   (table) => [
-    uniqueIndex("Department_tenantId_code_key").using(
+    uniqueIndex("department_tenant_id_code_key").using(
       "btree",
       table.tenantId.asc().nullsLast().op("text_ops"),
       table.code.asc().nullsLast().op("text_ops"),
@@ -869,7 +733,7 @@ export const department = pgTable(
     foreignKey({
       columns: [table.tenantId],
       foreignColumns: [tenant.id],
-      name: "Department_tenantId_fkey",
+      name: "department_tenant_id_fkey",
     })
       .onUpdate("cascade")
       .onDelete("restrict"),
@@ -877,28 +741,30 @@ export const department = pgTable(
 );
 
 export const chartOfAccount = pgTable(
-  "ChartOfAccount",
+  "chart_of_account",
   {
     id: text().primaryKey().notNull(),
-    tenantId: text().notNull(),
+    tenantId: text("tenant_id").notNull(),
     code: text().notNull(),
     name: text().notNull(),
-    description: text(),
     type: accountType().notNull(),
     category: accountCategory().notNull(),
-    isActive: boolean().default(true).notNull(),
-    createdAt: timestamp({ precision: 3, mode: "string" })
+    isActive: boolean("is_active").default(true).notNull(),
+    createdAt: timestamp("created_at", { precision: 3, mode: "string" })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
-    updatedAt: timestamp({ precision: 3, mode: "string" }).notNull(),
+    updatedAt: timestamp("updated_at", {
+      precision: 3,
+      mode: "string",
+    }).notNull(),
   },
   (table) => [
-    uniqueIndex("ChartOfAccount_tenantId_code_key").using(
+    uniqueIndex("chart_of_account_tenant_id_code_key").using(
       "btree",
       table.tenantId.asc().nullsLast().op("text_ops"),
       table.code.asc().nullsLast().op("text_ops"),
     ),
-    index("ChartOfAccount_tenantId_idx").using(
+    index("chart_of_account_tenant_id_idx").using(
       "btree",
       table.tenantId.asc().nullsLast().op("text_ops"),
     ),
@@ -906,18 +772,18 @@ export const chartOfAccount = pgTable(
 );
 
 export const glMapping = pgTable(
-  "GLMapping",
+  "gl_mapping",
   {
     id: text().primaryKey().notNull(),
-    tenantId: text().notNull(),
-    chartOfAccountId: text().notNull(),
-    mappingType: mappingType().notNull(),
-    earningType: earningType(),
-    deductionType: deductionType(),
-    departmentId: text(),
+    tenantId: text("tenant_id").notNull(),
+    chartOfAccountId: text("chart_of_account_id").notNull(),
+    mappingType: mappingType("mapping_type").notNull(),
+    earningType: earningType("earning_type"),
+    deductionType: deductionType("deduction_type"),
+    departmentId: text("department_id"),
   },
   (table) => [
-    index("GLMapping_tenantId_mappingType_idx").using(
+    index("gl_mapping_tenant_id_mapping_type_idx").using(
       "btree",
       table.tenantId.asc().nullsLast().op("text_ops"),
       table.mappingType.asc().nullsLast().op("text_ops"),
@@ -925,30 +791,9 @@ export const glMapping = pgTable(
     foreignKey({
       columns: [table.chartOfAccountId],
       foreignColumns: [chartOfAccount.id],
-      name: "GLMapping_chartOfAccountId_fkey",
+      name: "gl_mapping_chart_of_account_id_fkey",
     })
       .onUpdate("cascade")
       .onDelete("restrict"),
-  ],
-);
-
-export const remittanceToPayrollRun = pgTable(
-  "RemittanceToPayrollRun",
-  {
-    remittanceId: text().notNull(),
-    payrollRunId: text().notNull(),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.remittanceId],
-      foreignColumns: [remittance.id],
-      name: "RemittanceToPayrollRun_remittanceId_fkey",
-    })
-      .onUpdate("cascade")
-      .onDelete("restrict"),
-    primaryKey({
-      columns: [table.remittanceId, table.payrollRunId],
-      name: "RemittanceToPayrollRun_pkey",
-    }),
   ],
 );

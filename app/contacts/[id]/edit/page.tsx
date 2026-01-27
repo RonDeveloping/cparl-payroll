@@ -1,8 +1,8 @@
 //app\contacts\[id]\edit\page.tsx
 /*runs on the server, talks to db via prisma and prepares a flat object that the form can understand*/
 import prisma from "@/db/prismaDrizzle";
-import EditContactForm from "./EditContactForm"; // client component to handle the form state
-import { ContactFormValues } from "@/lib/schemas/contact";
+import EditContactForm from "./edit-contact"; // client component to handle the form state
+import { ContactFormValues } from "@/lib/validations/contact";
 import formatPhone from "@/utils/formatters/phone";
 import formatPostalCode from "@/utils/formatters/postalCode";
 

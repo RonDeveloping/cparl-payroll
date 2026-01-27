@@ -1,5 +1,5 @@
 import Counter from "@/components/Counter";
-import prisma from "@/lib/prisma";
+import prisma from "@/db/prismaDrizzle";
 
 export default async function UsersPage() {
   const users = await safe(prisma.user.findMany({ orderBy: { id: "desc" } }));
@@ -20,8 +20,8 @@ export default async function UsersPage() {
             {users.map((user) => (
               <tr key={user.id}>
                 <td className="border p-2">{user.id}</td>
-                <td className="border p-2">{user.name}</td>
-                <td className="border p-2">{user.email}</td>
+                <td className="border p-2">{user.displayName}</td>
+                <td className="border p-2">{user.securityEmail}</td>
               </tr>
             ))}
           </tbody>

@@ -1,19 +1,33 @@
 import { relations } from "drizzle-orm/relations";
-import { contact, address, email, employee, bankAccount, phone, legalNameHistory, conversationalNameHistory, employment, jobAssignment, timeEntry, payrollRun, payrollRunEmployee, payrollLine, deduction, payrollDisbursement, payrollJournal, journalEntry, tenant, tenantSettings, payrollCycle, department, chartOfAccount, glMapping, remittance, remittanceToPayrollRun } from "./schema";
+import { contact, legalNameHistory, conversationalNameHistory, address, email, phone, employee, employment, jobAssignment, timeEntry, payrollRun, payrollRunEmployee, payrollLine, deduction, bankAccount, payrollDisbursement, tenant, tenantSettings, payrollCycle, department, chartOfAccount, glMapping } from "./schema";
+
+export const legalNameHistoryRelations = relations(legalNameHistory, ({one}) => ({
+	contact: one(contact, {
+		fields: [legalNameHistory.contactId],
+		references: [contact.id]
+	}),
+}));
+
+export const contactRelations = relations(contact, ({many}) => ({
+	legalNameHistories: many(legalNameHistory),
+	conversationalNameHistories: many(conversationalNameHistory),
+	addresses: many(address),
+	emails: many(email),
+	phones: many(phone),
+}));
+
+export const conversationalNameHistoryRelations = relations(conversationalNameHistory, ({one}) => ({
+	contact: one(contact, {
+		fields: [conversationalNameHistory.contactId],
+		references: [contact.id]
+	}),
+}));
 
 export const addressRelations = relations(address, ({one}) => ({
 	contact: one(contact, {
 		fields: [address.contactId],
 		references: [contact.id]
 	}),
-}));
-
-export const contactRelations = relations(contact, ({many}) => ({
-	addresses: many(address),
-	emails: many(email),
-	phones: many(phone),
-	legalNameHistories: many(legalNameHistory),
-	conversationalNameHistories: many(conversationalNameHistory),
 }));
 
 export const emailRelations = relations(email, ({one}) => ({
@@ -23,36 +37,9 @@ export const emailRelations = relations(email, ({one}) => ({
 	}),
 }));
 
-export const bankAccountRelations = relations(bankAccount, ({one}) => ({
-	employee: one(employee, {
-		fields: [bankAccount.employeeId],
-		references: [employee.id]
-	}),
-}));
-
-export const employeeRelations = relations(employee, ({many}) => ({
-	bankAccounts: many(bankAccount),
-	employments: many(employment),
-	payrollRunEmployees: many(payrollRunEmployee),
-}));
-
 export const phoneRelations = relations(phone, ({one}) => ({
 	contact: one(contact, {
 		fields: [phone.contactId],
-		references: [contact.id]
-	}),
-}));
-
-export const legalNameHistoryRelations = relations(legalNameHistory, ({one}) => ({
-	contact: one(contact, {
-		fields: [legalNameHistory.contactId],
-		references: [contact.id]
-	}),
-}));
-
-export const conversationalNameHistoryRelations = relations(conversationalNameHistory, ({one}) => ({
-	contact: one(contact, {
-		fields: [conversationalNameHistory.contactId],
 		references: [contact.id]
 	}),
 }));
@@ -63,6 +50,12 @@ export const employmentRelations = relations(employment, ({one, many}) => ({
 		references: [employee.id]
 	}),
 	jobAssignments: many(jobAssignment),
+}));
+
+export const employeeRelations = relations(employee, ({many}) => ({
+	employments: many(employment),
+	payrollRunEmployees: many(payrollRunEmployee),
+	bankAccounts: many(bankAccount),
 }));
 
 export const jobAssignmentRelations = relations(jobAssignment, ({one, many}) => ({
@@ -117,22 +110,18 @@ export const deductionRelations = relations(deduction, ({one}) => ({
 	}),
 }));
 
+export const bankAccountRelations = relations(bankAccount, ({one}) => ({
+	employee: one(employee, {
+		fields: [bankAccount.employeeId],
+		references: [employee.id]
+	}),
+}));
+
 export const payrollDisbursementRelations = relations(payrollDisbursement, ({one}) => ({
 	payrollRunEmployee: one(payrollRunEmployee, {
 		fields: [payrollDisbursement.payrollRunEmployeeId],
 		references: [payrollRunEmployee.id]
 	}),
-}));
-
-export const journalEntryRelations = relations(journalEntry, ({one}) => ({
-	payrollJournal: one(payrollJournal, {
-		fields: [journalEntry.payrollJournalId],
-		references: [payrollJournal.id]
-	}),
-}));
-
-export const payrollJournalRelations = relations(payrollJournal, ({many}) => ({
-	journalEntries: many(journalEntry),
 }));
 
 export const tenantSettingsRelations = relations(tenantSettings, ({one}) => ({
@@ -171,15 +160,4 @@ export const glMappingRelations = relations(glMapping, ({one}) => ({
 
 export const chartOfAccountRelations = relations(chartOfAccount, ({many}) => ({
 	glMappings: many(glMapping),
-}));
-
-export const remittanceToPayrollRunRelations = relations(remittanceToPayrollRun, ({one}) => ({
-	remittance: one(remittance, {
-		fields: [remittanceToPayrollRun.remittanceId],
-		references: [remittance.id]
-	}),
-}));
-
-export const remittanceRelations = relations(remittance, ({many}) => ({
-	remittanceToPayrollRuns: many(remittanceToPayrollRun),
 }));

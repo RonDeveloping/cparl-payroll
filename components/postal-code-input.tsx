@@ -1,7 +1,7 @@
 // components/PostalCodeInput.tsx
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { contactSchema, ContactFormValues } from "@/lib/schemas/contact";
+import { contactSchema, ContactFormValues } from "@/lib/validations/contact";
 
 export default function PostalCodeForm() {
   const {
