@@ -20,8 +20,10 @@ export default async function UsersPage() {
             {users.map((user) => (
               <tr key={user.id}>
                 <td className="border p-2">{user.id}</td>
-                <td className="border p-2">{user.displayName}</td>
-                <td className="border p-2">{user.securityEmail}</td>
+                <td className="border p-2">
+                  {user.givenName + " " + user.familyName}
+                </td>
+                <td className="border p-2">{user.email}</td>
               </tr>
             ))}
           </tbody>

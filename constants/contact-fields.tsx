@@ -1,10 +1,10 @@
-import { ContactFormValues } from "@/lib/validations/contact";
+import { ContactFormInput } from "@/lib/validations/contact-schema";
 import { Clarification } from "@/components/clarification";
 import { ReactNode } from "react";
 
 export type FieldDef = {
   label: ReactNode;
-  name: keyof ContactFormValues;
+  name: keyof ContactFormInput;
 };
 
 export const IDENTITY_FIELDS = {

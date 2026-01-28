@@ -1,4 +1,4 @@
-import CreateAccount from "@/components/auth/create-account";
+import RegisterForm from "@/components/auth/register-form";
 
 export default function RegisterPage() {
   return (
@@ -8,7 +8,7 @@ export default function RegisterPage() {
         To access features and services, please register below.
       </p>
 
-      <CreateAccount />
+      <RegisterForm />
 
       <p className="mt-4 text-sm text-center">
         Already have an account?{" "}

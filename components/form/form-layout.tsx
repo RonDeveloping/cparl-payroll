@@ -1,7 +1,7 @@
 //@components/FormLayout.tsx
 "use client";
 import { useSearchParams, useRouter } from "next/navigation";
-import { FormActions } from "./FormActions";
+import { FormActions } from "./form-actions";
 
 interface FormLayoutProps {
   children: React.ReactNode;

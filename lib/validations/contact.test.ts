@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { contactSchema } from "./contact";
+import { contactSchema } from "./contact-schema";
 
 describe("contactSchema postalCode", () => {
   it("accepts valid Canadian postal code", () => {

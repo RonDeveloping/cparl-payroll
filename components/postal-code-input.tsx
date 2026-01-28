@@ -1,19 +1,22 @@
 // components/PostalCodeInput.tsx
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { contactSchema, ContactFormValues } from "@/lib/validations/contact";
+import {
+  contactSchema,
+  ContactFormInput,
+} from "@/lib/validations/contact-schema";
 
 export default function PostalCodeForm() {
   const {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<ContactFormValues>({
+  } = useForm<ContactFormInput>({
     resolver: zodResolver(contactSchema),
     mode: "onBlur", // <-- validate on blur instead of on change
   });
 
-  const onSubmit = (data: ContactFormValues) => {
+  const onSubmit = (data: ContactFormInput) => {
     console.log("Form submitted:", data);
   };
 

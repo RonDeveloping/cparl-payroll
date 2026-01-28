@@ -6,24 +6,23 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 
-import { contactSchema, ContactFormValues } from "@/lib/validations/contact";
+import {
+  contactSchema,
+  ContactFormInput,
+} from "@/lib/validations/contact-schema";
 import { upsertContactPEA } from "@/db/actions/contact";
 import { getFieldChanges, ChangeEntry } from "@/utils/formChanges";
 
-import FormLayout from "@/components/form/FormLayout";
-// import FormSection from "@/components/form/FormSection";
-// import InputWithChanges from "@/components/form/InputWithChanges";
-import { FormChangeProvider } from "@/components/form/FormChangeContext";
-// import SectionDisclosure from "@/components/section-disclosure";
-// import { Clarification } from "@/components/Clarification";
+import FormLayout from "@/components/form/form-layout";
+import { SmartFormProvider } from "@/components/form/form-change-context";
 import formatPostalCode from "@/utils/formatters/postalCode";
 import { registerWithOnBlurFormat } from "@/utils/formRegister";
 import formatPhone from "@/utils/formatters/phone";
-import { ContactFormFields } from "@/components/contact/form-fields";
+import { ContactForm } from "@/components/contact/contact-form";
 
 interface EditContactFormProps {
   paramsPromise: Promise<{ id: string }>;
-  initialData: ContactFormValues;
+  initialData: ContactFormInput;
 }
 
 export default function EditContactForm({
@@ -38,7 +37,7 @@ export default function EditContactForm({
     handleSubmit,
     formState: { errors, isSubmitting, isDirty, dirtyFields },
     getValues,
-  } = useForm<ContactFormValues>({
+  } = useForm<ContactFormInput>({
     resolver: zodResolver(contactSchema),
     values: initialData,
     shouldFocusError: false, // Prevents auto-focus on first error field upon submission
@@ -49,7 +48,7 @@ export default function EditContactForm({
 
   const registerFormatted = useMemo(
     () =>
-      registerWithOnBlurFormat<ContactFormValues>(register, {
+      registerWithOnBlurFormat<ContactFormInput>(register, {
         postalCode: formatPostalCode,
         phone: formatPhone,
       }),
@@ -80,7 +79,7 @@ export default function EditContactForm({
     ),
   );
   // Form submission handler where this data is coming from RHF's handleSubmit of RHF state, not DOM
-  const onCreateOrConfirm = async (data: ContactFormValues) => {
+  const onCreateOrConfirm = async (data: ContactFormInput) => {
     try {
       const result = await upsertContactPEA(data, params.id);
       if (result?.id) {
@@ -105,7 +104,7 @@ export default function EditContactForm({
       showChanges={showB4Change}
       onEyeToggle={() => setShowB4Change((v) => !v)}
     >
-      <FormChangeProvider<ContactFormValues>
+      <SmartFormProvider<ContactFormInput>
         value={{
           changes,
           showChanges: showB4Change,
@@ -117,7 +116,7 @@ export default function EditContactForm({
           onSubmit={handleSubmit(onCreateOrConfirm)} //handleSubmit here in RHF reads the form data, validates and build a plain object called data, then calls onCreateOrConfirm with that data.
           className="space-y-4"
         >
-          <ContactFormFields
+          <ContactForm
             errors={errors}
             showOptionalIdentity={showOptionalIdentity}
             setShowOptionalIdentity={setShowOptionalIdentity}
@@ -125,84 +124,7 @@ export default function EditContactForm({
             setShowOptionalContact={setShowOptionalContact}
           />
         </form>
-      </FormChangeProvider>
+      </SmartFormProvider>
     </FormLayout>
   );
 }
-
-/*
-  return (
-    <FormLayout
-      ...
-    >
-      <FormChangeProvider<ContactFormValues>
-        value={{
-          changes,
-          showChanges: showB4Change,
-          register,
-        }}
-      >
-        <form
-          id="contact-form"
-          onSubmit={handleSubmit(onCreateOrConfirm)}
-          className="space-y-8"
-        >
-          <section className="...">
-              Identity
-            </h2>
-            
-            <div className="...">
-             
-              <InputWithChanges<ContactFormValues>
-                label="Given Name"
-                name="givenName"
-                error={errors.givenName?.message}
-              />
-              <InputWithChanges<ContactFormValues>
-                label="Family Name"
-                name="familyName"
-                error={errors.familyName?.message}
-              />
-            </div>
-            <SectionDisclosure
-              label="Optional"
-              expanded={showOptional}
-              onToggle={() => setShowOptional((v) => !v)}
-            />
-            
-            {showOptional && (
-              <div className="...">
-                <InputWithChanges<ContactFormValues>
-                  label={
-                    <Clarification
-                      term="Middle Name"
-                      description="..."
-                    />
-                  }
-                  name="middleName"
-                  error={errors.middleName?.message}
-                />
-                <InputWithChanges<ContactFormValues>
-                  label="Nickname"
-                  name="nickName"
-                />
-                <InputWithChanges<ContactFormValues>
-                  label={
-                    <Clarification
-                      term="Display Name"
-                      description="..."
-                    />
-                  }
-                  name="displayName"
-                />
-              </div>
-            )}
-          </section>
-
-          ....
-        </form>
-      </FormChangeProvider>
-    </FormLayout>
-  );
-}
-*/

@@ -1,30 +1,34 @@
 import React from "react";
-import { UseFormRegister, FieldValues, Path } from "react-hook-form";
+import {
+  FieldValues,
+  Path,
+  UseFormRegister,
+  RegisterOptions,
+} from "react-hook-form";
 
-interface InputGroupProps<T extends FieldValues> {
+interface InputGroupProps<TFormValues extends FieldValues> {
   // label: React.ReactNode; //for accessibility, use ReactNode to allow more complex labels, not just string, such as clarfication icons.
-  name: Path<T>;
-  register: UseFormRegister<T>;
+  name: Path<TFormValues>;
+  register: UseFormRegister<TFormValues>;
   error?: string;
   placeholder?: string;
   type?: string;
+  rules?: RegisterOptions<TFormValues, Path<TFormValues>>;
 }
 
-export default function InputGroup<T extends FieldValues>({
+export default function InputGroup<TFormValues extends FieldValues>({
   // label,
   name,
   register,
   error,
   placeholder,
   type = "text",
-}: InputGroupProps<T>) {
+  rules,
+}: InputGroupProps<TFormValues>) {
   return (
     <div className="flex flex-col space-y-1">
-      {/* <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">
-        {label}
-      </label> */}
       <input
-        {...register(name)}
+        {...register(name, rules)}
         type={type}
         placeholder={placeholder}
         className={`w-full px-4 py-2 rounded-lg border transition-all text-sm outline-none ${

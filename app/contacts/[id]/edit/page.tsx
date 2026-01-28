@@ -2,7 +2,7 @@
 /*runs on the server, talks to db via prisma and prepares a flat object that the form can understand*/
 import prisma from "@/db/prismaDrizzle";
 import EditContactForm from "./edit-contact"; // client component to handle the form state
-import { ContactFormValues } from "@/lib/validations/contact";
+import { ContactFormInput } from "@/lib/validations/contact-schema";
 import formatPhone from "@/utils/formatters/phone";
 import formatPostalCode from "@/utils/formatters/postalCode";
 
@@ -15,7 +15,7 @@ export default async function EditContactPage({
 
   //URL is /contacts/new/edit: The server sees id === "new", skips Prisma, and sends a blank form.
   if (id === "new") {
-    const emptyData: ContactFormValues = {
+    const emptyData: ContactFormInput = {
       givenName: "",
       familyName: "",
       nickName: "",

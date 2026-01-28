@@ -18,7 +18,7 @@ export function useFormChangeContext<TFormValues extends FieldValues>() {
   const ctx = useContext(FormChangeContext);
   if (!ctx) {
     throw new Error(
-      "InputWithChanges must be used within a <FormChangeProvider>",
+      "InputWithChanges must be used within a <SmartFormProvider>",
     );
   }
   return ctx as {
@@ -28,7 +28,7 @@ export function useFormChangeContext<TFormValues extends FieldValues>() {
   };
 }
 
-export function FormChangeProvider<TFormValues extends FieldValues>({
+export function SmartFormProvider<TFormValues extends FieldValues>({
   value,
   children,
 }: {

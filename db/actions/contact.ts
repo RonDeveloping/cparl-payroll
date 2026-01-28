@@ -1,6 +1,6 @@
 "use server";
 
-import { ContactFormValues } from "@/lib/validations/contact";
+import { ContactFormInput } from "@/lib/validations/contact-schema";
 import prisma from "@/db/prismaDrizzle";
 import { safe } from "@/utils/validators/safe";
 import crypto from "crypto";
@@ -10,7 +10,7 @@ import crypto from "crypto";
  * Updates an existing contact or creates a new one.
  * Returns the contact object so the frontend can redirect to the new ID.
  */
-export async function upsertContactPEA(data: ContactFormValues, id: string) {
+export async function upsertContactPEA(data: ContactFormInput, id: string) {
   // 1. NORMALIZE EVERYTHING (as case sensitive crucial for hashes)
   const street = (data.street ?? "").trim().toUpperCase();
   const city = (data.city ?? "").trim().toUpperCase();

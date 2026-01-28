@@ -1,4 +1,4 @@
-// lib/schemas/contact.ts
+// lib/validations/contact-schema.ts
 import { z } from "zod";
 import { isValidCanadianPostalCode } from "../../utils/validators/postalCode";
 
@@ -36,4 +36,4 @@ export const contactSchema = z.object({
 });
 
 // Export the type so both frontend and backend can use it
-export type ContactFormValues = z.infer<typeof contactSchema>;
+export type ContactFormInput = z.infer<typeof contactSchema>;

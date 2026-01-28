@@ -14,10 +14,14 @@ datasource db {
 model User {
   id           String   @id @default(cuid())
   slug         String   @unique
-  displayName  String   @map("display_name")
-  securityEmail  String   @unique @map("security_email")
+  givenName    String   @map("given_name")
+  familyName   String   @map("family_name")
+  email  String   @unique @map("email")
   emailVerifiedAt       DateTime? @map("email_verified_at")
-  pendingSecurityEmail  String?   @map("pending_security_email")
+  pendingEmail  String?   @map("pending_email")
+  phone  String   @unique @map("phone")
+  phoneVerifiedAt       DateTime? @map("phone_verified_at")
+  pendingPhone  String?   @map("pending_phone")
   passwordHash String?  @map("password_hash")
   contactId    String   @unique @map("contact_id")
   createdAt    DateTime @default(now()) @map("created_at")
