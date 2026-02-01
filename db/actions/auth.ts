@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/db/prismaDrizzle";
-import { registerSchema } from "@/lib/validations/register-schema";
+import { registerSchema } from "@/lib/validations/user-register-schema";
 import bcrypt from "bcryptjs";
 
 export async function checkEmailAvailability(email: string) {

@@ -3,7 +3,7 @@
 import { FieldValues, Path, RegisterOptions } from "react-hook-form";
 import InputGroup from "./input-group";
 import { useFormChangeContext } from "./form-change-context";
-import { CapLabel } from "../ui/cap-label";
+import { CapLabel } from "../shared/cap-label";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 

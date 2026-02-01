@@ -4,30 +4,39 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { REGISTER_FIELDS } from "@/constants/register-fields";
+import { REGISTER_FIELDS } from "@/constants/user-register-fields";
 import {
   registerSchema,
   UserRegistrationInput,
-} from "@/lib/validations/register-schema";
+} from "@/lib/validations/user-register-schema";
 import { registerUserAction } from "@/db/actions/auth";
-import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { useMemo, useState } from "react";
 import { FormGrid } from "../form/form-grid";
 import InputWithChanges from "../form/input-with-changes";
 import { SmartFormProvider } from "../form/form-change-context";
+import formatPhone from "@/utils/formatters/phone";
+import { registerWithOnBlurFormat } from "@/utils/formRegister";
+import { Spinner } from "../shared/spinner";
 
 export default function RegisterForm() {
   const [serverError, setServerError] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
   } = useForm<UserRegistrationInput>({
     resolver: zodResolver(registerSchema),
-    mode: "onBlur",
+    mode: "onChange",
   });
+
+  const registerFormatted = useMemo(
+    () =>
+      registerWithOnBlurFormat<UserRegistrationInput>(register, {
+        phone: formatPhone,
+      }),
+    [register],
+  );
 
   const onSubmit = async (data: UserRegistrationInput) => {
     setServerError(null);
@@ -49,7 +58,7 @@ export default function RegisterForm() {
 
       <SmartFormProvider<UserRegistrationInput>
         value={{
-          register, // Pass the RHF register function
+          register: registerFormatted, // Pass the RHF register function
           changes: [], // No "changes" for a new registration
           showChanges: false,
         }}
@@ -84,9 +93,11 @@ export default function RegisterForm() {
         )}
 
         <button
-          disabled={isSubmitting}
-          className="bg-blue-600 text-white p-2 rounded disabled:bg-blue-300"
+          type="submit"
+          disabled={!isValid || isSubmitting}
+          className="bg-blue-600 text-white p-2 rounded transition-colors disabled:bg-gray-400 disabled:opacity-70"
         >
+          {isSubmitting ? <Spinner size="sm" /> : null}
           {isSubmitting ? "Creating Account..." : "Register"}
         </button>
       </SmartFormProvider>

@@ -16,7 +16,7 @@ export const contactSchema = z.object({
     .optional()
     .refine(
       (val) => {
-        if (!val) return true; // optional field
+        if (!val) return true;
         const digits = val.replace(/\D/g, "");
         return digits.length == 10;
       },
