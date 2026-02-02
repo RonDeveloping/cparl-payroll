@@ -9,7 +9,7 @@ import {
   registerSchema,
   UserRegistrationInput,
 } from "@/lib/validations/user-register-schema";
-import { registerUserAction } from "@/db/actions/auth";
+import { upsertUser } from "@/db/actions/user";
 import { useMemo, useState } from "react";
 import { FormGrid } from "../form/form-grid";
 import InputWithChanges from "../form/input-with-changes";
@@ -42,14 +42,14 @@ export default function RegisterForm() {
 
   const onSubmit = async (data: UserRegistrationInput) => {
     setServerError(null);
-    const result = await registerUserAction(data);
+    const result = await upsertUser(data);
 
-    if (result?.error) {
-      setServerError(result.error);
-    } else {
-      // Redirect or show success message
-      window.location.replace("/login?registered=true");
-    }
+    // if (result?.error) {
+    //   setServerError(result.error);
+    // } else {
+    //   // Redirect or show success message
+    //   window.location.replace("/login?registered=true");
+    // }
   };
 
   return (

@@ -13,9 +13,9 @@ export async function login(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
-  // 1. Find the user by security_email (the Source of Truth)
+  // 1. Find the user by email (the Source of Truth)
   const user = await prisma.user.findUnique({
-    where: { securityEmail: email.toLowerCase().trim() },
+    where: { email: email.toLowerCase().trim() },
   });
 
   if (!user || !user.passwordHash) {

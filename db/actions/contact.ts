@@ -4,7 +4,6 @@ import { ContactFormInput } from "@/lib/validations/contact-schema";
 import prisma from "@/db/prismaDrizzle";
 import { safe } from "@/utils/validators/safe";
 import crypto from "crypto";
-// import { number } from "zod";
 
 /**
  * Updates an existing contact or creates a new one.
@@ -25,7 +24,7 @@ export async function upsertContactPEA(data: ContactFormInput, id: string) {
     .update(addressString)
     .digest("hex");
 
-  const emailClean = data.email.toLowerCase().trim();
+  const emailClean = data.email.trim();
   const phoneNumber = (data.phone ?? "").trim();
 
   return await safe(

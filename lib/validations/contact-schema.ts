@@ -10,7 +10,7 @@ export const contactSchema = z.object({
   prefix: z.string().optional(),
   suffix: z.string().optional(),
   displayName: z.string().optional(),
-  email: z.string().email("Invalid email address").toLowerCase(),
+  email: z.string().email("Invalid email address"),
   phone: z
     .string()
     .optional()

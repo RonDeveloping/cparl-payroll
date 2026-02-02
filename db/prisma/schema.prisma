@@ -13,13 +13,13 @@ datasource db {
 
 model User {
   id           String   @id @default(cuid()) // Internal, never changes
-  slug         String   @unique // Normalized input/email
-  givenName    String   @map("given_name")
-  familyName   String   @map("family_name")
-  email  String   @unique @map("email")
+  slug         String   @unique // Normalized email, all lowercase
+  // givenName    String   @map("given_name")
+  // familyName   String   @map("family_name")
+  email  String   @unique @map("email") //original format user inputs; case-insensitive in practice.
   emailVerifiedAt       DateTime? @map("email_verified_at")
   pendingEmail  String?   @map("pending_email")
-  phone  String   @unique @map("phone")
+  phone  String?   @unique @map("phone")
   phoneVerifiedAt       DateTime? @map("phone_verified_at")
   pendingPhone  String?   @map("pending_phone")
   passwordHash String?  @map("password_hash")
