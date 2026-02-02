@@ -17,6 +17,8 @@ import { SmartFormProvider } from "../form/form-change-context";
 import formatPhone from "@/utils/formatters/phone";
 import { registerWithOnBlurFormat } from "@/utils/formRegister";
 import { Spinner } from "../shared/spinner";
+import { BUTTON_VARIANTS } from "@/constants/styles";
+import { cn } from "@/lib/utils";
 
 export default function RegisterForm() {
   const [serverError, setServerError] = useState<string | null>(null);
@@ -95,10 +97,15 @@ export default function RegisterForm() {
         <button
           type="submit"
           disabled={!isValid || isSubmitting}
-          className="bg-blue-600 text-white p-2 rounded transition-colors disabled:bg-gray-400 disabled:opacity-70"
+          className={cn(BUTTON_VARIANTS.primary, "relative")}
         >
-          {isSubmitting ? <Spinner size="sm" /> : null}
-          {isSubmitting ? "Creating Account..." : "Register"}
+          {isSubmitting && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2">
+              <Spinner size="sm" />
+            </div>
+          )}
+          {/* The Text - its position remains stable */}
+          <span className={cn(isSubmitting && "opacity-0")}>Register</span>
         </button>
       </SmartFormProvider>
     </form>
