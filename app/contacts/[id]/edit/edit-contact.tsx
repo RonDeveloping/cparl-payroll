@@ -10,7 +10,7 @@ import {
   contactSchema,
   ContactFormInput,
 } from "@/lib/validations/contact-schema";
-import { upsertContactPEA } from "@/db/actions/contact";
+import { upsertContactPEA } from "@/lib/actions/contact";
 import { getFieldChanges, ChangeEntry } from "@/utils/formChanges";
 
 import FormLayout from "@/components/form/form-layout";

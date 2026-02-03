@@ -28,11 +28,12 @@ export const contactSchema = z.object({
   country: z.string().optional(),
   postalCode: z
     .string()
-    .nonempty("Postal code cannot be empty")
+    // .nonempty("Postal code cannot be empty")
     .transform((val) => val.trim().toUpperCase()) //trim whitespace
     .refine(isValidCanadianPostalCode, {
       message: "Enter a valid Canadian postal code (e.g., K1A 0B1)",
-    }),
+    })
+    .optional(),
 });
 
 // Export the type so both frontend and backend can use it

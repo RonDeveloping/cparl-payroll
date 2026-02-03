@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import { Toaster } from "sonner";
 
 // This Metadata applies to every page by default; individual pages can override this.
 export const metadata: Metadata = {
@@ -24,6 +25,7 @@ export default function RootLayout({
       <body className="bg-white text-black">
         {/*by placing Navbar here, it will appear on every page without rendered*/}
         <Navbar />
+        <Toaster richColors position="top-right"/>
         {/* Padding-top ensures content isn't hidden under the fixed navbar */}
         <main className="pt-16 min-h-[150vh]" style={{ paddingTop: "70px" }}>
           {children}

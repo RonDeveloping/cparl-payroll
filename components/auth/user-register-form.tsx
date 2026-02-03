@@ -9,7 +9,7 @@ import {
   registerSchema,
   UserRegistrationInput,
 } from "@/lib/validations/user-register-schema";
-import { upsertUser } from "@/db/actions/user";
+import { upsertUser } from "@/lib/actions/user";
 import { useMemo, useState } from "react";
 import { FormGrid } from "../form/form-grid";
 import InputWithChanges from "../form/input-with-changes";
@@ -19,6 +19,7 @@ import { registerWithOnBlurFormat } from "@/utils/formRegister";
 import { Spinner } from "../shared/spinner";
 import { BUTTON_VARIANTS } from "@/constants/styles";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export default function RegisterForm() {
   const [serverError, setServerError] = useState<string | null>(null);
@@ -32,6 +33,8 @@ export default function RegisterForm() {
     mode: "onChange",
   });
 
+  const router = useRouter();
+
   const registerFormatted = useMemo(
     () =>
       registerWithOnBlurFormat<UserRegistrationInput>(register, {
@@ -42,14 +45,15 @@ export default function RegisterForm() {
 
   const onSubmit = async (data: UserRegistrationInput) => {
     setServerError(null);
+
     const result = await upsertUser(data);
 
-    // if (result?.error) {
-    //   setServerError(result.error);
-    // } else {
-    //   // Redirect or show success message
-    //   window.location.replace("/login?registered=true");
-    // }
+    if (!result.success) {
+      setServerError(result.error ?? "An unexpected error occurred.");
+      return;
+    }
+    console.log("Registration successful:", result.data);
+    router.push("/auth/veri-request");
   };
 
   return (

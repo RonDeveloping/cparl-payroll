@@ -1,7 +1,7 @@
 import { UserRegistrationInput } from "@/lib/validations/user-register-schema";
 import { Clarification } from "@/components/clarification";
 import { ReactNode } from "react";
-import { checkEmailAvailability } from "@/db/actions/user";
+import { checkEmailAvailability } from "@/lib/actions/user";
 
 export type FieldDef = {
   label: ReactNode;
