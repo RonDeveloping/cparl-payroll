@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Tooltip from "../components/Tooltip";
 import Link from "next/link";
+import { ROUTES } from "@/constants/routes";
 
 export default function Home() {
   return (
@@ -25,7 +26,7 @@ export default function Home() {
             <Tooltip
               content={
                 <span>
-                  your registered email address and password are required to
+                  your verified email address and a password are required to
                   login.
                 </span>
               }
@@ -33,7 +34,7 @@ export default function Home() {
               placement="bottom"
             >
               <Link
-                href="/contacts/new"
+                href={ROUTES.AUTH.LOGIN}
                 className="font-medium text-zinc-950 dark:text-zinc-50"
               >
                 Login
@@ -48,7 +49,7 @@ export default function Home() {
               placement="bottom"
             >
               <Link
-                href="/register"
+                href={ROUTES.AUTH.REGISTER}
                 className="font-medium text-zinc-950 dark:text-zinc-50"
               >
                 Register

@@ -1,5 +1,8 @@
+//"Check your inbox" informative page
+// app/auth/verify/page.tsx
 import Link from "next/link";
 import { MailCheck } from "lucide-react";
+import { ROUTES } from "@/constants/routes";
 
 export default function VerifyRequestPage() {
   return (
@@ -24,7 +27,7 @@ export default function VerifyRequestPage() {
             Didn&apos;t receive an email? Check your spam folder or
           </p>
           <Link
-            href="/auth/resend"
+            href={ROUTES.AUTH.RESEND}
             className="text-blue-600 font-medium hover:underline"
           >
             click here to resend

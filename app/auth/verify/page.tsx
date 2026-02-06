@@ -1,14 +1,16 @@
+//The "Email Verified!" success page
 // app/auth/verify/page.tsx
 import { verifyEmailAction } from "@/lib/actions/veri-actions";
-// import { redirect } from "next/navigation";
 import Link from "next/link";
+import { ROUTES } from "@/constants/routes";
 
 export default async function VerifyPage({
   searchParams,
 }: {
-  searchParams: { token: string };
+  searchParams: Promise<{ token?: string }>;
 }) {
-  const token = searchParams.token;
+  const params = await searchParams;
+  const token = params.token;
 
   if (!token) {
     return (
@@ -31,7 +33,10 @@ export default async function VerifyPage({
           </h1>
           {/* Use result.error here now that we've checked !result.success */}
           <p className="text-red-600 mb-4">{result.error}</p>
-          <Link href="/auth/resend" className="text-blue-600 hover:underline">
+          <Link
+            href={ROUTES.AUTH.RESEND}
+            className="text-blue-600 hover:underline"
+          >
             Request a new verification link
           </Link>
         </div>
@@ -50,7 +55,7 @@ export default async function VerifyPage({
           Thank you. Your account is now active.
         </p>
         <Link
-          href="/login"
+          href={ROUTES.AUTH.LOGIN}
           className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors"
         >
           Sign In

@@ -1,4 +1,5 @@
 import RegisterForm from "@/components/auth/user-register-form";
+import { ROUTES } from "@/constants/routes";
 
 export default function RegisterPage() {
   return (
@@ -12,7 +13,7 @@ export default function RegisterPage() {
 
       <p className="mt-4 text-sm text-center">
         Already have an account?{" "}
-        <a href="/login" className="text-blue-600">
+        <a href={ROUTES.AUTH.LOGIN} className="text-blue-600">
           Login here
         </a>
       </p>

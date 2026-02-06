@@ -17,9 +17,10 @@ export const sendVerificationEmail = async (email: string, token: string) => {
   const confirmLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify?token=${token}`;
 
   await resend.emails.send({
-    from: "ron@cparl.com", // Replace with your verified domain
+    from: "CPARL Notifications<noreply@verify.cparl.com>", // Replace with your verified domain
     to: email,
-    subject: "Confirm your email",
+    subject: "Confirm your email address provided in registration",
+    replyTo: "ron@cparl.com",
     html: `
       <div style="font-family: sans-serif; line-height: 1.5;">
         <h2>Verify your account</h2>
