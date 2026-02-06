@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Tooltip from "../components/Tooltip";
+import Tooltip from "../components/tool-tip";
 import Link from "next/link";
 import { ROUTES } from "@/constants/routes";
 

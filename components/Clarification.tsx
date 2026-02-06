@@ -1,5 +1,5 @@
 // app/components/Clarification.tsx
-import Tooltip from "./Tooltip";
+import Tooltip from "./tool-tip";
 
 interface ClarificationProps {
   term: string;

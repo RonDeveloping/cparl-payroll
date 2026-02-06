@@ -1,4 +1,4 @@
-import Counter from "@/components/Counter";
+import Counter from "@/components/counter";
 import prisma from "@/db/prismaDrizzle";
 
 export default async function UsersPage() {

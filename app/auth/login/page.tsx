@@ -29,8 +29,12 @@ export default function LoginPage() {
 
     if (result.success) {
       toast.success("Welcome back!");
-      router.push("/dashboard");
+      // 1. Tell the router to prefetch the dashboard (makes it faster)
+      router.prefetch(ROUTES.DASHBOARD.HOME);
+      // 2. Refresh to clear server-side cache
       router.refresh();
+
+      router.push(ROUTES.DASHBOARD.HOME);
     } else {
       toast.error(result.error || "Login failed");
       setLoading(false);

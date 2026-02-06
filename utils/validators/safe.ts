@@ -8,7 +8,9 @@
  * @returns The result of the promise.
  */
 
-export type SafeResult<T> =
+import { isRedirectError } from "next/dist/client/components/redirect-error";
+
+type SafeResult<T> = 
   | { success: true; data: T; error: null }
   | { success: false; data: null; error: string };
 
@@ -17,10 +19,12 @@ export async function safe<T>(p: Promise<T>): Promise<SafeResult<T>> {
     const data = await p;
     return { success: true, data, error: null };
   } catch (e: unknown) {
-    // 1. Log the original technical error for debugging purposes
-    console.log("--- START DATABASE ERROR ---");
-    console.log(e);
-    console.log("--- END DATABASE ERROR ---");
+    // This is the official way to let Next.js handle redirects
+    if (isRedirectError(e)) {
+      throw e;
+    }
+
+    console.log("--- DATABASE ERROR ---", e);
     const errorMessage = e instanceof Error ? e.message : "Database error";
     return { success: false, data: null, error: errorMessage };
   }
