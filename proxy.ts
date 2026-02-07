@@ -11,7 +11,7 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "a_very_long_random_string_here",
 );
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const token = request.cookies.get("session")?.value;
   const path = request.nextUrl.pathname;
 
