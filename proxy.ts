@@ -1,6 +1,6 @@
-// This middleware checks for a valid JWT token in the "session" cookie for protected routes (like /dashboard/*). If the token is missing or invalid, it redirects the user to the login page. You can customize the protected routes and the redirection logic as needed.
+// This proxy checks for a valid JWT token in the "session" cookie for protected routes (like /dashboard/*). If the token is missing or invalid, it redirects the user to the login page. You can customize the protected routes and the redirection logic as needed.
 
-// middleware.ts (Root of project!)
+// proxy.ts (Root of project!)
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";

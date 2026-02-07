@@ -8,6 +8,7 @@ import { cookies } from "next/headers";
 import { SignJWT } from "jose";
 import { redirect } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
+import { sendResetEmail } from "@/lib/mail";
 
 //TODO: Move this secret to an environment variable and ensure it's a secure, random value in production
 const JWT_SECRET = new TextEncoder().encode(
@@ -76,4 +77,81 @@ export async function loginAction(data: LoginData) {
 export async function logoutAction() {
   const cookieStore = await cookies();
   cookieStore.delete("session");
+}
+
+export async function askForResetLinkAction(email: string) {
+  return await safe(
+    (async () => {
+      const user = await prisma.user.findUnique({
+        where: { email: email.toLowerCase().trim() },
+      });
+
+      // Security: Don't reveal if the email doesn't exist
+      if (!user) return { success: true };
+
+      // Delete any old reset tokens first
+      await prisma.verificationToken.deleteMany({
+        where: { userId: user.id, type: "PASSWORD_RESET" },
+      });
+
+      // Create the new token
+      const token = crypto.randomUUID();
+      await prisma.verificationToken.create({
+        data: {
+          userId: user.id,
+          token,
+          type: "PASSWORD_RESET",
+          expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
+        },
+      });
+
+      await sendResetEmail(user.email, token);
+      // console.log(
+      //   `Reset link: ${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password?token=${token}`,
+      // );
+
+      return { success: true };
+    })(),
+  );
+}
+
+export async function resetPasswordAction(token: string, newPassword: string) {
+  return await safe(
+    (async () => {
+      // 1. Find the token and ensure it's the correct type
+      const tokenRecord = await prisma.verificationToken.findUnique({
+        where: { token },
+        include: { user: true },
+      });
+
+      // 2. Validate existence, type, and expiration
+      if (
+        !tokenRecord ||
+        tokenRecord.type !== "PASSWORD_RESET" ||
+        tokenRecord.expiresAt < new Date()
+      ) {
+        throw new Error("This link is invalid or has expired.");
+      }
+
+      // 3. Hash the new password
+      const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+      // 4. Update user and cleanup token in a single transaction
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: tokenRecord.userId },
+          data: { passwordHash: hashedPassword },
+        }),
+        // Delete ALL password reset tokens for this user to be safe
+        prisma.verificationToken.deleteMany({
+          where: {
+            userId: tokenRecord.userId,
+            type: "PASSWORD_RESET",
+          },
+        }),
+      ]);
+
+      return { success: true };
+    })(),
+  );
 }

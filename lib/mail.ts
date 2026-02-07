@@ -36,3 +36,18 @@ export const sendVerificationEmail = async (email: string, token: string) => {
     `,
   });
 };
+
+export async function sendResetEmail(email: string, token: string) {
+  const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password?token=${token}`;
+
+  await resend.emails.send({
+    from: "CPARL Notifications<noreply@verify.cparl.com>",
+    to: email,
+    subject: "Reset your password",
+    html: `
+      <p>Click the link below to reset your password:</p>
+      <a href="${resetLink}">${resetLink}</a>
+      <p>This link expires in 1 hour.</p>
+    `,
+  });
+}

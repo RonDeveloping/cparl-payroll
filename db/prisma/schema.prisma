@@ -37,6 +37,7 @@ model VerificationToken {
   token     String   @unique
   userId    String
   user      User     @relation(fields: [userId], references: [id])
+  type      token_type @default(EMAIL_VERIFICATION)
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -591,6 +592,11 @@ Granularity: Analyzes every PayrollLine/Deduction, but exports a Summarized Tota
 // ==========================================
 // ===== ENUMS (Lowercase for Postgres) =====
 // ==========================================
+
+enum token_type {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
 
 //Conflct resolution & precedence USER > SUPPORT > IMPORT > SYSTEM
 enum conversational_name_source {
