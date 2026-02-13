@@ -31,6 +31,7 @@ export default function RegisterForm() {
   } = useForm<UserRegistrationInput>({
     resolver: zodResolver(registerSchema),
     mode: "onChange",
+    reValidateMode: "onBlur", // Re-validate on blur (important for async validations)
   });
 
   const router = useRouter();

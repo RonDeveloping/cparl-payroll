@@ -1,11 +1,12 @@
 import { UserRegistrationInput } from "@/lib/validations/user-register-schema";
 import { Clarification } from "@/components/clarification";
 import { ReactNode } from "react";
-import { checkEmailAvailability } from "@/lib/actions/user";
 
 export type FieldDef = {
   label: ReactNode;
   name: keyof UserRegistrationInput;
+  rules?: Record<string, unknown>;
+  type?: string;
 };
 
 export const REGISTER_FIELDS = {
@@ -21,18 +22,13 @@ export const REGISTER_FIELDS = {
         />
       ),
       name: "email",
-      rules: {
-        validate: async (value: string) =>
-          (await checkEmailAvailability(value)) ||
-          "This email is already taken",
-      },
     },
 
     {
       label: (
         <Clarification
           term="Mobile Phone"
-          description="with messaging service as a backup verification method."
+          description="Optional but beneficial as a backup method to recover your account."
         />
       ),
       name: "phone",

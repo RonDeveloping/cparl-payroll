@@ -10,11 +10,17 @@ import { sendVerificationEmail } from "../mail";
 import crypto from "node:crypto";
 
 export async function checkEmailAvailability(email: string) {
-  const user = await prisma.user.findUnique({
-    where: { email: email.toLowerCase().trim() },
+  const normalizedEmail = email.toLowerCase().trim();
+  const user = await prisma.user.findFirst({
+    where: {
+      slug: {
+        equals: normalizedEmail,
+        mode: "insensitive", // Case-insensitive search
+      },
+    },
     select: { id: true },
   });
-  return !user; // Returns true if available
+  return !user; // Returns true if available, false if taken
 }
 
 /**
@@ -30,7 +36,25 @@ export async function upsertUser(
 
   return await safe(
     prisma.$transaction(async (tx) => {
-      // 1. Resolve the target Contact ID
+      // 1. Check for duplicate email (case-insensitive) unless updating existing user
+      const existingUserByEmail = await tx.user.findFirst({
+        where: {
+          slug: {
+            equals: normalizedSlug,
+            mode: "insensitive", // Case-insensitive comparison
+          },
+          id: {
+            not: existingUserId || "", // Exclude the current user if updating
+          },
+        },
+        select: { id: true },
+      });
+
+      if (existingUserByEmail) {
+        throw new Error("This email is already registered");
+      }
+
+      // 2. Resolve the target Contact ID
       // If we are updating an existing user, we need their current contactId
       let targetContactId = "new";
       let userToUpdate = null;
@@ -44,11 +68,11 @@ export async function upsertUser(
         }
       }
 
-      // 2. Run the complex Contact logic (PEA = Phone, Email, Address)
+      // 3. Run the complex Contact logic (PEA = Phone, Email, Address)
       // This uses your internal helper with the address hashing
       const contact = await upsertContactPEAInternal(data, targetContactId, tx);
 
-      // 3. Upsert the User record
+      // 4. Upsert the User record
       const hashedPassword = data.password
         ? await bcrypt.hash(data.password, 10)
         : undefined;
@@ -70,7 +94,7 @@ export async function upsertUser(
         },
       });
 
-      // --- ADDED: STEP 4 - VERIFICATION TOKEN & EMAIL TRIGGER ---
+      // --- ADDED: STEP 5 - VERIFICATION TOKEN & EMAIL TRIGGER ---
 
       // A. Clear any old tokens for this user (Cleanup)
       await tx.verificationToken.deleteMany({

@@ -9,6 +9,8 @@ import { SignJWT } from "jose";
 import { redirect } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import { sendResetEmail } from "@/lib/mail";
+import { normalizeId } from "@/utils/formatters/idSlug";
+import crypto from "node:crypto";
 
 //TODO: Move this secret to an environment variable and ensure it's a secure, random value in production
 const JWT_SECRET = new TextEncoder().encode(
@@ -28,7 +30,7 @@ export async function loginAction(data: LoginData) {
       const { email, password } = data;
 
       const user = await prisma.user.findUnique({
-        where: { email: email.toLowerCase().trim() },
+        where: { slug: normalizeId(email) },
       });
 
       if (!user || !user.passwordHash) {
@@ -83,7 +85,7 @@ export async function askForResetLinkAction(email: string) {
   return await safe(
     (async () => {
       const user = await prisma.user.findUnique({
-        where: { email: email.toLowerCase().trim() },
+        where: { slug: normalizeId(email) },
       });
 
       // Security: Don't reveal if the email doesn't exist
