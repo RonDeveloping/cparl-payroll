@@ -1,3 +1,4 @@
+// lib/actions/user.ts
 "use server";
 
 import bcrypt from "bcrypt";
@@ -9,9 +10,9 @@ import { UserRegistrationInput } from "../validations/user-register-schema";
 import { sendVerificationEmail } from "../mail";
 import crypto from "node:crypto";
 
-export async function checkEmailAvailability(email: string) {
+export async function isEmailTaken(email: string) {
   const normalizedEmail = email.toLowerCase().trim();
-  const user = await prisma.user.findFirst({
+  const isEmailInUserTable = await prisma.user.findFirst({
     where: {
       slug: {
         equals: normalizedEmail,
@@ -20,7 +21,7 @@ export async function checkEmailAvailability(email: string) {
     },
     select: { id: true },
   });
-  return !user; // Returns true if available, false if taken
+  return isEmailInUserTable; // Returns true if taken, false if available
 }
 
 /**
@@ -50,9 +51,9 @@ export async function upsertUser(
         select: { id: true },
       });
 
-      if (existingUserByEmail) {
-        throw new Error("This email is already registered");
-      }
+      // if (existingUserByEmail) {
+      //   throw new Error("This email is already registered");
+      // }
 
       // 2. Resolve the target Contact ID
       // If we are updating an existing user, we need their current contactId

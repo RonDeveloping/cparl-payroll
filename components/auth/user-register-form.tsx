@@ -1,4 +1,4 @@
-// components/RegisterForm.tsx
+// components/auth/user-register-form.tsx
 
 "use client";
 
@@ -9,7 +9,6 @@ import {
   registerSchema,
   UserRegistrationInput,
 } from "@/lib/validations/user-register-schema";
-import { upsertUser } from "@/lib/actions/user";
 import { useMemo, useState } from "react";
 import { FormGrid } from "../form/form-grid";
 import InputWithChanges from "../form/input-with-changes";
@@ -47,14 +46,26 @@ export default function RegisterForm() {
   const onSubmit = async (data: UserRegistrationInput) => {
     setServerError(null);
 
-    const result = await upsertUser(data);
+    try {
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-    if (!result.success) {
-      setServerError(result.error ?? "An unexpected error occurred.");
-      return;
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Handle Rate Limit (429) or Server Errors (500)
+        setServerError(result.error || "An unexpected error occurred.");
+        return;
+      }
+
+      // Success (Generic): Redirect to the verification request page and pass the email as a query parameter
+      router.push(`/auth/veri-request?email=${encodeURIComponent(data.email)}`);
+    } catch (err) {
+      setServerError("Failed to connect to the server.");
     }
-    console.log("Registration successful:", result.data);
-    router.push("/auth/veri-request");
   };
 
   return (
@@ -116,12 +127,3 @@ export default function RegisterForm() {
     </form>
   );
 }
-/*
-Most professional development teams (including those at Vercel, Google, and Airbnb) prefer kebab-case for files for three technical reasons:
-
-Case Sensitivity Issues: macOS and Windows are often case-insensitive, but Linux (where your code is deployed/CI/CD) is case-sensitive. If you rename RegisterForm.tsx to registerform.tsx, git might not track the change on Windows, but your build will fail on Linux. Kebab-case avoids this entirely.
-
-URL Consistency: In the Next.js app router, folders define your URLs. URLs are always lowercase (e.g., /user-settings). Using kebab-case across your entire src folder keeps your file system consistent with your routing.
-
-Scanability: register-form.tsx is slightly easier to read in a dense file tree than RegisterForm.tsx, especially for people using screen readers or different IDE themes.
-*/

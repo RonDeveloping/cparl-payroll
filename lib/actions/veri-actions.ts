@@ -5,6 +5,8 @@ import prisma from "@/db/prismaDrizzle";
 import { safe } from "@/utils/validators/safe";
 import { sendVerificationEmail } from "@/lib/mail";
 import crypto from "crypto";
+import { ratelimit } from "../ratelimit";
+import { headers } from "next/headers";
 
 export async function verifyEmailAction(token: string) {
   return await safe(
@@ -43,17 +45,6 @@ export async function verifyEmailAction(token: string) {
         },
       });
 
-      // 4. Sync the Contact Table
-      // Ensure the "Shared Kernel" identity matches the verified auth email
-      // if (user.contactId) {
-      //   await tx.contact.update({
-      //     where: { id: user.contactId },
-      //     data: {
-      //       email: updatedUser.email,
-      //     },
-      //   });
-      // }
-
       // 5. Delete the token so it cannot be reused
       await tx.verificationToken.delete({
         where: { id: tokenRecord.id },
@@ -65,6 +56,19 @@ export async function verifyEmailAction(token: string) {
 }
 
 export async function resendVerification(email: string) {
+  // 1. RATE LIMIT CHECK (Outside the transaction)
+  const headerList = await headers();
+  const ip = headerList.get("x-forwarded-for") ?? "127.0.0.1";
+
+  const { success } = await ratelimit.limit(`resend_${ip}`);
+
+  if (!success) {
+    return {
+      success: false,
+      error: "Too many requests. Please wait a moment before trying again.",
+    };
+  }
+
   return await safe(
     prisma.$transaction(async (tx) => {
       // 1. Find the user by email or slug
@@ -75,9 +79,8 @@ export async function resendVerification(email: string) {
       });
 
       if (!user) {
-        // For security, you might want to return "Success" even if user not found
-        // to prevent email enumeration, but for now we'll throw an error.
-        throw new Error("User not found.");
+        // Return a success object instead of throwing an error to implement Generic Response
+        return { success: true, message: "Verification email sent." };
       }
 
       // 2. Enforce "One Active Token" - Delete old tokens for this user

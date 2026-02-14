@@ -1,15 +1,21 @@
-//
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+//just in case I want to keep resend link in a separate page.
+
+import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { resendVerification } from "@/lib/actions/veri-actions";
-import { toast } from "sonner"; // or your preferred toast lib
+import { toast } from "sonner";
 
-export default function ResendPage() {
-  const [email, setEmail] = useState("");
+function ResendFormContent() {
+  const searchParams = useSearchParams();
+  // 1. Get the param first
+  const emailParam = searchParams.get("email") || "";
+
+  // 2. Initialize state with that param directly
+  // No more useEffect needed!
+  const [email, setEmail] = useState(emailParam);
   const [loading, setLoading] = useState(false);
-
   const handleResend = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -38,7 +44,7 @@ export default function ResendPage() {
           type="email"
           required
           className="w-full p-2 border rounded"
-          placeholder="email@example.com"
+          placeholder={email || "emai2l@example.com"}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />

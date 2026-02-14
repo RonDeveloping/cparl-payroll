@@ -1,23 +1,17 @@
 // lib/validations/register-schema.ts
 
 import { z } from "zod";
-import { checkEmailAvailability } from "@/lib/actions/user";
 
 export const registerSchema = z
   .object({
     givenName: z.string().min(1, "Given name is required"),
     familyName: z.string().min(1, "Family name is required"),
-    email: z
-      .string()
-      .email("Invalid email address")
-      .trim()
-      .refine(async (email) => await checkEmailAvailability(email), {
-        message:
-          "This email is already taken; if you own it, please log in or use password recovery.",
-      }),
-    phone: z
-      .string()
-      .optional()
+    email: z.string().email("Invalid email address").trim(),
+      // .refine(async (email) => await checkEmailAvailability(email), {
+      //   message:
+      //     "This email is already taken; if you own it, please log in or use password recovery.",
+      // }),
+    phone: z.string().optional()
       .refine(
         (val) => {
           if (!val) return true;
@@ -27,8 +21,7 @@ export const registerSchema = z
         { message: "Phone number must contain 10 digits" },
       ),
 
-    password: z
-      .string()
+    password: z.string()
       .min(8, "Password must be at least 8 characters")
       .max(100)
       .regex(/[A-Z]/, "Password must contain at least one UPPERCASE letter")
