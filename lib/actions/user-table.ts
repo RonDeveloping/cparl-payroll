@@ -6,7 +6,7 @@ import prisma from "@/db/prismaDrizzle";
 import { normalizeId } from "@/utils/formatters/idSlug";
 import { safe } from "@/utils/validators/safe";
 import { upsertContactPEAInternal } from "@/db/internal/contactHelper";
-import { UserRegistrationInput } from "../validations/user-register-schema";
+import { RegisterInput } from "../validations/register-schema";
 import { sendVerificationEmail } from "../mail";
 import crypto from "node:crypto";
 
@@ -28,10 +28,7 @@ export async function isEmailTaken(email: string) {
  * Main Entry Point: Synchronizes Auth (User) and Identity (Contact/PEA).
  * Handles the "Status-Gate" by storing unverified email in 'email' field.
  */
-export async function upsertUser(
-  data: UserRegistrationInput,
-  existingUserId?: string,
-) {
+export async function upsertUser(data: RegisterInput, existingUserId?: string) {
   const normalizedSlug = normalizeId(data.email);
   const displayEmail = data.email.trim();
 
@@ -98,13 +95,13 @@ export async function upsertUser(
       // --- ADDED: STEP 5 - VERIFICATION TOKEN & EMAIL TRIGGER ---
 
       // A. Clear any old tokens for this user (Cleanup)
-      await tx.verificationToken.deleteMany({
+      await tx.emailVerification.deleteMany({
         where: { userId: user.id },
       });
 
       // B. Create the new token
       const token = crypto.randomBytes(32).toString("hex");
-      await tx.verificationToken.create({
+      await tx.emailVerification.create({
         data: {
           token,
           userId: user.id,

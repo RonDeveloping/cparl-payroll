@@ -1,7 +1,7 @@
 // app/api/register/route.ts
 import { NextResponse } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
-import { isEmailTaken, upsertUser } from "@/lib/actions/user";
+import { isEmailTaken, upsertUser } from "@/lib/actions/user-table";
 import { Redis } from "@upstash/redis";
 
 // This automatically looks for UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN

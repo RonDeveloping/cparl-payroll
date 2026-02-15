@@ -1,4 +1,5 @@
-import {cn} from "@/lib/utils";
+//constants/styles.ts
+import { cn } from "@/lib/utils";
 
 export const FORM_GRID_STYLE =
   "grid grid-cols-1 md:grid-cols-2 gap-4 mt-1 px-1";
@@ -20,6 +21,87 @@ export const BUTTON_VARIANTS = {
     "disabled:opacity-50 disabled:cursor-not-allowed",
   ),
 };
+
+export const authStyles: AuthStyleSchema = {
+  // Layout Containers
+  pageWrapper:
+    "flex flex-col items-center justify-center min-h-screen p-0 text-center",
+  card: "max-w-md w-full bg-white p-5 rounded-xl shadow-sm border border-slate-200",
+  divider: "my-8 border-slate-100",
+
+  // Typography
+  title: "text-2xl font-bold text-slate-900 mb-2",
+  bodyText: "text-slate-600 mb-6",
+  subText: "text-xs text-slate-500 leading-relaxed", // For your smaller "if" sentence
+  // Secondary Instructions (The "Keep page open" text)
+  instructionText: "text-slate-500 text-sm mb-6 leading-relaxed",
+
+  // Interactive Elements
+  buttonResend:
+    "text-blue-600 font-medium hover:underline disabled:text-slate-400 disabled:no-underline flex items-center justify-center w-full gap-2",
+  linkBack:
+    "text-sm text-slate-400 hover:text-slate-600 transition-colors inline-block",
+
+  // Troubleshooting Section (The "Didn't receive email?" part)
+  troubleshootWrapper: "space-y-1 mb-6",
+  troubleshootText: "text-sm text-slate-500",
+  // Notice/Alert Boxes
+  alertBox:
+    "mb-6 flex items-start gap-3 p-4 text-left bg-amber-50 border border-amber-100 rounded-lg",
+  alertText: "text-xs text-amber-800 leading-relaxed",
+  // Small Reminder (The one you asked to make smaller)
+  reminderBox:
+    "mb-6 p-3 bg-slate-50 rounded-md border border-slate-100 text-left",
+  reminderText: "text-[11px] text-slate-500 leading-tight italic",
+
+  // Icon Styles
+  iconCenter: "flex justify-center mb-4",
+  iconWrapper: "p-3 bg-blue-50 rounded-full inline-flex mb-4",
+  iconMain: "w-12 h-12 text-blue-600",
+  iconAlert: "w-5 h-5 text-amber-600 shrink-0 mt-0.5",
+  iconInfo: "w-4 h-4 text-slate-400 shrink-0 mt-0.5",
+  iconSpinner: "w-4 h-4 animate-spin",
+};
+
+/*
+Benefits of using interface:
+Autocompletion: As soon as you type className={authStyles., your IDE will pop up a list of all constants.
+Type Safety: If you accidentally mistype a constant name (e.g., authStyles.pageWrpper), TypeScript will throw an error, preventing runtime bugs.
+Refactoring: If you want to rename buttonResend to actionButton, you can use your IDE's "Rename Symbol" feature.
+*/
+interface AuthStyleSchema {
+  // Layout
+  pageWrapper: string;
+  card: string;
+  iconWrapper: string;
+  iconCenter: string;
+  divider: string;
+
+  // Typography
+  title: string;
+  bodyText: string;
+  instructionText: string;
+  subText: string;
+
+  // Interactive
+  buttonResend: string;
+  linkBack: string;
+
+  // Troubleshooting & Feedback
+  troubleshootWrapper: string;
+  troubleshootText: string;
+  alertBox: string;
+  alertText: string;
+  reminderBox: string;
+  reminderText: string;
+
+  // Icons
+  iconMain: string;
+  iconAlert: string;
+  iconInfo: string;
+  iconSpinner: string;
+}
+
 /*
 Variant	Visual Style	Common Use Case
 Primary	High contrast (Solid background).	The main goal: Register, Save, Pay.

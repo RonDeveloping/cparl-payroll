@@ -1,10 +1,10 @@
-import { UserRegistrationInput } from "@/lib/validations/user-register-schema";
+import { RegisterInput } from "@/lib/validations/register-schema";
 import { Clarification } from "@/components/clarification";
 import { ReactNode } from "react";
 
 export type FieldDef = {
   label: ReactNode;
-  name: keyof UserRegistrationInput;
+  name: keyof RegisterInput;
   rules?: Record<string, unknown>;
   type?: string;
 };
@@ -28,7 +28,7 @@ export const REGISTER_FIELDS = {
       label: (
         <Clarification
           term="Mobile Phone"
-          description="Optional but beneficial as a backup method to recover your account."
+          description="Optional for now, but will be required once you enter data. It will be used as a backup method for account recovery and two-factor authentication (2FA)."
         />
       ),
       name: "phone",

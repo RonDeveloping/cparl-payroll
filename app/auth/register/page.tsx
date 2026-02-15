@@ -1,4 +1,4 @@
-import RegisterForm from "@/components/auth/user-register-form";
+import RegisterForm from "@/components/auth/create-account-form";
 import { ROUTES } from "@/constants/routes";
 
 export default function RegisterPage() {

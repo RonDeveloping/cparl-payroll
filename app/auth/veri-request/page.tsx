@@ -8,7 +8,7 @@ import Link from "next/link";
 import { MailCheck } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { Suspense } from "react";
-import VerifyRequestContent from "@/components/auth/veri-request-content";
+import CheckEmailNotice from "@/components/auth/check-email-notice";
 
 export default function VerifyRequestPage() {
   const searchParams = useSearchParams();
@@ -23,7 +23,7 @@ export default function VerifyRequestPage() {
         </div>
       }
     >
-      <VerifyRequestContent />
+      <CheckEmailNotice />
     </Suspense>
   );
 }

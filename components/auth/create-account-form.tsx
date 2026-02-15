@@ -4,11 +4,11 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { REGISTER_FIELDS } from "@/constants/user-register-fields";
+import { REGISTER_FIELDS } from "@/constants/register-fields";
 import {
   registerSchema,
-  UserRegistrationInput,
-} from "@/lib/validations/user-register-schema";
+  RegisterInput,
+} from "@/lib/validations/register-schema";
 import { useMemo, useState } from "react";
 import { FormGrid } from "../form/form-grid";
 import InputWithChanges from "../form/input-with-changes";
@@ -27,7 +27,7 @@ export default function RegisterForm() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting, isValid },
-  } = useForm<UserRegistrationInput>({
+  } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     mode: "onChange",
     reValidateMode: "onBlur", // Re-validate on blur (important for async validations)
@@ -37,13 +37,13 @@ export default function RegisterForm() {
 
   const registerFormatted = useMemo(
     () =>
-      registerWithOnBlurFormat<UserRegistrationInput>(register, {
+      registerWithOnBlurFormat<RegisterInput>(register, {
         phone: formatPhone,
       }),
     [register],
   );
 
-  const onSubmit = async (data: UserRegistrationInput) => {
+  const onSubmit = async (data: RegisterInput) => {
     setServerError(null);
 
     try {
@@ -74,7 +74,7 @@ export default function RegisterForm() {
         <div className="text-red-600 bg-red-100 p-2 rounded">{serverError}</div>
       )}
 
-      <SmartFormProvider<UserRegistrationInput>
+      <SmartFormProvider<RegisterInput>
         value={{
           register: registerFormatted, // Pass the RHF register function
           changes: [], // No "changes" for a new registration
@@ -83,7 +83,7 @@ export default function RegisterForm() {
       >
         <FormGrid>
           {REGISTER_FIELDS.mandatory.map((field) => (
-            <InputWithChanges<UserRegistrationInput>
+            <InputWithChanges<RegisterInput>
               key={field.name}
               {...field}
               error={errors[field.name]?.message}

@@ -23,8 +23,7 @@ interface LoginData {
 }
 
 export async function loginAction(data: LoginData) {
-  // 1. Pass the promise directly to safe
-  // We use safe(somePromise) rather than safe(() => somePromise)
+  // 1. Pass the promise directly to safe(somePromise) rather than safe(() => somePromise)
   const result = await safe(
     (async () => {
       const { email, password } = data;
@@ -92,13 +91,13 @@ export async function askForResetLinkAction(email: string) {
       if (!user) return { success: true };
 
       // Delete any old reset tokens first
-      await prisma.verificationToken.deleteMany({
+      await prisma.emailVerification.deleteMany({
         where: { userId: user.id, type: "PASSWORD_RESET" },
       });
 
       // Create the new token
       const token = crypto.randomUUID();
-      await prisma.verificationToken.create({
+      await prisma.emailVerification.create({
         data: {
           userId: user.id,
           token,
@@ -108,10 +107,6 @@ export async function askForResetLinkAction(email: string) {
       });
 
       await sendResetEmail(user.email, token);
-      // console.log(
-      //   `Reset link: ${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password?token=${token}`,
-      // );
-
       return { success: true };
     })(),
   );
@@ -121,7 +116,7 @@ export async function resetPasswordAction(token: string, newPassword: string) {
   return await safe(
     (async () => {
       // 1. Find the token and ensure it's the correct type
-      const tokenRecord = await prisma.verificationToken.findUnique({
+      const tokenRecord = await prisma.emailVerification.findUnique({
         where: { token },
         include: { user: true },
       });
@@ -145,7 +140,7 @@ export async function resetPasswordAction(token: string, newPassword: string) {
           data: { passwordHash: hashedPassword },
         }),
         // Delete ALL password reset tokens for this user to be safe
-        prisma.verificationToken.deleteMany({
+        prisma.emailVerification.deleteMany({
           where: {
             userId: tokenRecord.userId,
             type: "PASSWORD_RESET",

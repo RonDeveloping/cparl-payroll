@@ -56,54 +56,74 @@ export async function verifyEmailAction(token: string) {
 }
 
 export async function resendVerification(email: string) {
-  // 1. RATE LIMIT CHECK (Outside the transaction)
+  // 1. RATE LIMIT CHECK
   const headerList = await headers();
   const ip = headerList.get("x-forwarded-for") ?? "127.0.0.1";
 
-  const { success } = await ratelimit.limit(`resend_${ip}`);
+  const { success: limitOK } = await ratelimit.limit(`resend_${ip}`);
 
-  if (!success) {
+  if (!limitOK) {
     return {
       success: false,
       error: "Too many requests. Please wait a moment before trying again.",
     };
   }
 
-  return await safe(
+  // 2. DATABASE TRANSACTION (Pure DB work)
+  const dbResult = await safe(
     prisma.$transaction(async (tx) => {
-      // 1. Find the user by email or slug
       const user = await tx.user.findFirst({
-        where: {
-          OR: [{ email: email.trim() }, { slug: email.toLowerCase().trim() }],
-        },
+        where: { slug: email.toLowerCase().trim() },
       });
 
-      if (!user) {
-        // Return a success object instead of throwing an error to implement Generic Response
-        return { success: true, message: "Verification email sent." };
-      }
+      // If no user, return null so we can still show a generic success message
+      if (!user) return null;
 
-      // 2. Enforce "One Active Token" - Delete old tokens for this user
+      // Enforce "One Active Token"
       await tx.emailVerification.deleteMany({
         where: { userId: user.id },
       });
 
-      // 3. Generate a new secure token
       const token = crypto.randomBytes(32).toString("hex");
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 Hours
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
       const newToken = await tx.emailVerification.create({
-        data: {
-          token,
-          userId: user.id,
-          expiresAt,
-        },
+        data: { token, userId: user.id, expiresAt },
       });
 
-      // 4. TRIGGER EMAIL SEND
-      await sendVerificationEmail(user.email, token);
-
-      return { success: true, message: "Verification email sent." };
+      // Pass the data out of the transaction
+      return { email: user.email, token: newToken.token };
     }),
   );
+
+  // 3. HANDLE DB ERROR
+  if (!dbResult.success) {
+    return { success: false, error: "Database error. Please try again." };
+  }
+
+  // 4. ONLY TRIGGER EMAIL NOW (after the transaction is committed) to ensure we don't send emails for tokens that might later be rolled back and to avoid long-running transactions due to email sending delays or service interruptions suchas Resend server issues.
+  // If dbResult.data is null, it means user wasn't found (Generic Response)
+  if (dbResult.data) {
+    try {
+      await sendVerificationEmail(dbResult.data.email, dbResult.data.token);
+    } catch (error) {
+      console.error("Email failed to send:", error);
+      // We don't necessarily return 'false' here because the token WAS created.
+      // But for a 'resend' action, the user expects the email to work.
+      return {
+        success: false,
+        error: "Failed to send email. Please try again.",
+      };
+    }
+  }
+
+  return { success: true, message: "Verification email sent." };
 }
+
+/*
+   4. TRIGGER EMAIL SEND
+      await sendVerificationEmail(user.email, newToken.token);
+
+      return { success: true, message: "Verification email sent." };
+    
+*/
