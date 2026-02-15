@@ -12,7 +12,7 @@ export async function verifyEmailAction(token: string) {
   return await safe(
     prisma.$transaction(async (tx) => {
       // 1. Find the token and include the user
-      const tokenRecord = await tx.verificationToken.findUnique({
+      const tokenRecord = await tx.emailVerification.findUnique({
         where: { token },
         include: { user: true },
       });
@@ -23,7 +23,7 @@ export async function verifyEmailAction(token: string) {
 
       if (tokenRecord.expiresAt < new Date()) {
         // Optional: delete expired token here
-        await tx.verificationToken.delete({ where: { id: tokenRecord.id } });
+        await tx.emailVerification.delete({ where: { id: tokenRecord.id } });
         throw new Error(
           "Verification link has expired. Please request a new one.",
         );
@@ -46,7 +46,7 @@ export async function verifyEmailAction(token: string) {
       });
 
       // 5. Delete the token so it cannot be reused
-      await tx.verificationToken.delete({
+      await tx.emailVerification.delete({
         where: { id: tokenRecord.id },
       });
 
@@ -84,7 +84,7 @@ export async function resendVerification(email: string) {
       }
 
       // 2. Enforce "One Active Token" - Delete old tokens for this user
-      await tx.verificationToken.deleteMany({
+      await tx.emailVerification.deleteMany({
         where: { userId: user.id },
       });
 
@@ -92,7 +92,7 @@ export async function resendVerification(email: string) {
       const token = crypto.randomBytes(32).toString("hex");
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 Hours
 
-      const newToken = await tx.verificationToken.create({
+      const newToken = await tx.emailVerification.create({
         data: {
           token,
           userId: user.id,

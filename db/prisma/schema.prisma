@@ -14,37 +14,65 @@ datasource db {
 model User {
   id           String   @id @default(cuid()) // Internal, never changes
   slug         String   @unique // Normalized email, all lowercase
-  // givenName    String   @map("given_name")
-  // familyName   String   @map("family_name")
   email  String   @unique @map("email") //original format user inputs; case-insensitive in practice.
   emailVerifiedAt       DateTime? @map("email_verified_at")
   pendingEmail  String?   @map("pending_email")
+  
   phone  String?   @unique @map("phone")
   phoneVerifiedAt       DateTime? @map("phone_verified_at")
   pendingPhone  String?   @map("pending_phone")
+  
   passwordHash String?  @map("password_hash")
   contactId    String   @unique @map("contact_id") // soft link only (No @relation)
+  
   createdAt    DateTime @default(now()) @map("created_at") 
   updatedAt    DateTime @updatedAt @map("updated_at")
+  last2FAAt          DateTime? @map("last_2fa_at")
 
-  verificationTokens VerificationToken[]
+  twoFactorCode     TwoFactorCode?
+  emailVerifications  EmailVerification?
+  phoneVerifications  PhoneVerification?
 
   @@map("user")
 }
 
-model VerificationToken {
+model EmailVerification {
   id        String   @id @default(cuid())
   token     String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String  @unique @map("user_id")
   type      token_type @default(EMAIL_VERIFICATION)
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  @@map("verification_token")
+
+  @@map("email_verification")
+  @@index([userId]) // Helps performance when looking up codes for a specific user
 }
 
+model PhoneVerification {
+  id        String   @id @default(cuid())
+  code      String    // The 6-digit code
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String  @unique @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@map("phone_verification")
+  @@index([userId]) // Helps performance when looking up codes for a specific user
+}
 
+// Used every time they log in (2FA)
+model TwoFactorCode {
+  id        String   @id @default(cuid())
+  code      String   // 6-digit numeric
+  userId    String   @unique @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("two_factor_codes")
+  @@index([userId]) // Faster lookup during login
+}
 
 // ==========================================
 // ===== CONTACT SERVICE (Identity)     =====
@@ -596,6 +624,7 @@ Granularity: Analyzes every PayrollLine/Deduction, but exports a Summarized Tota
 enum token_type {
   EMAIL_VERIFICATION
   PASSWORD_RESET
+  EMAIL_CHANGE
 }
 
 //Conflct resolution & precedence USER > SUPPORT > IMPORT > SYSTEM
