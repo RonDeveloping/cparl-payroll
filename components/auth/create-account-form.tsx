@@ -19,6 +19,7 @@ import { Spinner } from "../shared/spinner";
 import { BUTTON_VARIANTS } from "@/constants/styles";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { ROUTES } from "@/constants/routes";
 
 export default function RegisterForm() {
   const [serverError, setServerError] = useState<string | null>(null);
@@ -47,7 +48,8 @@ export default function RegisterForm() {
     setServerError(null);
 
     try {
-      const response = await fetch("/api/register", {
+      //createUserSendEmailVeriRequest is called in the API route to ensure the transaction and email sending happen server-side
+      const response = await fetch(ROUTES.API.REGISTER, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -62,7 +64,9 @@ export default function RegisterForm() {
       }
 
       // Success (Generic): Redirect to the verification request page and pass the email as a query parameter
-      router.push(`/auth/veri-request?email=${encodeURIComponent(data.email)}`);
+      router.push(
+        `${ROUTES.AUTH.CHECK_EMAIL}?email=${encodeURIComponent(data.email)}`,
+      );
     } catch (err) {
       setServerError("Failed to connect to the server.");
     }

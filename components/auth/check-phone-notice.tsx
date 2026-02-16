@@ -1,10 +1,10 @@
-//app/components/auth/check-email-notice.tsx
+//app/components/auth/check-phone-notice.tsx
 "use client";
 
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 
-import { MailCheck } from "lucide-react";
+import { PhoneIcon } from "lucide-react";
 import { AuthButton } from "../shared/auth-button";
 import { Alert } from "../shared/alert";
 import { ROUTES } from "@/constants/routes";
@@ -12,12 +12,12 @@ import Link from "next/link";
 import { authContent as c } from "@/constants/content";
 import { authStyles as s } from "@/constants/styles";
 
-import { resendVerificationEmail } from "@/lib/actions/veri-email";
+import { resendVerificationPhone } from "@/lib/actions/veri-phone";
 import { toast } from "sonner";
 
-export default function CheckEmailNotice() {
+export default function CheckPhoneNotice() {
   const searchParams = useSearchParams();
-  const email = searchParams.get("email") || "";
+  const phone = searchParams.get("phone") || "";
   const [isPending, setIsPending] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
@@ -30,15 +30,15 @@ export default function CheckEmailNotice() {
   }, [countdown]);
 
   const handleResend = async () => {
-    if (!email) {
-      toast.error(c.errors.noEmail);
+    if (!phone) {
+      // toast.error(c.errors);
       return;
     }
 
     setIsPending(true);
 
     try {
-      const result = await resendVerificationEmail(email);
+      const result = await resendVerificationPhone(phone);
 
       if (result.success) {
         // generic for security and reflect the deactivation logic
@@ -65,13 +65,12 @@ export default function CheckEmailNotice() {
       <div className={s.card}>
         <div className={s.iconCenter}>
           <div className={s.iconWrapper}>
-            <MailCheck className={s.iconMain} />
+            <PhoneIcon className={s.iconMain} />
           </div>
         </div>
 
         <h1 className={s.title}>{c.verifyEmail.title}</h1>
         {/* MAIN INSTRUCTION */}
-        <p className={s.bodyText}>{c.verifyEmail.mainInstruction(email)}</p>
 
         {/* SECONDARY REMINDER */}
         <div className={s.reminderBox}>

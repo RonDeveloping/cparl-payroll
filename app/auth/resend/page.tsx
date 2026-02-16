@@ -3,7 +3,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { resendVerification } from "@/lib/actions/veri-actions";
+import { resendVerificationEmail } from "@/lib/actions/veri-email";
 import { toast } from "sonner"; // or your preferred toast lib
 
 export default function ResendPage() {
@@ -14,7 +14,7 @@ export default function ResendPage() {
     e.preventDefault();
     setLoading(true);
 
-    const result = await resendVerification(email);
+    const result = await resendVerificationEmail(email);
 
     if (result.success) {
       toast.success("If an account exists, a new link has been sent.");

@@ -1,10 +1,10 @@
 //The "Email Verified!" success page
 // app/auth/verify/page.tsx
-import { verifyEmailAction } from "@/lib/actions/veri-actions";
+import { verifyEmailAction } from "@/lib/actions/veri-email";
 import Link from "next/link";
 import { ROUTES } from "@/constants/routes";
 
-export default async function VerifyPage({
+export default async function VerifyPages({
   searchParams,
 }: {
   searchParams: Promise<{ token?: string }>;

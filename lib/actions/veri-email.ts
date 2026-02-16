@@ -5,7 +5,7 @@ import prisma from "@/db/prismaDrizzle";
 import { safe } from "@/utils/validators/safe";
 import { sendVerificationEmail } from "@/lib/mail";
 import crypto from "crypto";
-import { ratelimit } from "../ratelimit";
+import { emailSendLimit } from "../ratelimit";
 import { headers } from "next/headers";
 
 export async function verifyEmailAction(token: string) {
@@ -45,7 +45,7 @@ export async function verifyEmailAction(token: string) {
         },
       });
 
-      // 5. Delete the token so it cannot be reused
+      // 4. Delete the token so it cannot be reused
       await tx.emailVerification.delete({
         where: { id: tokenRecord.id },
       });
@@ -55,12 +55,12 @@ export async function verifyEmailAction(token: string) {
   );
 }
 
-export async function resendVerification(email: string) {
+export async function resendVerificationEmail(email: string) {
   // 1. RATE LIMIT CHECK
   const headerList = await headers();
   const ip = headerList.get("x-forwarded-for") ?? "127.0.0.1";
 
-  const { success: limitOK } = await ratelimit.limit(`resend_${ip}`);
+  const { success: limitOK } = await emailSendLimit.limit(`resend_${ip}`);
 
   if (!limitOK) {
     return {
@@ -85,7 +85,7 @@ export async function resendVerification(email: string) {
       });
 
       const token = crypto.randomBytes(32).toString("hex");
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); //60 min expiry
 
       const newToken = await tx.emailVerification.create({
         data: { token, userId: user.id, expiresAt },
@@ -119,11 +119,3 @@ export async function resendVerification(email: string) {
 
   return { success: true, message: "Verification email sent." };
 }
-
-/*
-   4. TRIGGER EMAIL SEND
-      await sendVerificationEmail(user.email, newToken.token);
-
-      return { success: true, message: "Verification email sent." };
-    
-*/

@@ -1,4 +1,4 @@
-// lib/actions/user.ts
+// lib/actions/of_user.ts
 "use server";
 
 import bcrypt from "bcrypt";
@@ -28,32 +28,17 @@ export async function isEmailTaken(email: string) {
  * Main Entry Point: Synchronizes Auth (User) and Identity (Contact/PEA).
  * Handles the "Status-Gate" by storing unverified email in 'email' field.
  */
-export async function upsertUser(data: RegisterInput, existingUserId?: string) {
+export async function upSertUserSendEmailVeriRequest(
+  data: RegisterInput,
+  existingUserId?: string,
+) {
   const normalizedSlug = normalizeId(data.email);
   const displayEmail = data.email.trim();
+  const phone = data.phone ? data.phone.trim() : null;
 
-  return await safe(
+  // 1. DATABASE TRANSACTION
+  const dbResult = await safe(
     prisma.$transaction(async (tx) => {
-      // 1. Check for duplicate email (case-insensitive) unless updating existing user
-      const existingUserByEmail = await tx.user.findFirst({
-        where: {
-          slug: {
-            equals: normalizedSlug,
-            mode: "insensitive", // Case-insensitive comparison
-          },
-          id: {
-            not: existingUserId || "", // Exclude the current user if updating
-          },
-        },
-        select: { id: true },
-      });
-
-      // if (existingUserByEmail) {
-      //   throw new Error("This email is already registered");
-      // }
-
-      // 2. Resolve the target Contact ID
-      // If we are updating an existing user, we need their current contactId
       let targetContactId = "new";
       let userToUpdate = null;
 
@@ -66,11 +51,8 @@ export async function upsertUser(data: RegisterInput, existingUserId?: string) {
         }
       }
 
-      // 3. Run the complex Contact logic (PEA = Phone, Email, Address)
-      // This uses your internal helper with the address hashing
       const contact = await upsertContactPEAInternal(data, targetContactId, tx);
 
-      // 4. Upsert the User record
       const hashedPassword = data.password
         ? await bcrypt.hash(data.password, 10)
         : undefined;
@@ -79,40 +61,62 @@ export async function upsertUser(data: RegisterInput, existingUserId?: string) {
         where: { slug: normalizedSlug },
         update: {
           ...(hashedPassword && { passwordHash: hashedPassword }),
-          // Ensure the user is linked to the contact we just processed
           contactId: contact.id,
         },
         create: {
           slug: normalizedSlug,
-          email: displayEmail, // Primary email for account resets
+          email: displayEmail,
+          phone: phone,
           passwordHash: hashedPassword || null,
           contactId: contact.id,
-          emailVerifiedAt: null, // Status-Gate: Start unverified
-          pendingEmail: null, // Only used for future change-requests
+          emailVerifiedAt: null,
+          pendingEmail: null,
         },
       });
 
-      // --- ADDED: STEP 5 - VERIFICATION TOKEN & EMAIL TRIGGER ---
-
-      // A. Clear any old tokens for this user (Cleanup)
+      // Cleanup old tokens
       await tx.emailVerification.deleteMany({
         where: { userId: user.id },
       });
 
-      // B. Create the new token
+      // Create new token
       const token = crypto.randomBytes(32).toString("hex");
       await tx.emailVerification.create({
         data: {
           token,
           userId: user.id,
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour expiry
         },
       });
 
-      // C. Send the email!
-      await sendVerificationEmail(user.email, token);
-
-      return { user, contact };
+      // Return everything needed for the UI and the email trigger
+      return { user, contact, token };
     }),
   );
+
+  // 2. CHECK DB SUCCESS
+  if (!dbResult.success) {
+    return { success: false, error: "Registration failed. Please try again." };
+  }
+
+  // 3. TRIGGER EMAIL (Now safely outside the transaction)
+  try {
+    const { user, token } = dbResult.data;
+    await sendVerificationEmail(user.email, token);
+  } catch (error) {
+    // We log the error but don't fail the whole registration
+    // because the user account was successfully created/updated in the DB.
+    console.error("Post-Registration Email failed:", error);
+
+    // Optional: Return a specific flag so the UI can tell the user
+    // "Account created, but we couldn't send the email right now."
+    return {
+      success: true,
+      data: dbResult.data,
+      warning:
+        "Account created, but email delivery failed. Please try resending.",
+    };
+  }
+
+  return { success: true, data: dbResult.data };
 }

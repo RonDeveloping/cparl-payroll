@@ -26,7 +26,7 @@ export const authStyles: AuthStyleSchema = {
   // Layout Containers
   pageWrapper:
     "flex flex-col items-center justify-center min-h-screen p-0 text-center",
-  card: "max-w-md w-full bg-white p-5 rounded-xl shadow-sm border border-slate-200",
+  card: "max-w-md w-full bg-white p-6 rounded-xl shadow-sm border border-slate-200",
   divider: "my-8 border-slate-100",
 
   // Typography
@@ -47,7 +47,7 @@ export const authStyles: AuthStyleSchema = {
   troubleshootText: "text-sm text-slate-500",
   // Notice/Alert Boxes
   alertBox:
-    "mb-6 flex items-start gap-3 p-4 text-left bg-amber-50 border border-amber-100 rounded-lg",
+    "mb-6 flex items-start gap-3 px-4 py-0 text-left bg-amber-50 border border-amber-100 rounded-lg",
   alertText: "text-xs text-amber-800 leading-relaxed",
   // Small Reminder (The one you asked to make smaller)
   reminderBox:
