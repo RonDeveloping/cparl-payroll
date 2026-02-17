@@ -1,8 +1,7 @@
 //
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { resendVerificationEmail } from "@/lib/actions/veri-email";
 import { toast } from "sonner"; // or your preferred toast lib
 

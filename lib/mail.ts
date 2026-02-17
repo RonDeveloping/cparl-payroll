@@ -19,7 +19,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
  * In production, ensure 'from' is a domain you own.
  */
 export const sendVerificationEmail = async (email: string, token: string) => {
-  const confirmLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify?token=${token}`;
+  const confirmLink = `${process.env.NEXT_PUBLIC_APP_URL}${ROUTES.AUTH.EMAIL_VERIFIED}?token=${token}`;
 
   await resend.emails.send({
     from: mailContent.verification.from, // Replace with your verified domain
@@ -42,7 +42,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
 };
 
 export async function sendResetEmail(email: string, token: string) {
-  const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}${ROUTES.AUTH.RESET_PASSWORD}?token=${token}`;
+  const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}${ROUTES.AUTH.RESET_PASSWORD}?token=${token}&email=${encodeURIComponent(email)}`;
 
   await resend.emails.send({
     from: mailContent.verification.from,

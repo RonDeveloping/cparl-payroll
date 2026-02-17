@@ -1,4 +1,4 @@
-// components/auth/user-register-form.tsx
+// components/auth/create-account-form.tsx
 
 "use client";
 

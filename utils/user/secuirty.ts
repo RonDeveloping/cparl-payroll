@@ -1,7 +1,7 @@
 "use server"; // Marks every function in this file as a server-side entry point
 
 import { revalidatePath } from "next/cache";
-import { verifySession } from "@/utils/user/auth"; // Your session logic
+import { verifySession } from "@/lib/session";
 
 export async function requestEmailChangeAction(formData: FormData) {
   // 1. Authenticate the caller

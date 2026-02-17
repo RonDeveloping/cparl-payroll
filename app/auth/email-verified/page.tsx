@@ -1,5 +1,4 @@
-//The "Email Verified!" success page
-// app/auth/verify/page.tsx
+//auth/email-verified/page.tsx
 import { verifyEmailAction } from "@/lib/actions/veri-email";
 import Link from "next/link";
 import { ROUTES } from "@/constants/routes";

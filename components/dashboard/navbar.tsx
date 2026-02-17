@@ -18,7 +18,7 @@ export default async function Navbar() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm text-slate-600">
               <User size={16} className="text-slate-400" />
-              <span>{session.email}</span>
+              <span>{session.slug}</span>
             </div>
 
             <form action={logoutAction}>

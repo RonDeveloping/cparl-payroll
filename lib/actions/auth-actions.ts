@@ -45,7 +45,7 @@ export async function loginAction(data: LoginData) {
         throw new Error("Invalid email or password");
       }
 
-      const token = await new SignJWT({ userId: user.id, email: user.email })
+      const token = await new SignJWT({ userId: user.id, slug: user.slug })
         .setProtectedHeader({ alg: "HS256" })
         .setIssuedAt()
         .setExpirationTime("2h")

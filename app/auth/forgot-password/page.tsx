@@ -7,10 +7,14 @@ import { toast } from "sonner";
 import { Mail, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { ROUTES } from "@/constants/routes";
+import { useSearchParams } from "next/navigation";
 
 export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const searchParams = useSearchParams();
+  const emailFromURL = searchParams.get("email") || "";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -23,7 +27,9 @@ export default function ForgotPasswordPage() {
 
     if (result.success) {
       setIsSubmitted(true);
-      toast.success("Reset link generated!");
+      toast.success(
+        "If an account exists for that email, we have sent a password reset link.",
+      );
     } else {
       toast.error(result.error || "Something went wrong");
       setIsLoading(false);
@@ -68,6 +74,7 @@ export default function ForgotPasswordPage() {
             name="email"
             type="email"
             placeholder="you@example.com"
+            defaultValue={emailFromURL}
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
           />
         </div>

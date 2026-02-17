@@ -14,6 +14,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // ✅ ADDED: State to track the email input
+  const [emailValue, setEmailValue] = useState("");
+
   // Check if we arrived here after a successful registration
   const justRegistered = searchParams.get("registered") === "true";
 
@@ -69,6 +72,8 @@ export default function LoginPage() {
               required
               placeholder="name@example.com"
               className="w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              value={emailValue}
+              onChange={(e) => setEmailValue(e.target.value)}
             />
           </div>
         </div>
@@ -79,7 +84,7 @@ export default function LoginPage() {
               Password
             </label>
             <Link
-              href="/auth/forgot-password"
+              href={`${ROUTES.AUTH.FORGOT_PASSWORD}?email=${encodeURIComponent(emailValue)}`}
               className="text-xs text-blue-600 hover:underline"
             >
               Forgot password?

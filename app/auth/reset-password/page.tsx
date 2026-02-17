@@ -1,38 +1,51 @@
-//
 "use client";
 
 import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { resetPasswordAction } from "@/lib/actions/auth-actions";
 import { toast } from "sonner";
-import { Loader2, Lock, ShieldCheck } from "lucide-react";
+import { ShieldCheck, Mail } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
+import { SmartFormProvider } from "@/components/form/form-change-context";
+import InputWithChanges from "@/components/form/input-with-changes";
+import {
+  resetPasswordSchema,
+  ResetPasswordInput,
+} from "@/lib/validations/password-schema";
+import { PASSWORD_FIELDS } from "@/constants/password-fields";
+import { cn } from "@/lib/utils";
+import { BUTTON_VARIANTS } from "@/constants/styles";
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
+  const email = searchParams.get("email") || "";
 
   const [isLoading, setIsLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  // Setup React Hook Form
+  const formMethods = useForm<ResetPasswordInput>({
+    resolver: zodResolver(resetPasswordSchema),
+    mode: "onChange",
+  });
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = formMethods;
+
+  async function onSubmit(data: ResetPasswordInput) {
     if (!token) {
       toast.error("Missing reset token");
       return;
     }
 
-    const formData = new FormData(e.currentTarget);
-    const password = formData.get("password") as string;
-    const confirmPassword = formData.get("confirmPassword") as string;
-
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-
     setIsLoading(true);
-    const result = await resetPasswordAction(token, password);
+    const result = await resetPasswordAction(token, data.password);
 
     if (result.success) {
       toast.success("Password updated! Please log in.");
@@ -43,76 +56,58 @@ export default function ResetPasswordPage() {
     }
   }
 
-  // If someone lands here without a token, show a warning
   if (!token) {
     return (
       <div className="max-w-md mx-auto mt-20 text-center p-8 bg-red-50 border border-red-100 rounded-xl">
         <p className="text-red-600 font-medium">
-          Invalid link. Please request a new password reset.
+          Invalid link. Please request a new reset.
         </p>
       </div>
     );
   }
-
+  8;
   return (
-    <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-2xl shadow-sm border border-slate-200">
-      <div className="flex items-center gap-2 mb-6 text-blue-600">
+    <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-2xl shadow-sm border border-slate-200">
+      <div className="flex items-center gap-2 mb-2 text-blue-600">
         <ShieldCheck size={28} />
         <h1 className="text-2xl font-bold text-slate-900">Set New Password</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            New Password
-          </label>
-          <div className="relative">
-            <Lock
-              className="absolute left-3 top-2.5 text-slate-400"
-              size={18}
-            />
-            <input
-              required
-              name="password"
-              type="password"
-              minLength={8}
-              placeholder="••••••••"
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-            />
-          </div>
+      {email && (
+        <div className="flex items-center gap-2 mb-6 p-3 bg-slate-50 border border-slate-100 rounded-lg">
+          <Mail size={16} className="text-slate-400" />
+          <p className="text-sm text-slate-600">
+            <span className="font-semibold text-slate-900">{email}</span>
+          </p>
         </div>
+      )}
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Confirm New Password
-          </label>
-          <div className="relative">
-            <Lock
-              className="absolute left-3 top-2.5 text-slate-400"
-              size={18}
+      {/* Provide the context that InputWithChanges needs */}
+      <SmartFormProvider
+        value={{
+          register: register,
+          changes: [],
+          showChanges: false,
+        }}
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {PASSWORD_FIELDS.map((field) => (
+            <InputWithChanges<ResetPasswordInput>
+              key={field.name}
+              {...field}
+              error={errors[field.name]?.message}
             />
-            <input
-              required
-              name="confirmPassword"
-              type="password"
-              placeholder="••••••••"
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-            />
-          </div>
-        </div>
+          ))}
 
-        <button
-          disabled={isLoading}
-          type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
-        >
-          {isLoading ? (
-            <Loader2 className="animate-spin" size={20} />
-          ) : (
-            "Update Password"
-          )}
-        </button>
-      </form>
+          <button
+            disabled={isLoading || !isValid}
+            type="submit"
+            className={cn(BUTTON_VARIANTS.primary, "relative w-full")}
+          >
+            {isLoading ? "Updating..." : "Submit"}
+          </button>
+        </form>
+      </SmartFormProvider>
     </div>
   );
 }

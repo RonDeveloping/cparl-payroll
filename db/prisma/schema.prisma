@@ -30,8 +30,8 @@ model User {
   last2FAAt          DateTime? @map("last_2fa_at")
 
   twoFactorCode     TwoFactorCode?
-  emailVerifications  EmailVerification?
-  phoneVerifications  PhoneVerification?
+  emailVerifications  EmailVerification[]
+  phoneVerification  PhoneVerification?
 
   @@map("user")
 }
@@ -40,14 +40,14 @@ model EmailVerification {
   id        String   @id @default(cuid())
   token     String   @unique
   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String  @unique @map("user_id")
+  userId    String @map("user_id")
   type      token_type @default(EMAIL_VERIFICATION)
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("email_verification")
-  @@index([userId]) // Helps performance when looking up codes for a specific user
+  @@index([userId, type]) // Helps performance when looking up codes for a specific user
 }
 
 model PhoneVerification {
