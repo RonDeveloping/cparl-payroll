@@ -2,6 +2,7 @@
 import { verifyEmailAction } from "@/lib/actions/veri-email";
 import Link from "next/link";
 import { ROUTES } from "@/constants/routes";
+import { authStyles } from "@/constants/styles";
 
 export default async function VerifyPages({
   searchParams,
@@ -13,8 +14,8 @@ export default async function VerifyPages({
 
   if (!token) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h1 className="text-xl font-bold text-red-600">Missing Token</h1>
+      <div className={authStyles.missingTokenContainer}>
+        <h1 className={authStyles.missingTokenTitle}>Missing Token</h1>
         <p>This verification link is invalid or broken.</p>
       </div>
     );
@@ -25,17 +26,12 @@ export default async function VerifyPages({
   // 1. Handle Error State
   if (!result.success) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
-        <div className="bg-red-50 p-8 rounded-lg border border-red-200 shadow-sm">
-          <h1 className="text-2xl font-bold text-red-700 mb-2">
-            Verification Failed
-          </h1>
+      <div className={authStyles.emailVerificationContainer}>
+        <div className={authStyles.errorCard}>
+          <h1 className={authStyles.errorTitle}>Verification Failed</h1>
           {/* Use result.error here now that we've checked !result.success */}
-          <p className="text-red-600 mb-4">{result.error}</p>
-          <Link
-            href={ROUTES.AUTH.RESEND}
-            className="text-blue-600 hover:underline"
-          >
+          <p className={authStyles.errorMessage}>{result.error}</p>
+          <Link href={ROUTES.AUTH.RESEND} className={authStyles.errorLink}>
             Request a new verification link
           </Link>
         </div>
@@ -45,18 +41,13 @@ export default async function VerifyPages({
 
   // 2. Handle Success State
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
-      <div className="bg-green-50 p-8 rounded-lg border border-green-200 shadow-sm">
-        <h1 className="text-2xl font-bold text-green-700 mb-2">
-          Email Verified!
-        </h1>
-        <p className="text-green-600 mb-6">
+    <div className={authStyles.emailVerificationContainer}>
+      <div className={authStyles.successCard}>
+        <h1 className={authStyles.successTitle}>Email Verified!</h1>
+        <p className={authStyles.successMessage}>
           Thank you. Your account is now active.
         </p>
-        <Link
-          href={ROUTES.AUTH.LOGIN}
-          className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors"
-        >
+        <Link href={ROUTES.AUTH.LOGIN} className={authStyles.successButton}>
           Sign In
         </Link>
       </div>

@@ -7,6 +7,7 @@ import { Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { loginAction } from "@/lib/actions/auth-actions";
 import { ROUTES } from "@/constants/routes";
+import { authStyles } from "@/constants/styles";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -45,64 +46,60 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full max-w-md space-y-8 p-8 bg-white rounded-xl shadow-lg border border-slate-100">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold text-slate-900">Sign In</h1>
-        <p className="mt-2 text-sm text-slate-600">
+    <div className={authStyles.loginCard}>
+      <div className={authStyles.loginHeader}>
+        <h1 className={authStyles.loginTitle}>Sign In</h1>
+        <p className={authStyles.loginSubtitle}>
           Enter your credentials to access your account
         </p>
       </div>
 
       {justRegistered && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded text-sm">
+        <div className={authStyles.loginBanner}>
           Registration successful! Please sign in.
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">
-            Email Address
-          </label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+      <form onSubmit={handleSubmit} className={authStyles.loginForm}>
+        <div className={authStyles.loginFieldGroup}>
+          <label className={authStyles.loginFieldLabel}>Email Address</label>
+          <div className={authStyles.loginInputWrapper}>
+            <Mail className={authStyles.loginEmailIcon} />
             <input
               name="email"
               type="email"
               required
               placeholder="name@example.com"
-              className="w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              className={authStyles.loginInput}
               value={emailValue}
               onChange={(e) => setEmailValue(e.target.value)}
             />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <label className="text-sm font-medium text-slate-700">
-              Password
-            </label>
+        <div className={authStyles.loginFieldGroup}>
+          <div className={authStyles.loginPasswordHeader}>
+            <label className={authStyles.loginFieldLabel}>Password</label>
             <Link
               href={`${ROUTES.AUTH.FORGOT_PASSWORD}?email=${encodeURIComponent(emailValue)}`}
-              className="text-xs text-blue-600 hover:underline"
+              className={authStyles.loginForgotLink}
             >
               Forgot password?
             </Link>
           </div>
-          <div className="relative">
-            <Lock className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+          <div className={authStyles.loginInputWrapper}>
+            <Lock className={authStyles.loginPasswordIcon} />
             <input
               name="password"
               type={showPassword ? "text" : "password"}
               required
               placeholder="••••••••"
-              className="w-full pl-10 pr-12 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              className={authStyles.loginPasswordInput}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+              className={authStyles.loginPasswordToggle}
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
@@ -112,17 +109,17 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-md transition-colors flex items-center justify-center gap-2"
+          className={authStyles.loginButton}
         >
           {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Sign In"}
         </button>
       </form>
 
-      <p className="text-center text-sm text-slate-600">
+      <p className={authStyles.loginFooter}>
         Don&apos;t have an account?{" "}
         <Link
           href={ROUTES.AUTH.REGISTER}
-          className="text-blue-600 font-medium hover:underline"
+          className={authStyles.loginCreateLink}
         >
           Create one
         </Link>

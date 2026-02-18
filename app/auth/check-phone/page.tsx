@@ -4,16 +4,13 @@
 
 import { Suspense } from "react";
 import CheckPhoneNotice from "@/components/auth/check-phone-notice";
+import { authStyles } from "@/constants/styles";
 
 export default function CheckPhonePage() {
   return (
     // The Suspense boundary MUST wrap the component using useSearchParams
     <Suspense
-      fallback={
-        <div className="flex items-center justify-center min-h-screen">
-          Loading...
-        </div>
-      }
+      fallback={<div className={authStyles.loadingContainer}>Loading...</div>}
     >
       <CheckPhoneNotice />
     </Suspense>

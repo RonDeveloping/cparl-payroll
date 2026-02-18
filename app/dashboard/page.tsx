@@ -1,6 +1,7 @@
 import { getCurrentUser } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
+import { dashboardStyles } from "@/constants/styles";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -11,23 +12,21 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-        <h1 className="text-3xl font-bold text-slate-900">
+    <div className={dashboardStyles.pageContainer}>
+      <div className={dashboardStyles.heroCard}>
+        <h1 className={dashboardStyles.heroTitle}>
           Welcome back, {user.email}! 👋
         </h1>
-        <p className="text-slate-500 mt-2">
+        <p className={dashboardStyles.heroSubtitle}>
           Account Status:{" "}
-          <span className="text-green-600 font-medium">Verified</span>
+          <span className={dashboardStyles.heroStatus}>Verified</span>
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-6 bg-blue-50 rounded-xl border border-blue-100">
-          <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
-            Email
-          </p>
-          <p className="text-slate-700 font-medium">{user.email}</p>
+      <div className={dashboardStyles.statsGrid}>
+        <div className={dashboardStyles.statCard}>
+          <p className={dashboardStyles.statLabel}>Email</p>
+          <p className={dashboardStyles.statValue}>{user.email}</p>
         </div>
         {/* Add more stats or profile info here */}
       </div>

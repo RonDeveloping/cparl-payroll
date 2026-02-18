@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Mail, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { ROUTES } from "@/constants/routes";
+import { authStyles } from "@/constants/styles";
 import { useSearchParams } from "next/navigation";
 
 export default function ForgotPasswordPage() {
@@ -38,18 +39,18 @@ export default function ForgotPasswordPage() {
 
   if (isSubmitted) {
     return (
-      <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-2xl shadow-sm border border-slate-200 text-center">
-        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className={authStyles.forgotPasswordCardCenter}>
+        <div className={authStyles.forgotPasswordIcon}>
           <Mail size={32} />
         </div>
-        <h1 className="text-2xl font-bold text-slate-900">Check your email</h1>
-        <p className="text-slate-500 mt-2">
+        <h1 className={authStyles.forgotPasswordTitle}>Check your email</h1>
+        <p className={authStyles.forgotPasswordText}>
           If an account exists for that email, we have sent a password reset
           link.
         </p>
         <Link
           href={ROUTES.AUTH.LOGIN}
-          className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:underline"
+          className={authStyles.forgotPasswordBackLink}
         >
           <ArrowLeft size={16} /> Back to Login
         </Link>
@@ -58,15 +59,15 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-2xl shadow-sm border border-slate-200">
-      <h1 className="text-2xl font-bold text-slate-900">Forgot Password?</h1>
-      <p className="text-slate-500 mt-2 mb-6">
+    <div className={authStyles.forgotPasswordCard}>
+      <h1 className={authStyles.forgotPasswordTitle}>Forgot Password?</h1>
+      <p className={authStyles.forgotPasswordDescription}>
         Enter your email to receive a link to reset your password.
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className={authStyles.forgotPasswordForm}>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label className={authStyles.forgotPasswordLabel}>
             Email Address
           </label>
           <input
@@ -75,14 +76,14 @@ export default function ForgotPasswordPage() {
             type="email"
             placeholder="you@example.com"
             defaultValue={emailFromURL}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            className={authStyles.forgotPasswordInput}
           />
         </div>
 
         <button
           disabled={isLoading}
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+          className={authStyles.forgotPasswordButton}
         >
           {isLoading ? (
             <Loader2 className="animate-spin" size={20} />
@@ -92,10 +93,10 @@ export default function ForgotPasswordPage() {
         </button>
       </form>
 
-      <div className="mt-6 text-center">
+      <div className={authStyles.forgotPasswordFooter}>
         <Link
           href={ROUTES.AUTH.LOGIN}
-          className="text-sm text-slate-500 hover:text-blue-600"
+          className={authStyles.forgotPasswordFooterLink}
         >
           Remember your password? Log in
         </Link>

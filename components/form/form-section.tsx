@@ -1,5 +1,6 @@
 // components/form/FormSection.tsx
 "use client";
+import { formSectionStyles } from "@/constants/styles";
 
 interface FormSectionProps {
   title: string;
@@ -8,10 +9,8 @@ interface FormSectionProps {
 
 export default function FormSection({ title, children }: FormSectionProps) {
   return (
-    <section className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-      <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6 pb-2 border-b">
-        {title}
-      </h2>
+    <section className={formSectionStyles.section}>
+      <h2 className={formSectionStyles.title}>{title}</h2>
       {children}
     </section>
   );

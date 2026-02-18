@@ -16,7 +16,7 @@ import { SmartFormProvider } from "../form/form-change-context";
 import formatPhone from "@/utils/formatters/phone";
 import { registerWithOnBlurFormat } from "@/utils/formRegister";
 import { Spinner } from "../shared/spinner";
-import { BUTTON_VARIANTS } from "@/constants/styles";
+import { registerFormStyles } from "@/constants/styles";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
@@ -73,9 +73,9 @@ export default function RegisterForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit(onSubmit)} className={registerFormStyles.form}>
       {serverError && (
-        <div className="text-red-600 bg-red-100 p-2 rounded">{serverError}</div>
+        <div className={registerFormStyles.errorBox}>{serverError}</div>
       )}
 
       <SmartFormProvider<RegisterInput>
@@ -96,36 +96,42 @@ export default function RegisterForm() {
         </FormGrid>
 
         {/* Terms and Conditions Checkbox */}
-        <div className="flex items-start gap-2">
+        <div className={registerFormStyles.termsRow}>
           <input
             type="checkbox"
             id="terms"
             {...register("acceptTerms")}
-            className="mt-1"
+            className={registerFormStyles.termsCheckbox}
           />
-          <label htmlFor="terms" className="text-sm">
+          <label htmlFor="terms" className={registerFormStyles.termsLabel}>
             I agree to the{" "}
-            <a href="/terms" className="underline">
+            <a href="/terms" className={registerFormStyles.termsLink}>
               Terms and Conditions
             </a>
           </label>
         </div>
         {errors.acceptTerms && (
-          <p className="text-red-500 text-sm">{errors.acceptTerms.message}</p>
+          <p className={registerFormStyles.termsError}>
+            {errors.acceptTerms.message}
+          </p>
         )}
 
         <button
           type="submit"
           disabled={!isValid || isSubmitting}
-          className={cn(BUTTON_VARIANTS.primary, "relative")}
+          className={registerFormStyles.submitButton}
         >
           {isSubmitting && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2">
+            <div className={registerFormStyles.submitSpinner}>
               <Spinner size="sm" />
             </div>
           )}
           {/* The Text - its position remains stable */}
-          <span className={cn(isSubmitting && "opacity-0")}>Register</span>
+          <span
+            className={cn(isSubmitting && registerFormStyles.submitTextHidden)}
+          >
+            Register
+          </span>
         </button>
       </SmartFormProvider>
     </form>

@@ -6,19 +6,18 @@ import CPARLogo, { FileLogoMark, GlobeLogoMark } from "../components/logo";
 import Tooltip from "../components/tool-tip";
 import Link from "next/link";
 import { ROUTES } from "@/constants/routes";
+import { homeStyles } from "@/constants/styles";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+    <div className={homeStyles.page}>
+      <main className={homeStyles.main}>
         <CPARLogo />
 
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started,
-          </h1>
+        <div className={homeStyles.hero}>
+          <h1 className={homeStyles.heroTitle}>To get started,</h1>
 
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+          <p className={homeStyles.heroText}>
             please{" "}
             <Tooltip
               content={
@@ -30,10 +29,7 @@ export default function Home() {
               delay={100}
               placement="bottom"
             >
-              <Link
-                href={ROUTES.AUTH.LOGIN}
-                className="font-medium text-zinc-950 dark:text-zinc-50"
-              >
+              <Link href={ROUTES.AUTH.LOGIN} className={homeStyles.heroLink}>
                 Login
               </Link>
             </Tooltip>{" "}
@@ -45,17 +41,14 @@ export default function Home() {
               delay={100} /*ms*/
               placement="bottom"
             >
-              <Link
-                href={ROUTES.AUTH.REGISTER}
-                className="font-medium text-zinc-950 dark:text-zinc-50"
-              >
+              <Link href={ROUTES.AUTH.REGISTER} className={homeStyles.heroLink}>
                 Register
               </Link>
             </Tooltip>{" "}
           </p>
         </div>
 
-        <div className="flex w-full items-center flex-col gap-4 text-base font-medium sm:flex-row">
+        <div className={homeStyles.footer}>
           <Tooltip
             content={
               <span>
@@ -65,11 +58,8 @@ export default function Home() {
             delay={100} /*ms*/
             placement="bottom"
           >
-            <Link
-              href="/users"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              <span className="flex items-center gap-2 font-medium whitespace-nowrap">
+            <Link href="/users" className={homeStyles.footerLink}>
+              <span className={homeStyles.footerLinkContent}>
                 <GlobeLogoMark />
                 Contact Us
               </span>
@@ -81,18 +71,15 @@ export default function Home() {
             delay={100} /*ms*/
             placement="bottom"
           >
-            <Link
-              href="/users"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              <span className="flex items-center gap-2 font-medium text-zinc-950 dark:text-zinc-50 whitespace-nowrap">
+            <Link href="/users" className={homeStyles.footerLink}>
+              <span className={homeStyles.footerLinkContentAlt}>
                 <FileLogoMark />
                 Terms & Conditions
               </span>
             </Link>
           </Tooltip>
 
-          <p className="ml-auto flex items-center text-[13px] leading-none text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+          <p className={homeStyles.footerCopyright}>
             Copyright © 2026 CPARL Inc. All rights reserved.
           </p>
         </div>

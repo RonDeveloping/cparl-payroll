@@ -5,6 +5,8 @@ import {
   UseFormRegister,
   RegisterOptions,
 } from "react-hook-form";
+import { cn } from "@/lib/utils";
+import { inputGroupStyles } from "@/constants/styles";
 
 interface InputGroupProps<TFormValues extends FieldValues> {
   // label: React.ReactNode; //for accessibility, use ReactNode to allow more complex labels, not just string, such as clarfication icons.
@@ -26,22 +28,17 @@ export default function InputGroup<TFormValues extends FieldValues>({
   rules,
 }: InputGroupProps<TFormValues>) {
   return (
-    <div className="flex flex-col space-y-1">
+    <div className={inputGroupStyles.wrapper}>
       <input
         {...register(name, rules)}
         type={type}
         placeholder={placeholder}
-        className={`w-full px-4 py-2 rounded-lg border transition-all text-sm outline-none ${
-          error
-            ? "border-red-500 focus:ring-2 focus:ring-red-100"
-            : "border-slate-200 focus:ring-2 focus:ring-blue-500"
-        }`}
+        className={cn(
+          inputGroupStyles.inputBase,
+          error ? inputGroupStyles.inputError : inputGroupStyles.inputDefault,
+        )}
       />
-      {error && (
-        <span className="text-[10px] text-red-500 font-medium ml-1">
-          {error}
-        </span>
-      )}
+      {error && <span className={inputGroupStyles.errorText}>{error}</span>}
     </div>
   );
 }

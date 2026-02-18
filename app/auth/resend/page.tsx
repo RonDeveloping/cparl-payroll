@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { resendVerificationEmail } from "@/lib/actions/veri-email";
 import { toast } from "sonner"; // or your preferred toast lib
+import { authStyles } from "@/constants/styles";
 
 export default function ResendPage() {
   const [email, setEmail] = useState("");
@@ -24,19 +25,16 @@ export default function ResendPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <form
-        onSubmit={handleResend}
-        className="max-w-sm w-full space-y-4 bg-white p-6 rounded-lg shadow-md border"
-      >
-        <h1 className="text-xl font-bold">Resend Verification</h1>
-        <p className="text-sm text-gray-600">
+    <div className={authStyles.resendContainer}>
+      <form onSubmit={handleResend} className={authStyles.resendForm}>
+        <h1 className={authStyles.resendTitle}>Resend Verification</h1>
+        <p className={authStyles.resendDescription}>
           Enter your email to receive a new activation link.
         </p>
         <input
           type="email"
           required
-          className="w-full p-2 border rounded"
+          className={authStyles.resendInput}
           placeholder="email@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -44,7 +42,7 @@ export default function ResendPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 rounded disabled:bg-blue-300"
+          className={authStyles.resendButton}
         >
           {loading ? "Sending..." : "Send Link"}
         </button>

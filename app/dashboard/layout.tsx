@@ -1,6 +1,5 @@
 // components/dashboard/layout.tsx
 
-import Navbar from "@/components/dashboard/navbar";
 import { Suspense } from "react";
 import PhoneBannerServer from "@/components/dashboard/phone_banner_server";
 import BannerSkeleton from "@/components/dashboard/banner_skeleton";

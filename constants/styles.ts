@@ -1,8 +1,7 @@
 //constants/styles.ts
 import { cn } from "@/lib/utils";
 
-export const FORM_GRID_STYLE =
-  "grid grid-cols-1 md:grid-cols-2 gap-4 mt-1 px-1";
+export const FORM_GRID_STYLE = "grid grid-cols-1 md:grid-cols-2 gap-4 px-1";
 
 export const LABEL_STYLE =
   "text-[11px] font-bold text-slate-500 uppercase ml-1";
@@ -22,19 +21,125 @@ export const BUTTON_VARIANTS = {
   ),
 };
 
+const sharedStyles = {
+  relative: "relative",
+  spaceY2: "space-y-2",
+  spaceY4: "space-y-4",
+  flexCol: "flex flex-col",
+  p6: "p-6",
+  p8: "p-8",
+  maxWmdCenter: "max-w-md mx-auto",
+  maxWmdFull: "max-w-md w-full",
+  cardBase: "bg-white shadow-sm border border-slate-200",
+  roundedXl: "rounded-xl",
+  rounded2xl: "rounded-2xl",
+  headingLg: "text-2xl font-bold text-slate-900",
+  headingXl: "text-3xl font-bold text-slate-900",
+  labelSmMediumSlate700: "text-sm font-medium text-slate-700",
+  textSlate500: "text-slate-500",
+  textSmSlate500: "text-sm text-slate-500",
+  textSmSlate600: "text-sm text-slate-600",
+  textSlate400: "text-slate-400",
+  textBlue600: "text-blue-600",
+  linkBlueUnderline: "text-blue-600 hover:underline",
+  fontSemiboldSlate800: "font-semibold text-slate-800",
+  fontMediumZinc: "font-medium text-zinc-950 dark:text-zinc-50",
+  camelCase: "camel-case",
+  iconLeftInline: "absolute left-3 top-2.5 h-5 w-5 text-slate-400",
+  iconToggleRight:
+    "absolute right-3 top-2.5 text-slate-400 hover:text-slate-600",
+  buttonBlueBase: "bg-blue-600 text-white",
+  buttonBlueHover: "hover:bg-blue-700",
+  buttonBlueFlex: "transition-colors flex items-center justify-center gap-2",
+  inlineFlexGap2: "inline-flex items-center gap-2",
+  // Padding composites (normalized)
+  px4Py2: "px-4 py-2",
+  px4Py3: "px-4 py-3",
+  px3Py1_5: "px-3 py-1.5",
+  px6Py2: "px-6 py-2",
+  p3Box: "p-3",
+  // Input specific padding
+  inputPaddingLg: "pl-10 pr-12 py-2",
+  // Margin composites (normalized) - MUST be before tokens that use them
+  mt1: "mt-1",
+  mt2: "mt-2",
+  mt4: "mt-4",
+  mt6: "mt-6",
+  mt8: "mt-8",
+  mt20: "mt-20",
+  mb1: "mb-1",
+  mb2: "mb-2",
+  mb4: "mb-4",
+  mb6: "mb-6",
+  mb8: "mb-8",
+  my8: "my-8",
+  ml1: "ml-1",
+  mr1: "mr-1",
+  mxAuto: "mx-auto",
+  // Text composites using margin tokens
+  textSlate500Mt2: cn("text-slate-500", "mt-2"),
+  // Input field composites
+  inputBase:
+    "w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition-all",
+  inputWithRightPadding:
+    "w-full pl-10 pr-12 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition-all",
+  // Container composites
+  pageContainerLarge: cn("max-w-5xl p-6 space-y-6", "mx-auto"),
+  pageContainerMedium: cn("max-w-3xl p-6", "mx-auto"),
+  centerContainer:
+    "flex flex-col items-center justify-center min-h-screen p-4 text-center",
+  // Input icon composites
+  lockIcon: "absolute left-3 top-2.5 text-slate-400",
+  toggleIconRight: cn(
+    "absolute right-3 top-[10px]",
+    "text-slate-400 hover:text-slate-600",
+  ),
+  // Alert/Error/Info Box Composites
+  errorBox: "text-red-600 bg-red-100 p-2 rounded",
+  infoBox: cn("mb-6", "p-3 bg-slate-50 rounded-md border border-slate-100"),
+  // Composite tokens (cross-map reusable)
+  sectionCard: cn(
+    "bg-white shadow-sm border border-slate-200",
+    "rounded-xl",
+    "p-6",
+  ),
+  sectionHeaderRow: cn("flex items-center justify-between", "mb-4"),
+  sectionHeaderLeftBlueBase: "flex items-center space-x-2 text-blue-600",
+  sectionHeaderLeftPurpleBase: cn(
+    "flex items-center space-x-2 text-purple-600",
+    "mb-4",
+  ),
+  sectionHeaderLeftOrangeBase: cn(
+    "flex items-center space-x-2 text-orange-600",
+    "mb-4",
+  ),
+  badgeBlueSmall: cn(
+    "flex items-center gap-1 px-2 py-0.5 bg-blue-50 border border-blue-100 rounded-md",
+  ),
+  badgeLabel: "text-[10px] font-bold uppercase text-blue-700 tracking-tight",
+};
+
 export const authStyles: AuthStyleSchema = {
   // Layout Containers
   pageWrapper:
     "flex flex-col items-center justify-center min-h-screen p-0 text-center",
-  card: "max-w-md w-full bg-white p-6 rounded-xl shadow-sm border border-slate-200",
-  divider: "my-8 border-slate-100",
+  card: cn(
+    sharedStyles.maxWmdFull,
+    sharedStyles.cardBase,
+    sharedStyles.roundedXl,
+    sharedStyles.p6,
+  ),
+  divider: cn(sharedStyles.my8, "border-slate-100"),
 
   // Typography
-  title: "text-2xl font-bold text-slate-900 mb-2",
-  bodyText: "text-slate-600 mb-6",
+  title: cn(sharedStyles.headingLg, sharedStyles.mb2),
+  bodyText: cn("text-slate-600", sharedStyles.mb6),
   subText: "text-xs text-slate-500 leading-relaxed", // For your smaller "if" sentence
   // Secondary Instructions (The "Keep page open" text)
-  instructionText: "text-slate-500 text-sm mb-6 leading-relaxed",
+  instructionText: cn(
+    "text-slate-500 text-sm leading-relaxed",
+    sharedStyles.mb6,
+  ),
 
   // Interactive Elements
   buttonResend:
@@ -43,24 +148,344 @@ export const authStyles: AuthStyleSchema = {
     "text-sm text-slate-400 hover:text-slate-600 transition-colors inline-block",
 
   // Troubleshooting Section (The "Didn't receive email?" part)
-  troubleshootWrapper: "space-y-1 mb-6",
-  troubleshootText: "text-sm text-slate-500",
+  troubleshootWrapper: cn("space-y-1", sharedStyles.mb6),
+  troubleshootText: sharedStyles.textSmSlate500,
   // Notice/Alert Boxes
-  alertBox:
-    "mb-6 flex items-start gap-3 px-4 py-0 text-left bg-amber-50 border border-amber-100 rounded-lg",
+  alertBox: cn(
+    "flex items-start gap-3 px-4 py-0 text-left bg-amber-50 border border-amber-100 rounded-lg",
+    sharedStyles.mb6,
+  ),
   alertText: "text-xs text-amber-800 leading-relaxed",
   // Small Reminder (The one you asked to make smaller)
-  reminderBox:
-    "mb-6 p-3 bg-slate-50 rounded-md border border-slate-100 text-left",
+  reminderBox: sharedStyles.infoBox,
   reminderText: "text-[11px] text-slate-500 leading-tight italic",
 
   // Icon Styles
-  iconCenter: "flex justify-center mb-4",
-  iconWrapper: "p-3 bg-blue-50 rounded-full inline-flex mb-4",
+  iconCenter: cn("flex justify-center", sharedStyles.mb4),
+  iconWrapper: cn(
+    sharedStyles.p3Box,
+    "bg-blue-50 rounded-full inline-flex",
+    sharedStyles.mb4,
+  ),
   iconMain: "w-12 h-12 text-blue-600",
   iconAlert: "w-5 h-5 text-amber-600 shrink-0 mt-0.5",
   iconInfo: "w-4 h-4 text-slate-400 shrink-0 mt-0.5",
   iconSpinner: "w-4 h-4 animate-spin",
+
+  // Email Verification States
+  emailVerificationContainer: sharedStyles.centerContainer,
+  missingTokenContainer:
+    "flex flex-col items-center justify-center min-h-screen",
+  missingTokenTitle: "text-xl font-bold text-red-600",
+  errorCard: "bg-red-50 p-8 rounded-lg border border-red-200 shadow-sm",
+  errorTitle: cn("text-2xl font-bold text-red-700", sharedStyles.mb2),
+  errorMessage: cn("text-red-600", sharedStyles.mb4),
+  errorLink: sharedStyles.linkBlueUnderline,
+  successCard: "bg-green-50 p-8 rounded-lg border border-green-200 shadow-sm",
+  successTitle: cn("text-2xl font-bold text-green-700", sharedStyles.mb2),
+  successMessage: cn("text-green-600", sharedStyles.mb6),
+  successButton: cn(
+    "bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors",
+    sharedStyles.px6Py2,
+  ),
+
+  // Forgot Password Page
+  forgotPasswordCard: cn(
+    sharedStyles.maxWmdCenter,
+    sharedStyles.mt20,
+    sharedStyles.p8,
+    sharedStyles.cardBase,
+    sharedStyles.rounded2xl,
+  ),
+  forgotPasswordCardCenter: cn(
+    sharedStyles.maxWmdCenter,
+    sharedStyles.mt20,
+    sharedStyles.p8,
+    sharedStyles.cardBase,
+    sharedStyles.rounded2xl,
+    "text-center",
+  ),
+  forgotPasswordTitle: sharedStyles.headingLg,
+  forgotPasswordDescription: cn(sharedStyles.textSlate500Mt2, sharedStyles.mb6),
+  forgotPasswordText: sharedStyles.textSlate500Mt2,
+  forgotPasswordForm: sharedStyles.spaceY4,
+  forgotPasswordLabel: cn(
+    sharedStyles.labelSmMediumSlate700,
+    "block",
+    sharedStyles.mb1,
+  ),
+  forgotPasswordInput: cn(
+    "w-full border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all",
+    sharedStyles.px4Py2,
+  ),
+  forgotPasswordButton: cn(
+    "w-full font-medium py-2 rounded-lg disabled:opacity-70",
+    sharedStyles.buttonBlueBase,
+    sharedStyles.buttonBlueHover,
+    sharedStyles.buttonBlueFlex,
+  ),
+  forgotPasswordIcon: cn(
+    "w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto",
+    sharedStyles.mb4,
+  ),
+  forgotPasswordBackLink: cn(
+    "text-sm font-medium",
+    sharedStyles.mt6,
+    sharedStyles.inlineFlexGap2,
+    sharedStyles.linkBlueUnderline,
+  ),
+  forgotPasswordFooter: cn("text-center", sharedStyles.mt6),
+  forgotPasswordFooterLink: cn(
+    sharedStyles.textSmSlate500,
+    "hover:text-blue-600",
+  ),
+
+  // Login Page
+  loginCard:
+    "w-full max-w-md space-y-8 p-8 bg-white rounded-xl shadow-lg border border-slate-100",
+  loginHeader: "text-center",
+  loginTitle: sharedStyles.headingXl,
+  loginSubtitle: cn(sharedStyles.textSmSlate600, sharedStyles.mt2),
+  loginBanner: cn(
+    "bg-blue-50 border border-blue-200 text-blue-700 rounded text-sm",
+    sharedStyles.px4Py3,
+  ),
+  loginForm: "space-y-6",
+  loginFieldGroup: sharedStyles.spaceY2,
+  loginFieldLabel: sharedStyles.labelSmMediumSlate700,
+  loginInputWrapper: sharedStyles.relative,
+  loginEmailIcon: sharedStyles.iconLeftInline,
+  loginInput: sharedStyles.inputBase,
+  loginPasswordHeader: "flex justify-between items-center",
+  loginForgotLink: cn("text-xs", sharedStyles.linkBlueUnderline),
+  loginPasswordIcon: sharedStyles.iconLeftInline,
+  loginPasswordInput: sharedStyles.inputWithRightPadding,
+  loginPasswordToggle: sharedStyles.iconToggleRight,
+  loginButton: cn(
+    "w-full font-semibold py-2 rounded-md",
+    sharedStyles.buttonBlueBase,
+    sharedStyles.buttonBlueHover,
+    sharedStyles.buttonBlueFlex,
+  ),
+  loginFooter: cn("text-center", sharedStyles.textSmSlate600),
+  loginCreateLink: cn(sharedStyles.linkBlueUnderline, "font-medium"),
+
+  // Register Page
+  registerCard: cn(
+    sharedStyles.maxWmdCenter,
+    sharedStyles.mt20,
+    sharedStyles.p6,
+    "shadow-lg border",
+    sharedStyles.roundedXl,
+  ),
+  registerTitle: cn("text-2xl font-bold", sharedStyles.mb6),
+  registerDescription: cn("text-gray-600", sharedStyles.mb8),
+  registerFooter: cn("text-sm text-center", sharedStyles.mt4),
+  registerLoginLink: sharedStyles.textBlue600,
+
+  // Resend Verification Page
+  resendContainer: sharedStyles.centerContainer,
+  resendForm:
+    "max-w-sm w-full space-y-4 bg-white p-6 rounded-lg shadow-md border",
+  resendTitle: "text-xl font-bold",
+  resendDescription: "text-sm text-gray-600",
+  resendInput: "w-full p-2 border rounded",
+  resendButton: cn(
+    "w-full py-2 rounded disabled:bg-blue-300",
+    sharedStyles.buttonBlueBase,
+  ),
+
+  // Reset Password Page
+  resetInvalidContainer: cn(
+    sharedStyles.maxWmdCenter,
+    sharedStyles.mt20,
+    "text-center",
+    sharedStyles.p8,
+    "bg-red-50 border border-red-100",
+    sharedStyles.roundedXl,
+  ),
+  resetInvalidMessage: "text-red-600 font-medium",
+  resetCard: cn(
+    sharedStyles.maxWmdCenter,
+    sharedStyles.mt8,
+    sharedStyles.p6,
+    sharedStyles.cardBase,
+    sharedStyles.rounded2xl,
+  ),
+  resetHeader: cn("flex items-center gap-2 text-blue-600", sharedStyles.mb2),
+  resetTitle: sharedStyles.headingLg,
+  resetEmailBox: cn(
+    "flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-lg",
+    sharedStyles.p3Box,
+    sharedStyles.mb6,
+  ),
+  resetEmailIcon: sharedStyles.textSlate400,
+  resetEmailText: sharedStyles.textSmSlate600,
+  resetEmailSpan: "font-semibold text-slate-900",
+  resetForm: sharedStyles.spaceY4,
+
+  // Suspense Fallback Styles
+  loadingContainer: "flex items-center justify-center min-h-screen",
+};
+
+export const contactProfileStyles: ContactProfileStyleSchema = {
+  pageContainer: sharedStyles.pageContainerLarge,
+  headerCard: cn(
+    "flex items-center space-x-4",
+    sharedStyles.cardBase,
+    sharedStyles.roundedXl,
+    sharedStyles.p8,
+  ),
+  avatar: "w-24 h-24 rounded-full border-4 border-blue-50",
+  nameTitle: sharedStyles.headingLg,
+  subtleText: "text-slate-500",
+  infoList: "space-y-0",
+  editButton: cn(
+    "flex items-center justify-center gap-1.5 bg-transparent hover:bg-green-50 text-slate-600 rounded-md text-sm font-medium transition-all border border-transparent hover:border-green-100",
+    sharedStyles.px3Py1_5,
+  ),
+  editIcon: "text-green-600",
+  sectionCard: sharedStyles.sectionCard,
+  sectionHeaderRow: sharedStyles.sectionHeaderRow,
+  sectionHeaderLeftBlue: sharedStyles.sectionHeaderLeftBlueBase,
+  sectionHeaderLeftPurple: sharedStyles.sectionHeaderLeftPurpleBase,
+  sectionHeaderLeftOrange: sharedStyles.sectionHeaderLeftOrangeBase,
+  sectionTitle: sharedStyles.fontSemiboldSlate800,
+  sectionContent: sharedStyles.spaceY4,
+  columnStack: sharedStyles.flexCol,
+  accessRow: "flex items-center gap-2 border-b border-slate-100 pb-1",
+  metaLabel: "text-xs text-slate-400 uppercase tracking-wider",
+  accessIcon: "inline-flex items-center text-purple-600",
+  badgeRow: cn("flex items-center gap-3", sharedStyles.mt1),
+  badge: sharedStyles.badgeBlueSmall,
+  badgeTitle: sharedStyles.fontSemiboldSlate800,
+  badgeIcon: sharedStyles.textBlue600,
+  badgeText: sharedStyles.badgeLabel,
+  detailGrid: "grid grid-cols-1 md:grid-cols-2 gap-6",
+  payrollLinkButton: cn(
+    "w-full text-sm text-left",
+    sharedStyles.mt2,
+    sharedStyles.linkBlueUnderline,
+  ),
+  notFoundContainer: cn("max-w-5xl p-12 text-center", sharedStyles.mxAuto),
+  notFoundTitle: "text-2xl font-bold text-slate-800",
+  notFoundText: cn(sharedStyles.textSlate500, sharedStyles.mb6),
+  notFoundLink: sharedStyles.linkBlueUnderline,
+  infoItem: sharedStyles.flexCol,
+  infoValueRow: "flex items-center space-x-2 text-slate-700 font-medium",
+  infoIcon: sharedStyles.textSlate400,
+};
+
+export const dashboardStyles: DashboardStyleSchema = {
+  pageContainer: cn("max-w-4xl space-y-6", sharedStyles.mxAuto),
+  heroCard: cn(sharedStyles.cardBase, sharedStyles.rounded2xl, sharedStyles.p8),
+  heroTitle: sharedStyles.headingXl,
+  heroSubtitle: sharedStyles.textSlate500Mt2,
+  heroStatus: "text-green-600 font-medium",
+  statsGrid: "grid grid-cols-1 md:grid-cols-3 gap-4",
+  statCard: cn("bg-blue-50 rounded-xl border border-blue-100", sharedStyles.p6),
+  statLabel: "text-xs font-semibold text-blue-600 uppercase tracking-wider",
+  statValue: "text-slate-700 font-medium",
+};
+
+export const homeStyles: HomeStyleSchema = {
+  page: "flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black",
+  main: "flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start",
+  hero: "flex flex-col items-center gap-6 text-center sm:items-start sm:text-left",
+  heroTitle:
+    "max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50",
+  heroText: "max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400",
+  heroLink: sharedStyles.fontMediumZinc,
+  footer:
+    "flex w-full items-center flex-col gap-4 text-base font-medium sm:flex-row",
+  footerLink: sharedStyles.fontMediumZinc,
+  footerLinkContent: "flex items-center gap-2 font-medium whitespace-nowrap",
+  footerLinkContentAlt:
+    "flex items-center gap-2 font-medium text-zinc-950 dark:text-zinc-50 whitespace-nowrap",
+  footerCopyright:
+    "ml-auto flex items-center text-[13px] leading-none text-zinc-500 dark:text-zinc-400 whitespace-nowrap",
+};
+
+export const formActionsStyles: FormActionsStyleSchema = {
+  container: "flex justify-between items-center w-full",
+  saveButtonBase: cn(
+    "flex items-center gap-2 border rounded-lg font-semibold transition-all",
+    "px-8 py-2",
+  ),
+  saveActive:
+    "bg-slate-50 text-emerald-600 border-slate-200 hover:bg-white hover:border-emerald-200 shadow-sm active:scale-95",
+  saveLocked:
+    "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-70",
+  backActionWrapper: "flex items-center group cursor-pointer",
+  backArrow: cn("text-slate-400 group-hover:text-slate-700", sharedStyles.mr1),
+  backLabelBase: cn("text-sm font-medium", "transition-all duration-300"),
+  backLabelActive: "text-slate-500 hover:text-slate-800 cursor-pointer",
+  backLabelDisabled: "text-slate-100 select-none",
+  showChangesButton:
+    "flex items-center gap-2 text-xs font-semibold tracking-wider text-slate-500 hover:text-slate-800 transition-colors",
+  showChangesIcon: sharedStyles.textSlate400,
+  showChangesCount: sharedStyles.camelCase,
+};
+
+export const registerFormStyles: RegisterFormStyleSchema = {
+  form: "flex flex-col gap-4",
+  errorBox: sharedStyles.errorBox,
+  termsRow: "flex items-start gap-2",
+  termsCheckbox: "mt-1",
+  termsLabel: "text-sm",
+  termsLink: "underline",
+  termsError: "text-red-500 text-sm",
+  submitButton: cn(BUTTON_VARIANTS.primary, sharedStyles.relative),
+  submitSpinner: "absolute left-3 top-1/2 -translate-y-1/2",
+  submitTextHidden: "opacity-0",
+};
+
+export const formLayoutStyles: FormLayoutStyleSchema = {
+  container: sharedStyles.pageContainerMedium,
+  actionsWrapper: sharedStyles.mb8,
+};
+
+export const formSectionStyles: FormSectionStyleSchema = {
+  section: sharedStyles.sectionCard,
+  title: cn(
+    "text-sm font-bold text-slate-900 uppercase tracking-wider pb-2 border-b",
+    sharedStyles.mb6,
+  ),
+};
+
+export const inputGroupStyles: InputGroupStyleSchema = {
+  wrapper: "flex flex-col space-y-1",
+  inputBase: cn(
+    "w-full rounded-lg border transition-all text-sm outline-none",
+    sharedStyles.px4Py2,
+  ),
+  inputError: "border-red-500 focus:ring-2 focus:ring-red-100",
+  inputDefault: "border-slate-200 focus:ring-2 focus:ring-blue-500",
+  errorText: cn("text-[10px] text-red-500 font-medium", sharedStyles.ml1),
+};
+
+export const inputWithChangesStyles: InputWithChangesStyleSchema = {
+  wrapper: sharedStyles.spaceY2,
+  headerRow: "flex items-baseline justify-between",
+  changeText: "text-xs text-red-500 line-through text-right",
+  inputWrapper: sharedStyles.relative,
+  toggleButton: sharedStyles.toggleIconRight,
+  changeCount: sharedStyles.camelCase,
+};
+
+export const passwordInputStyles: PasswordInputStyleSchema = {
+  wrapper: "space-y-1 w-full",
+  label: cn(sharedStyles.labelSmMediumSlate700, "block"),
+  inputWrapper: sharedStyles.relative,
+  lockIcon: sharedStyles.lockIcon,
+  inputBase: cn(
+    "w-full border rounded-lg outline-none transition-all",
+    sharedStyles.inputPaddingLg,
+  ),
+  inputError: "border-red-500 focus:ring-red-200",
+  inputDefault: "border-slate-300 focus:ring-blue-500 focus:ring-2",
+  toggleButton: sharedStyles.iconToggleRight,
+  errorText: "text-xs text-red-500",
 };
 
 /*
@@ -100,6 +525,214 @@ interface AuthStyleSchema {
   iconAlert: string;
   iconInfo: string;
   iconSpinner: string;
+
+  // Email Verification States
+  emailVerificationContainer: string;
+  missingTokenContainer: string;
+  missingTokenTitle: string;
+  errorCard: string;
+  errorTitle: string;
+  errorMessage: string;
+  errorLink: string;
+  successCard: string;
+  successTitle: string;
+  successMessage: string;
+  successButton: string;
+
+  // Forgot Password Page
+  forgotPasswordCard: string;
+  forgotPasswordCardCenter: string;
+  forgotPasswordTitle: string;
+  forgotPasswordDescription: string;
+  forgotPasswordText: string;
+  forgotPasswordForm: string;
+  forgotPasswordLabel: string;
+  forgotPasswordInput: string;
+  forgotPasswordButton: string;
+  forgotPasswordIcon: string;
+  forgotPasswordBackLink: string;
+  forgotPasswordFooter: string;
+  forgotPasswordFooterLink: string;
+
+  // Login Page
+  loginCard: string;
+  loginHeader: string;
+  loginTitle: string;
+  loginSubtitle: string;
+  loginBanner: string;
+  loginForm: string;
+  loginFieldGroup: string;
+  loginFieldLabel: string;
+  loginInputWrapper: string;
+  loginEmailIcon: string;
+  loginInput: string;
+  loginPasswordHeader: string;
+  loginForgotLink: string;
+  loginPasswordIcon: string;
+  loginPasswordInput: string;
+  loginPasswordToggle: string;
+  loginButton: string;
+  loginFooter: string;
+  loginCreateLink: string;
+
+  // Register Page
+  registerCard: string;
+  registerTitle: string;
+  registerDescription: string;
+  registerFooter: string;
+  registerLoginLink: string;
+
+  // Resend Verification Page
+  resendContainer: string;
+  resendForm: string;
+  resendTitle: string;
+  resendDescription: string;
+  resendInput: string;
+  resendButton: string;
+
+  // Reset Password Page
+  resetInvalidContainer: string;
+  resetInvalidMessage: string;
+  resetCard: string;
+  resetHeader: string;
+  resetTitle: string;
+  resetEmailBox: string;
+  resetEmailIcon: string;
+  resetEmailText: string;
+  resetEmailSpan: string;
+  resetForm: string;
+
+  // Suspense Fallback Styles
+  loadingContainer: string;
+}
+
+interface ContactProfileStyleSchema {
+  pageContainer: string;
+  headerCard: string;
+  avatar: string;
+  nameTitle: string;
+  subtleText: string;
+  infoList: string;
+  editButton: string;
+  editIcon: string;
+  sectionCard: string;
+  sectionHeaderRow: string;
+  sectionHeaderLeftBlue: string;
+  sectionHeaderLeftPurple: string;
+  sectionHeaderLeftOrange: string;
+  sectionTitle: string;
+  sectionContent: string;
+  columnStack: string;
+  accessRow: string;
+  metaLabel: string;
+  accessIcon: string;
+  badgeRow: string;
+  badge: string;
+  badgeTitle: string;
+  badgeIcon: string;
+  badgeText: string;
+  detailGrid: string;
+  payrollLinkButton: string;
+  notFoundContainer: string;
+  notFoundTitle: string;
+  notFoundText: string;
+  notFoundLink: string;
+  infoItem: string;
+  infoValueRow: string;
+  infoIcon: string;
+}
+
+interface DashboardStyleSchema {
+  pageContainer: string;
+  heroCard: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  heroStatus: string;
+  statsGrid: string;
+  statCard: string;
+  statLabel: string;
+  statValue: string;
+}
+
+interface HomeStyleSchema {
+  page: string;
+  main: string;
+  hero: string;
+  heroTitle: string;
+  heroText: string;
+  heroLink: string;
+  footer: string;
+  footerLink: string;
+  footerLinkContent: string;
+  footerLinkContentAlt: string;
+  footerCopyright: string;
+}
+
+interface RegisterFormStyleSchema {
+  form: string;
+  errorBox: string;
+  termsRow: string;
+  termsCheckbox: string;
+  termsLabel: string;
+  termsLink: string;
+  termsError: string;
+  submitButton: string;
+  submitSpinner: string;
+  submitTextHidden: string;
+}
+
+interface FormActionsStyleSchema {
+  container: string;
+  saveButtonBase: string;
+  saveActive: string;
+  saveLocked: string;
+  backActionWrapper: string;
+  backArrow: string;
+  backLabelBase: string;
+  backLabelActive: string;
+  backLabelDisabled: string;
+  showChangesButton: string;
+  showChangesIcon: string;
+  showChangesCount: string;
+}
+
+interface FormLayoutStyleSchema {
+  container: string;
+  actionsWrapper: string;
+}
+
+interface FormSectionStyleSchema {
+  section: string;
+  title: string;
+}
+
+interface InputGroupStyleSchema {
+  wrapper: string;
+  inputBase: string;
+  inputError: string;
+  inputDefault: string;
+  errorText: string;
+}
+
+interface InputWithChangesStyleSchema {
+  wrapper: string;
+  headerRow: string;
+  changeText: string;
+  inputWrapper: string;
+  toggleButton: string;
+  changeCount: string;
+}
+
+interface PasswordInputStyleSchema {
+  wrapper: string;
+  label: string;
+  inputWrapper: string;
+  lockIcon: string;
+  inputBase: string;
+  inputError: string;
+  inputDefault: string;
+  toggleButton: string;
+  errorText: string;
 }
 
 /*

@@ -2,6 +2,7 @@
 "use client";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FormActions } from "./form-actions";
+import { formLayoutStyles } from "@/constants/styles";
 
 interface FormLayoutProps {
   children: React.ReactNode;
@@ -44,7 +45,7 @@ export default function FormLayout({
   const safeBackPath = isNew ? `/${domain}` : `/${domain}/${id}`;
 
   const renderActions = () => (
-    <div className={"mb-8"}>
+    <div className={formLayoutStyles.actionsWrapper}>
       <FormActions
         formId={formId} //this id links a button to a form
         isSubmitting={isSubmitting}
@@ -62,7 +63,7 @@ export default function FormLayout({
   );
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
+    <div className={formLayoutStyles.container}>
       {/* Top Buttons */}
       {renderActions()}
 

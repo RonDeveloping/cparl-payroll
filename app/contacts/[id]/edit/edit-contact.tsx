@@ -82,9 +82,11 @@ export default function EditContactForm({
   const onCreateOrConfirm = async (data: ContactFormInput) => {
     try {
       const result = await upsertContactPEA(data, params.id);
-      if (result?.id) {
+      if (result.success && result.data?.id) {
         router.refresh();
-        router.push(`/contacts/${result.id}`);
+        router.push(`/contacts/${result.data.id}`);
+      } else if (!result.success) {
+        alert(result.error || "Changes not saved; please check for errors.");
       }
     } catch (error) {
       console.error("Form submission failed", error);

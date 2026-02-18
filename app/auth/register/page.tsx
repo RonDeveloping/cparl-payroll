@@ -1,19 +1,20 @@
 import RegisterForm from "@/components/auth/create-account-form";
 import { ROUTES } from "@/constants/routes";
+import { authStyles } from "@/constants/styles";
 
 export default function RegisterPage() {
   return (
-    <div className="max-w-md mx-auto mt-20 p-6 shadow-lg border rounded-xl">
-      <h1 className="text-2xl font-bold mb-6">Create Your Account</h1>
-      <p className="text-gray-600 mb-8">
+    <div className={authStyles.registerCard}>
+      <h1 className={authStyles.registerTitle}>Create Your Account</h1>
+      <p className={authStyles.registerDescription}>
         To access features and services, please register below.
       </p>
 
       <RegisterForm />
 
-      <p className="mt-4 text-sm text-center">
+      <p className={authStyles.registerFooter}>
         Already have an account?{" "}
-        <a href={ROUTES.AUTH.LOGIN} className="text-blue-600">
+        <a href={ROUTES.AUTH.LOGIN} className={authStyles.registerLoginLink}>
           Login here
         </a>
       </p>

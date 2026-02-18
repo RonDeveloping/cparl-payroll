@@ -3,6 +3,8 @@
 
 import { Save, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { formActionsStyles } from "@/constants/styles";
+import { cn } from "@/lib/utils";
 
 interface FormActionsProps {
   /** navigation */
@@ -38,18 +40,18 @@ export function FormActions({
   onEyeToggle,
   changeCount = 0,
 }: FormActionsProps) {
-  const saveActiveStyles =
-    "bg-slate-50 text-emerald-600 border-slate-200 hover:bg-white hover:border-emerald-200 shadow-sm active:scale-95";
-  const saveLockedStyles =
-    "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-70";
+  const saveActiveStyles = formActionsStyles.saveActive;
+  const saveLockedStyles = formActionsStyles.saveLocked;
   const isActionLocked = isSubmitting || isDisabled;
   const SaveButton = (
     <button
       type="submit"
       form={formId}
       disabled={isActionLocked}
-      className={`flex items-center gap-2 border px-8 py-2 rounded-lg font-semibold transition-all
-      ${isActionLocked ? saveLockedStyles : saveActiveStyles}`}
+      className={cn(
+        formActionsStyles.saveButtonBase,
+        isActionLocked ? saveLockedStyles : saveActiveStyles,
+      )}
     >
       {isSubmitting ? (
         savingLabel
@@ -62,26 +64,20 @@ export function FormActions({
     </button>
   );
 
-  const backActiveStyles = "text-slate-500 hover:text-slate-800 cursor-pointer";
-  const backLabelFadeStyles = "text-slate-100 select-none";
+  const backActiveStyles = formActionsStyles.backLabelActive;
+  const backLabelFadeStyles = formActionsStyles.backLabelDisabled;
   //if add cursor-not-allowed pointer-events-none, back is blocked.change slate-100 to transparent will make the label disappear
 
-  const backLabelStyles = `flex items-center text-sm transition-colors ${
-    isDisabled ? backLabelFadeStyles : backActiveStyles
-  }`;
+  const backLabelStyles = cn(
+    formActionsStyles.backLabelBase,
+    isDisabled ? backLabelFadeStyles : backActiveStyles,
+  );
 
   const BackActionContent = (
-    <div className="flex items-center group cursor-pointer">
+    <div className={formActionsStyles.backActionWrapper}>
       {/* Arrow stays visible and slate-colored always */}
-      <ArrowLeft
-        size={16}
-        className="mr-1 text-slate-400 group-hover:text-slate-700"
-      />
-      <span
-        className={`text-sm font-medium transition-all duration-300 ${backLabelStyles}`}
-      >
-        {backLabel}
-      </span>
+      <ArrowLeft size={16} className={formActionsStyles.backArrow} />
+      <span className={backLabelStyles}>{backLabel}</span>
     </div>
   );
   //check if fixed path exists and use the path(pro: SEO, prefetch); Otherwise use browse history(pro: keep filter setting); we could check isActionLocked and set href to "#" to match pointer-events-none when locked to prevent navigation
@@ -99,23 +95,22 @@ export function FormActions({
         type="button"
         onClick={onEyeToggle}
         aria-expanded={showB4Change}
-        className="flex items-center gap-2 text-xs font-semibold tracking-wider
-                 text-slate-500 hover:text-slate-800 transition-colors"
+        className={formActionsStyles.showChangesButton}
       >
         {showB4Change ? (
-          <EyeOff size={14} className="text-slate-400" />
+          <EyeOff size={14} className={formActionsStyles.showChangesIcon} />
         ) : (
-          <Eye size={14} className="text-slate-400" />
+          <Eye size={14} className={formActionsStyles.showChangesIcon} />
         )}
 
-        <span className="camel-case">
+        <span className={formActionsStyles.showChangesCount}>
           {changeCount} {changeLabel}
         </span>
       </button>
     ) : null;
 
   return (
-    <div className="flex justify-between items-center w-full">
+    <div className={formActionsStyles.container}>
       {BackAction}
       {ShowChangesToggle}
       {SaveButton}

@@ -6,6 +6,7 @@ import { useFormChangeContext } from "./form-change-context";
 import { CapLabel } from "../shared/cap-label";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { inputWithChangesStyles } from "@/constants/styles";
 
 export interface InputWithChangesProps<TFormValues extends FieldValues> {
   label: React.ReactNode;
@@ -33,17 +34,17 @@ export default function InputWithChanges<TFormValues extends FieldValues>({
   const inputType = type === "password" && showPassword ? "text" : type;
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-baseline justify-between">
+    <div className={inputWithChangesStyles.wrapper}>
+      <div className={inputWithChangesStyles.headerRow}>
         <CapLabel>{label}</CapLabel>
         {/* Change indicator */}
         {showChanges && change && (
-          <span className="text-xs text-red-500 line-through text-right">
+          <span className={inputWithChangesStyles.changeText}>
             {String(change.before)}
           </span>
         )}
       </div>
-      <div className="relative">
+      <div className={inputWithChangesStyles.inputWrapper}>
         {/* Input */}
         <InputGroup<TFormValues>
           name={name}
@@ -58,7 +59,7 @@ export default function InputWithChanges<TFormValues extends FieldValues>({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-[10px] text-slate-400 hover:text-slate-600"
+            className={inputWithChangesStyles.toggleButton}
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
