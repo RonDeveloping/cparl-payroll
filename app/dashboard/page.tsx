@@ -27,7 +27,7 @@ export default async function DashboardPage() {
     {
       id: "profile",
       title: "Profile",
-      subtitle: "View identity",
+      subtitle: "",
       tone: "emerald",
       items: [
         { label: "Full name", value: fullName || profileName },
@@ -40,7 +40,7 @@ export default async function DashboardPage() {
     {
       id: "security",
       title: "Security",
-      subtitle: "Protect access",
+      subtitle: "",
       tone: "blue",
       items: [
         { label: "Multi-factor", value: "Enabled" },
@@ -53,7 +53,7 @@ export default async function DashboardPage() {
     {
       id: "products",
       title: "Products",
-      subtitle: "Active modules",
+      subtitle: "",
       tone: "violet",
       items: [
         { label: "Payroll", value: "Enabled" },
@@ -66,7 +66,7 @@ export default async function DashboardPage() {
     {
       id: "payments",
       title: "Payments",
-      subtitle: "Payroll status",
+      subtitle: "",
       tone: "amber",
       items: [
         { label: "Next run", value: "Mar 1" },
@@ -79,7 +79,7 @@ export default async function DashboardPage() {
     {
       id: "communications",
       title: "Communications",
-      subtitle: "Team updates",
+      subtitle: "",
       tone: "slate",
       items: [
         { label: "Email digest", value: "Weekly" },

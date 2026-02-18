@@ -3,7 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { logoutAction } from "@/lib/actions/auth-actions";
+import { navbarStyles } from "@/constants/styles";
+import { cn } from "@/lib/utils";
+import { broadcastLogout } from "@/lib/logout-sync";
 import {
   LayoutDashboard,
   Settings,
@@ -25,11 +29,14 @@ type NavbarUser = {
 
 //The Navbar component itself is a client component that handles its own visibility state based on scroll position; this bar is a "Smart Header," which stays out of the way while the user is reading (scrolling down) but slides back in instantly the moment they start scrolling up.
 export default function Navbar({ user }: { user: NavbarUser | null }) {
+  const pathname = usePathname();
   const lastScrollY = useRef(0);
   const [isScrolledDown, setIsScrolledDown] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const closeTimeoutRef = useRef<number | null>(null);
+  const settingsCloseTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const controlNavbar = () => {
@@ -48,7 +55,15 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
     };
 
     window.addEventListener("scroll", controlNavbar);
-    return () => window.removeEventListener("scroll", controlNavbar);
+    return () => {
+      window.removeEventListener("scroll", controlNavbar);
+      if (closeTimeoutRef.current) {
+        window.clearTimeout(closeTimeoutRef.current);
+      }
+      if (settingsCloseTimeoutRef.current) {
+        window.clearTimeout(settingsCloseTimeoutRef.current);
+      }
+    };
   }, []);
 
   const givenName = user?.givenName?.trim() || "";
@@ -65,98 +80,179 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
     user?.email?.[0] ||
     "U"
   ).toUpperCase();
+  const isPayrollDashboard = pathname?.startsWith("/payroll");
+  const createHref = isPayrollDashboard
+    ? "/employees/new"
+    : "/tenants/new/edit";
+  const createTitle = isPayrollDashboard ? "Create Employee" : "Create Tenant";
+  const isAuthenticated = Boolean(user);
+  const iconLinkClass = cn(
+    navbarStyles.iconLink,
+    !isAuthenticated && navbarStyles.iconLinkDisabled,
+  );
+  const iconLinkPrimaryClass = cn(
+    navbarStyles.iconLinkPrimary,
+    !isAuthenticated && navbarStyles.iconLinkPrimaryDisabled,
+  );
+  const settingsButtonClass = cn(
+    navbarStyles.settingsMenuButton,
+    !isAuthenticated && navbarStyles.settingsMenuButtonDisabled,
+  );
 
   // Determine final visibility
   const shouldShow = !isScrolledDown || isHovered;
 
   return (
     <div
-      //wrapper ensures coverage by the hover state
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* ---INDICATOR LINE/TRIGGER ZONE (visible upon nav's hidden) starting with a blue on the left with transitions through a layered mix in the middle and ending in a green on the right  --- */}
       <div
-        className={`fixed top-0 left-0 w-full z-[60] transition-opacity duration-300 ${
-          shouldShow ? "opacity-0" : "opacity-100"
-        } bg-gradient-to-r from-blue-200 via-emerald-100 to-green-200`}
-        style={{ height: "6px" }} // Slightly thicker for easier hovering
+        className={cn(
+          navbarStyles.scrollIndicator,
+          shouldShow
+            ? navbarStyles.scrollIndicatorHidden
+            : navbarStyles.scrollIndicatorVisible,
+        )}
+        style={{ height: "6px" }}
       />
 
-      {/* --- THE NAVIGATION BAR (Off-White & Green)--- */}
       <nav
-        className={`fixed top-0 left-0 w-full h-16 bg-stone-50 border-b border-stone-200 text-stone-800 flex items-center justify-between px-6 z-50 transition-transform duration-500 ease-in-out ${
-          shouldShow ? "translate-y-0" : "-translate-y-full"
-        }`}
+        className={cn(
+          navbarStyles.nav,
+          shouldShow ? navbarStyles.navVisible : navbarStyles.navHidden,
+        )}
       >
         {/* Logo Section */}
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" className={navbarStyles.logoLink}>
           <Image
-            className="dark:invert"
+            className={navbarStyles.logoImage}
             src="/logo.png"
             alt="CPAL"
             width={38}
             height={38}
             priority
           />
-          <span className="font-bold text-xl text-emerald-700 hidden sm:block">
-            CPARL
-          </span>
+          <span className={navbarStyles.logoText}>CPARL</span>
         </Link>
 
         {/* Search Field */}
-        <div className="flex-1 max-w-md mx-8 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600/50 w-4 h-4" />
+        <div className={navbarStyles.searchContainer}>
+          <Search className={navbarStyles.searchIcon} />
           <input
             type="text"
             placeholder="Search..."
-            className="w-full pl-10 pr-4 py-2 rounded-full bg-white border border-stone-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-sm"
+            className={navbarStyles.searchInput}
           />
         </div>
 
         {/* Icon Navigation (Green) */}
-        <div className="flex items-center gap-2 sm:gap-4 text-emerald-600">
-          {/* NEW: Add Icon with a subtle border to make it pop */}
+        <div className={navbarStyles.iconNavigation}>
+          {/* Create action icon */}
           <Link
-            href="/create"
-            title="Add New"
-            className="p-2 border-2 border-emerald-100 hover:border-emerald-500 hover:bg-emerald-50 rounded-full transition-all"
+            href={createHref}
+            title={createTitle}
+            className={iconLinkPrimaryClass}
           >
             <Plus className="w-6 h-6" />
           </Link>
           <Link
-            href="/"
+            href={user ? "/tenants" : "/auth/login"}
             title="Home"
-            className="p-2 hover:bg-emerald-50 rounded-full transition-colors"
+            className={iconLinkClass}
           >
             <Home className="w-6 h-6" />
           </Link>
-          <Link
-            href="/dashboard"
-            title="Dashboard"
-            className="p-2 hover:bg-emerald-50 rounded-full transition-colors"
-          >
+          <Link href="/dashboard" title="Dashboard" className={iconLinkClass}>
             <LayoutDashboard className="w-6 h-6" />
           </Link>
-          <Link
-            href="/settings"
-            title="Settings"
-            className="p-2 hover:bg-emerald-50 rounded-full transition-colors"
+          <div
+            className={navbarStyles.settingsMenuContainer}
+            onMouseEnter={() => {
+              if (!isAuthenticated) return;
+              if (settingsCloseTimeoutRef.current) {
+                window.clearTimeout(settingsCloseTimeoutRef.current);
+                settingsCloseTimeoutRef.current = null;
+              }
+              setIsSettingsOpen(true);
+            }}
+            onMouseLeave={() => {
+              if (!isAuthenticated) return;
+              if (settingsCloseTimeoutRef.current) {
+                window.clearTimeout(settingsCloseTimeoutRef.current);
+              }
+              settingsCloseTimeoutRef.current = window.setTimeout(() => {
+                setIsSettingsOpen(false);
+              }, 200);
+            }}
           >
-            <Settings className="w-6 h-6" />
-          </Link>
+            <button
+              type="button"
+              title="Settings"
+              className={settingsButtonClass}
+              onClick={() => setIsSettingsOpen((open) => !open)}
+              aria-expanded={isSettingsOpen}
+            >
+              <Settings className="w-6 h-6" />
+            </button>
+
+            {isSettingsOpen && (
+              <div className={navbarStyles.settingsMenuDropdown}>
+                <Link
+                  href="/settings/chart-of-accounts"
+                  className={navbarStyles.settingsMenuItem}
+                >
+                  Chart of accounts
+                </Link>
+                <Link
+                  href="/settings/recurring-transactions"
+                  className={navbarStyles.settingsMenuItem}
+                >
+                  Recurring transactions
+                </Link>
+                <div className={navbarStyles.settingsMenuDivider} />
+                <Link
+                  href="/settings/import-data"
+                  className={navbarStyles.settingsMenuItem}
+                >
+                  Import data
+                </Link>
+                <Link
+                  href="/settings/export-data"
+                  className={navbarStyles.settingsMenuItem}
+                >
+                  Export data
+                </Link>
+                <Link
+                  href="/settings/audit-log"
+                  className={navbarStyles.settingsMenuItem}
+                >
+                  Audit log
+                </Link>
+                <div className={navbarStyles.settingsMenuDivider} />
+                <Link
+                  href="/settings/share-screen"
+                  className={navbarStyles.settingsMenuItem}
+                >
+                  Share screen
+                </Link>
+                <Link
+                  href="/settings/your-team"
+                  className={navbarStyles.settingsMenuItem}
+                >
+                  Your team
+                </Link>
+              </div>
+            )}
+          </div>
           {/* NEW: Help Button */}
-          <Link
-            href="/help"
-            title="Help & Support"
-            className="p-2 hover:bg-emerald-50 rounded-full transition-colors"
-          >
+          <Link href="/help" title="Help & Support" className={iconLinkClass}>
             <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6" />
           </Link>
           {/* Profile Menu */}
           {user ? (
             <div
-              className="relative ml-1 pl-3 pt-2 border-l border-stone-200"
+              className={navbarStyles.profileMenuContainer}
               onMouseEnter={() => {
                 if (closeTimeoutRef.current) {
                   window.clearTimeout(closeTimeoutRef.current);
@@ -177,28 +273,31 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
                 type="button"
                 onClick={() => setIsMenuOpen((open) => !open)}
                 title="User icon"
-                className="flex items-center rounded-full border border-emerald-100 bg-white p-1 hover:bg-emerald-50 transition-colors"
+                className={navbarStyles.profileButton}
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white text-sm font-semibold">
+                <span className={navbarStyles.profileAvatar}>
                   {avatarInitial}
                 </span>
               </button>
 
               {isMenuOpen && (
-                <div className="absolute right-0 top-full w-auto min-w-[200px] max-w-[260px] rounded-xl border border-stone-200 bg-white shadow-lg overflow-hidden">
-                  <div className="px-4 py-3">
-                    <p className="text-sm font-semibold text-stone-800 truncate">
+                <div className={navbarStyles.profileMenuDropdown}>
+                  <div className={navbarStyles.profileMenuHeader}>
+                    <p className={navbarStyles.profileMenuName}>
                       {fullName || profileName}
                     </p>
-                    <p className="text-xs text-stone-500 truncate">
+                    <p className={navbarStyles.profileMenuEmail}>
                       {user.email}
                     </p>
                   </div>
-                  <div className="border-t border-stone-100">
-                    <form action={logoutAction}>
+                  <div className={navbarStyles.profileMenuFooter}>
+                    <form
+                      action={logoutAction}
+                      onSubmit={() => broadcastLogout()}
+                    >
                       <button
                         type="submit"
-                        className="w-full px-4 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        className={navbarStyles.logoutButton}
                       >
                         <LogOut className="h-4 w-4" />
                         Logout
@@ -212,9 +311,9 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
             <Link
               href="/auth/login"
               title="Sign in"
-              className="ml-1 pl-3 border-l border-stone-200 p-1 rounded-full hover:bg-emerald-50 text-emerald-700 transition-colors"
+              className={navbarStyles.loginLink}
             >
-              <UserCircle className="h-7 w-7 sm:h-8 sm:w-8 stroke-[1.5]" />
+              <UserCircle className={navbarStyles.loginIcon} />
             </Link>
           )}
         </div>

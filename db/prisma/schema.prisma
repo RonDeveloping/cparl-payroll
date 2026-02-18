@@ -527,11 +527,26 @@ model Tenant {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
+  members       TenantUser[]
   settings      TenantSettings?
   payrollCycles PayrollCycle[]
   departments   Department[]
 
   @@map("tenant")
+}
+
+model TenantUser {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  userId    String   @map("user_id")
+  role      String   @default("member")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+  @@map("tenant_user")
 }
 
 model TenantSettings {

@@ -105,7 +105,11 @@ export async function resendVerificationEmail(email: string) {
   // If dbResult.data is null, it means user wasn't found (Generic Response)
   if (dbResult.data) {
     try {
-      await sendVerificationEmail(dbResult.data.email, dbResult.data.token);
+      await sendVerificationEmail(
+        dbResult.data.email,
+        dbResult.data.token,
+        new Date(),
+      );
     } catch (error) {
       console.error("Email failed to send:", error);
       // We don't necessarily return 'false' here because the token WAS created.

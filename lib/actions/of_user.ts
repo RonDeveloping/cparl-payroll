@@ -102,7 +102,7 @@ export async function upSertUserSendEmailVeriRequest(
   // 3. TRIGGER EMAIL (Now safely outside the transaction)
   try {
     const { user, token } = dbResult.data;
-    await sendVerificationEmail(user.email, token);
+    await sendVerificationEmail(user.email, token, new Date());
   } catch (error) {
     // We log the error but don't fail the whole registration
     // because the user account was successfully created/updated in the DB.

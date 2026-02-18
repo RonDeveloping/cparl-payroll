@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/navbar";
 import { Toaster } from "sonner";
+import { getCurrentUser } from "@/lib/auth-utils";
+import LogoutSync from "@/components/logout-sync";
 
 // This Metadata applies to every page by default; individual pages can override this.
 export const metadata: Metadata = {
@@ -15,16 +17,28 @@ export const metadata: Metadata = {
 };
 
 //{children} is the content of the specific page being rendered inside this layout; this's a server component so it can't use hooks like useState or useEffect to listen to scroll events
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const user = await getCurrentUser();
+  const navUser = user
+    ? {
+        email: user.email,
+        givenName: user.givenName,
+        familyName: user.familyName,
+        displayName: user.displayName,
+        nickName: user.nickName,
+      }
+    : null;
+
   return (
     <html lang="en">
       <body className="bg-white text-black">
         {/*by placing Navbar here, it will appear on every page without rendered*/}
-        <Navbar />
+        <Navbar user={navUser} />
+        <LogoutSync />
         <Toaster richColors position="top-right" />
         {/* Padding-top ensures content isn't hidden under the fixed navbar */}
         <main className="pt-16 min-h-[150vh]" style={{ paddingTop: "70px" }}>

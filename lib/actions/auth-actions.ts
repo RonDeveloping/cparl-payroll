@@ -78,6 +78,7 @@ export async function loginAction(data: LoginData) {
 export async function logoutAction() {
   const cookieStore = await cookies();
   cookieStore.delete("session");
+  redirect(ROUTES.AUTH.LOGIN);
 }
 
 export async function askForResetLinkAction(email: string) {

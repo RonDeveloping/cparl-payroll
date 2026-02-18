@@ -501,12 +501,100 @@ export const passwordInputStyles: PasswordInputStyleSchema = {
   errorText: "text-xs text-red-500",
 };
 
+export const navbarStyles: NavbarStyleSchema = {
+  wrapper: "w-full",
+  scrollIndicator:
+    "fixed top-0 left-0 w-full z-[60] transition-opacity duration-300 bg-gradient-to-r from-blue-200 via-emerald-100 to-green-200",
+  scrollIndicatorVisible: "opacity-100",
+  scrollIndicatorHidden: "opacity-0",
+  nav: "fixed top-0 left-0 w-full h-16 bg-stone-50 border-b border-stone-200 text-stone-800 flex items-center justify-between px-6 z-50 transition-transform duration-500 ease-in-out",
+  navVisible: "translate-y-0",
+  navHidden: "-translate-y-full",
+  logoLink: "flex items-center gap-2",
+  logoImage: "dark:invert",
+  logoText: "font-bold text-xl text-emerald-700 hidden sm:block",
+  searchContainer: "flex-1 max-w-md mx-8 relative",
+  searchIcon:
+    "absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600/50 w-4 h-4",
+  searchInput:
+    "w-full pl-10 pr-4 py-2 rounded-full bg-white border border-stone-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-sm",
+  iconNavigation: "flex items-center gap-2 sm:gap-4 text-emerald-600",
+  iconLink: "p-2 hover:bg-emerald-50 rounded-full transition-colors",
+  iconLinkDisabled: "text-stone-400 pointer-events-none opacity-60",
+  iconLinkPrimary:
+    "p-2 border-2 border-emerald-100 hover:border-emerald-500 hover:bg-emerald-50 rounded-full transition-all",
+  iconLinkPrimaryDisabled:
+    "border-stone-200 text-stone-400 pointer-events-none opacity-60",
+  settingsMenuContainer: "relative",
+  settingsMenuButton: "p-2 hover:bg-emerald-50 rounded-full transition-colors",
+  settingsMenuButtonDisabled: "text-stone-400 pointer-events-none opacity-60",
+  settingsMenuDropdown:
+    "absolute right-0 top-full mt-2 w-64 rounded-xl border border-stone-200 bg-white shadow-lg overflow-hidden z-50",
+  settingsMenuItem:
+    "flex items-center gap-2 px-4 py-2 text-sm text-stone-700 hover:bg-emerald-50 transition-colors",
+  settingsMenuDivider: "border-t border-stone-100",
+  profileMenuContainer: "relative ml-1 pl-3 pt-2 border-l border-stone-200",
+  profileButton:
+    "flex items-center rounded-full border border-emerald-100 bg-white p-1 hover:bg-emerald-50 transition-colors",
+  profileAvatar:
+    "flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white text-sm font-semibold",
+  profileMenuDropdown:
+    "absolute right-0 top-full w-auto min-w-[200px] max-w-[260px] rounded-xl border border-stone-200 bg-white shadow-lg overflow-hidden",
+  profileMenuHeader: "px-4 py-3",
+  profileMenuName: "text-sm font-semibold text-stone-800 truncate",
+  profileMenuEmail: "text-xs text-stone-500 truncate",
+  profileMenuFooter: "border-t border-stone-100",
+  logoutButton:
+    "w-full px-4 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-2",
+  loginLink:
+    "ml-1 pl-3 border-l border-stone-200 p-1 rounded-full hover:bg-emerald-50 text-emerald-700 transition-colors",
+  loginIcon: "h-7 w-7 sm:h-8 sm:w-8 stroke-[1.5]",
+};
+
 /*
 Benefits of using interface:
 Autocompletion: As soon as you type className={authStyles., your IDE will pop up a list of all constants.
 Type Safety: If you accidentally mistype a constant name (e.g., authStyles.pageWrpper), TypeScript will throw an error, preventing runtime bugs.
 Refactoring: If you want to rename buttonResend to actionButton, you can use your IDE's "Rename Symbol" feature.
 */
+interface NavbarStyleSchema {
+  wrapper: string;
+  scrollIndicator: string;
+  scrollIndicatorVisible: string;
+  scrollIndicatorHidden: string;
+  nav: string;
+  navVisible: string;
+  navHidden: string;
+  logoLink: string;
+  logoImage: string;
+  logoText: string;
+  searchContainer: string;
+  searchIcon: string;
+  searchInput: string;
+  iconNavigation: string;
+  iconLink: string;
+  iconLinkDisabled: string;
+  iconLinkPrimary: string;
+  iconLinkPrimaryDisabled: string;
+  settingsMenuContainer: string;
+  settingsMenuButton: string;
+  settingsMenuButtonDisabled: string;
+  settingsMenuDropdown: string;
+  settingsMenuItem: string;
+  settingsMenuDivider: string;
+  profileMenuContainer: string;
+  profileButton: string;
+  profileAvatar: string;
+  profileMenuDropdown: string;
+  profileMenuHeader: string;
+  profileMenuName: string;
+  profileMenuEmail: string;
+  profileMenuFooter: string;
+  logoutButton: string;
+  loginLink: string;
+  loginIcon: string;
+}
+
 interface AuthStyleSchema {
   // Layout
   pageWrapper: string;

@@ -19,4 +19,11 @@ export const emailStyles = {
     "font-size: 12px; color: #94a3b8; margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 16px;",
   expiry:
     "font-size: 14px; color: #64748b; font-style: italic; margin-top: 16px;",
+  timestamp:
+    "font-size: 12px; color: #94a3b8; display: block; margin-bottom: 4px;",
+  buttonRow:
+    "display: table; width: 100%; margin-bottom: 16px; margin-top: 24px;",
+  buttonCell: "display: table-cell; vertical-align: top;",
+  timestampCell:
+    "display: table-cell; vertical-align: middle; padding-left: 20px; line-height: 1.5;",
 };

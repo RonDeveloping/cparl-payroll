@@ -6,12 +6,5 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <html lang="en">
-      <body>
-        {/* Wrap children with the Provider */}
-        <TenantProvider>{children}</TenantProvider>
-      </body>
-    </html>
-  );
+  return <TenantProvider>{children}</TenantProvider>;
 }

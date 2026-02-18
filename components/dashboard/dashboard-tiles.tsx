@@ -84,35 +84,44 @@ export default function DashboardTiles({ tiles }: { tiles: DashboardTile[] }) {
         })}
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         {activeTile ? (
-          <div className="space-y-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+          <div>
+            <div className="flex items-center gap-2 border-b border-slate-200 px-5 py-3 bg-slate-50">
+              <div
+                className={`flex h-6 w-6 items-center justify-center rounded-full ${toneStyles[activeTile.tone].split(" ")[2]}`}
+              >
+                {(() => {
+                  const Icon = iconMap[activeTile.icon];
+                  return <Icon className="h-3 w-3" />;
+                })()}
+              </div>
+              <span className="text-sm font-semibold text-slate-900">
                 {activeTile.title}
-              </p>
-              <h3 className="text-lg font-semibold text-slate-900">
-                {activeTile.subtitle}
-              </h3>
+              </span>
             </div>
-            <div className="space-y-3 text-sm">
-              {activeTile.items.map((item) => (
-                <div
-                  key={item.label}
-                  className="flex items-center justify-between text-slate-600"
-                >
-                  <span>{item.label}</span>
-                  <span className="font-medium text-slate-900">
-                    {item.value}
-                  </span>
-                </div>
-              ))}
+            <div className="p-5 space-y-4">
+              <div className="space-y-3 text-sm">
+                {activeTile.items.map((item) => (
+                  <div
+                    key={item.label}
+                    className="flex items-center justify-between text-slate-600"
+                  >
+                    <span>{item.label}</span>
+                    <span className="font-medium text-slate-900">
+                      {item.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         ) : (
-          <p className="text-sm text-slate-500">
-            Select a tile to view details.
-          </p>
+          <div className="px-5 py-8">
+            <p className="text-sm text-slate-500">
+              Select a tile to view details.
+            </p>
+          </div>
         )}
       </div>
     </div>
