@@ -49,9 +49,6 @@ export default function LoginPage() {
     <div className={authStyles.loginCard}>
       <div className={authStyles.loginHeader}>
         <h1 className={authStyles.loginTitle}>Sign In</h1>
-        <p className={authStyles.loginSubtitle}>
-          Enter your credentials to access your account
-        </p>
       </div>
 
       {justRegistered && (
@@ -111,7 +108,7 @@ export default function LoginPage() {
           disabled={loading}
           className={authStyles.loginButton}
         >
-          {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Sign In"}
+          {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Submit"}
         </button>
       </form>
 

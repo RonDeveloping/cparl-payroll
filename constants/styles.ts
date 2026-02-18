@@ -1,7 +1,7 @@
 //constants/styles.ts
 import { cn } from "@/lib/utils";
 
-export const FORM_GRID_STYLE = "grid grid-cols-1 md:grid-cols-2 gap-4 px-1";
+export const FORM_GRID_STYLE = "grid grid-cols-1 md:grid-cols-2 px-1 gap-6";
 
 export const LABEL_STYLE =
   "text-[11px] font-bold text-slate-500 uppercase ml-1";
@@ -9,37 +9,33 @@ export const LABEL_STYLE =
 export const BUTTON_VARIANTS = {
   // Bold, clear, and high-priority
   primary: cn(
-    "flex items-center justify-center gap-2 p-2 rounded transition-all text-white font-medium",
+    "flex items-center justify-center p-2 rounded transition-all text-white font-medium",
     "bg-blue-600 cursor-pointer hover:bg-blue-700 active:scale-[0.98]",
     "disabled:bg-slate-300 disabled:cursor-not-allowed disabled:active:scale-100 disabled:opacity-70",
+    "gap-4",
   ),
   // Subtle, secondary, and less "loud"
   secondary: cn(
-    "flex items-center justify-center gap-2 p-2 rounded border border-slate-300 transition-all",
+    "flex items-center justify-center p-2 rounded border border-slate-300 transition-all",
     "bg-white text-slate-700 cursor-pointer hover:bg-slate-50",
     "disabled:opacity-50 disabled:cursor-not-allowed",
+    "gap-4",
   ),
 };
 
-const sharedStyles = {
+const sharedStyles: Record<string, string> = {
   relative: "relative",
-  spaceY2: "space-y-2",
-  spaceY4: "space-y-4",
+  // Note: gap-4 will be applied via class composition
   flexCol: "flex flex-col",
-  p6: "p-6",
-  p8: "p-8",
+  p7: "p-7",
   maxWmdCenter: "max-w-md mx-auto",
   maxWmdFull: "max-w-md w-full",
   cardBase: "bg-white shadow-sm border border-slate-200",
   roundedXl: "rounded-xl",
   rounded2xl: "rounded-2xl",
   headingLg: "text-2xl font-bold text-slate-900",
-  headingXl: "text-3xl font-bold text-slate-900",
   labelSmMediumSlate700: "text-sm font-medium text-slate-700",
-  textSlate500: "text-slate-500",
   textSmSlate500: "text-sm text-slate-500",
-  textSmSlate600: "text-sm text-slate-600",
-  textSlate400: "text-slate-400",
   textBlue600: "text-blue-600",
   linkBlueUnderline: "text-blue-600 hover:underline",
   fontSemiboldSlate800: "font-semibold text-slate-800",
@@ -50,32 +46,25 @@ const sharedStyles = {
     "absolute right-3 top-2.5 text-slate-400 hover:text-slate-600",
   buttonBlueBase: "bg-blue-600 text-white",
   buttonBlueHover: "hover:bg-blue-700",
-  buttonBlueFlex: "transition-colors flex items-center justify-center gap-2",
-  inlineFlexGap2: "inline-flex items-center gap-2",
+  buttonBlueFlex: "transition-colors flex items-center justify-center",
+  inlineFlexGap2: "inline-flex items-center",
   // Padding composites (normalized)
-  px4Py2: "px-4 py-2",
-  px4Py3: "px-4 py-3",
-  px3Py1_5: "px-3 py-1.5",
-  px6Py2: "px-6 py-2",
+  px4Py2: "px-5 py-2",
   p3Box: "p-3",
   // Input specific padding
   inputPaddingLg: "pl-10 pr-12 py-2",
-  // Margin composites (normalized) - MUST be before tokens that use them
-  mt1: "mt-1",
-  mt2: "mt-2",
-  mt4: "mt-4",
-  mt6: "mt-6",
-  mt8: "mt-8",
-  mt20: "mt-20",
-  mb1: "mb-1",
-  mb2: "mb-2",
+  // Margin composites (consolidated to key breakpoints) - MUST be before tokens that use them
+  mt10: "mt-10",
   mb4: "mb-4",
-  mb6: "mb-6",
-  mb8: "mb-8",
   my8: "my-8",
   ml1: "ml-1",
   mr1: "mr-1",
   mxAuto: "mx-auto",
+  // Gap and space composites (consolidated to key breakpoints)
+  gap4: "gap-4",
+  spaceY8: "space-y-8",
+  spaceY1: "space-y-1",
+  spaceX3: "space-x-3",
   // Text composites using margin tokens
   textSlate500Mt2: cn("text-slate-500", "mt-2"),
   // Input field composites
@@ -84,7 +73,7 @@ const sharedStyles = {
   inputWithRightPadding:
     "w-full pl-10 pr-12 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition-all",
   // Container composites
-  pageContainerLarge: cn("max-w-5xl p-6 space-y-6", "mx-auto"),
+  pageContainerLarge: cn("max-w-5xl p-6", "space-y-6", "mx-auto"),
   pageContainerMedium: cn("max-w-3xl p-6", "mx-auto"),
   centerContainer:
     "flex flex-col items-center justify-center min-h-screen p-4 text-center",
@@ -104,17 +93,20 @@ const sharedStyles = {
     "p-6",
   ),
   sectionHeaderRow: cn("flex items-center justify-between", "mb-4"),
-  sectionHeaderLeftBlueBase: "flex items-center space-x-2 text-blue-600",
+  sectionHeaderLeftBlueBase: cn("flex items-center text-blue-600", "space-x-3"),
   sectionHeaderLeftPurpleBase: cn(
-    "flex items-center space-x-2 text-purple-600",
+    "flex items-center text-purple-600",
+    "space-x-3",
     "mb-4",
   ),
   sectionHeaderLeftOrangeBase: cn(
-    "flex items-center space-x-2 text-orange-600",
+    "flex items-center text-orange-600",
+    "space-x-3",
     "mb-4",
   ),
   badgeBlueSmall: cn(
-    "flex items-center gap-1 px-2 py-0.5 bg-blue-50 border border-blue-100 rounded-md",
+    "flex items-center rounded-md bg-blue-50 border border-blue-100 px-2 py-0.5",
+    "gap-4",
   ),
   badgeLabel: "text-[10px] font-bold uppercase text-blue-700 tracking-tight",
 };
@@ -127,13 +119,13 @@ export const authStyles: AuthStyleSchema = {
     sharedStyles.maxWmdFull,
     sharedStyles.cardBase,
     sharedStyles.roundedXl,
-    sharedStyles.p6,
+    sharedStyles.p7,
   ),
-  divider: cn(sharedStyles.my8, "border-slate-100"),
+  divider: cn("my-8", "border-slate-100"),
 
   // Typography
-  title: cn(sharedStyles.headingLg, sharedStyles.mb2),
-  bodyText: cn("text-slate-600", sharedStyles.mb6),
+  title: cn("text-2xl font-bold text-slate-900", "mb-2"),
+  bodyText: cn("text-slate-600", "mb-6"),
   subText: "text-xs text-slate-500 leading-relaxed", // For your smaller "if" sentence
   // Secondary Instructions (The "Keep page open" text)
   instructionText: cn(
@@ -142,22 +134,25 @@ export const authStyles: AuthStyleSchema = {
   ),
 
   // Interactive Elements
-  buttonResend:
-    "text-blue-600 font-medium hover:underline disabled:text-slate-400 disabled:no-underline flex items-center justify-center w-full gap-2",
+  buttonResend: cn(
+    "text-blue-600 font-medium hover:underline disabled:text-slate-400 disabled:no-underline flex items-center justify-center w-full",
+    sharedStyles.gap4,
+  ),
   linkBack:
     "text-sm text-slate-400 hover:text-slate-600 transition-colors inline-block",
 
   // Troubleshooting Section (The "Didn't receive email?" part)
-  troubleshootWrapper: cn("space-y-1", sharedStyles.mb6),
-  troubleshootText: sharedStyles.textSmSlate500,
+  troubleshootWrapper: cn(sharedStyles.spaceY5, "mb-6"),
+  troubleshootText: "text-sm text-slate-500",
   // Notice/Alert Boxes
   alertBox: cn(
-    "flex items-start gap-3 px-4 py-0 text-left bg-amber-50 border border-amber-100 rounded-lg",
-    sharedStyles.mb6,
+    "flex items-start text-left bg-amber-50 border border-amber-100 rounded-lg px-4 py-0",
+    sharedStyles.gap4,
+    "mb-6",
   ),
   alertText: "text-xs text-amber-800 leading-relaxed",
   // Small Reminder (The one you asked to make smaller)
-  reminderBox: sharedStyles.infoBox,
+  reminderBox: "mb-6 p-3 bg-slate-50 rounded-md border border-slate-100",
   reminderText: "text-[11px] text-slate-500 leading-tight italic",
 
   // Icon Styles
@@ -178,41 +173,41 @@ export const authStyles: AuthStyleSchema = {
     "flex flex-col items-center justify-center min-h-screen",
   missingTokenTitle: "text-xl font-bold text-red-600",
   errorCard: "bg-red-50 p-8 rounded-lg border border-red-200 shadow-sm",
-  errorTitle: cn("text-2xl font-bold text-red-700", sharedStyles.mb2),
+  errorTitle: cn("text-2xl font-bold text-red-700", sharedStyles.mb4),
   errorMessage: cn("text-red-600", sharedStyles.mb4),
   errorLink: sharedStyles.linkBlueUnderline,
   successCard: "bg-green-50 p-8 rounded-lg border border-green-200 shadow-sm",
-  successTitle: cn("text-2xl font-bold text-green-700", sharedStyles.mb2),
-  successMessage: cn("text-green-600", sharedStyles.mb6),
+  successTitle: cn("text-2xl font-bold text-green-700", sharedStyles.mb4),
+  successMessage: cn("text-green-600", sharedStyles.mb4),
   successButton: cn(
     "bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors",
-    sharedStyles.px6Py2,
+    sharedStyles.px4Py2,
   ),
 
   // Forgot Password Page
   forgotPasswordCard: cn(
     sharedStyles.maxWmdCenter,
-    sharedStyles.mt20,
-    sharedStyles.p8,
+    sharedStyles.mt10,
+    sharedStyles.p7,
     sharedStyles.cardBase,
     sharedStyles.rounded2xl,
   ),
   forgotPasswordCardCenter: cn(
     sharedStyles.maxWmdCenter,
-    sharedStyles.mt20,
-    sharedStyles.p8,
+    sharedStyles.mt10,
+    sharedStyles.p7,
     sharedStyles.cardBase,
     sharedStyles.rounded2xl,
     "text-center",
   ),
   forgotPasswordTitle: sharedStyles.headingLg,
-  forgotPasswordDescription: cn(sharedStyles.textSlate500Mt2, sharedStyles.mb6),
+  forgotPasswordDescription: cn(sharedStyles.textSlate500Mt2, sharedStyles.mb4),
   forgotPasswordText: sharedStyles.textSlate500Mt2,
   forgotPasswordForm: sharedStyles.spaceY4,
   forgotPasswordLabel: cn(
     sharedStyles.labelSmMediumSlate700,
     "block",
-    sharedStyles.mb1,
+    sharedStyles.mb4,
   ),
   forgotPasswordInput: cn(
     "w-full border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all",
@@ -223,6 +218,7 @@ export const authStyles: AuthStyleSchema = {
     sharedStyles.buttonBlueBase,
     sharedStyles.buttonBlueHover,
     sharedStyles.buttonBlueFlex,
+    sharedStyles.gap4,
   ),
   forgotPasswordIcon: cn(
     "w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto",
@@ -230,28 +226,31 @@ export const authStyles: AuthStyleSchema = {
   ),
   forgotPasswordBackLink: cn(
     "text-sm font-medium",
-    sharedStyles.mt6,
+    sharedStyles.mt10,
     sharedStyles.inlineFlexGap2,
+    sharedStyles.gap4,
     sharedStyles.linkBlueUnderline,
   ),
-  forgotPasswordFooter: cn("text-center", sharedStyles.mt6),
+  forgotPasswordFooter: cn("text-center", sharedStyles.mt10),
   forgotPasswordFooterLink: cn(
     sharedStyles.textSmSlate500,
     "hover:text-blue-600",
   ),
 
   // Login Page
-  loginCard:
-    "w-full max-w-md space-y-8 p-8 bg-white rounded-xl shadow-lg border border-slate-100",
+  loginCard: cn(
+    "w-full max-w-md p-8 bg-white rounded-xl shadow-lg border border-slate-100",
+    sharedStyles.spaceY5,
+  ),
   loginHeader: "text-center",
-  loginTitle: sharedStyles.headingXl,
-  loginSubtitle: cn(sharedStyles.textSmSlate600, sharedStyles.mt2),
+  loginTitle: sharedStyles.headingLg,
+  loginSubtitle: cn(sharedStyles.textSmSlate500, sharedStyles.mt10),
   loginBanner: cn(
     "bg-blue-50 border border-blue-200 text-blue-700 rounded text-sm",
-    sharedStyles.px4Py3,
+    sharedStyles.px4Py2,
   ),
-  loginForm: "space-y-6",
-  loginFieldGroup: sharedStyles.spaceY2,
+  loginForm: sharedStyles.spaceY8,
+  loginFieldGroup: sharedStyles.spaceY1,
   loginFieldLabel: sharedStyles.labelSmMediumSlate700,
   loginInputWrapper: sharedStyles.relative,
   loginEmailIcon: sharedStyles.iconLeftInline,
@@ -266,27 +265,30 @@ export const authStyles: AuthStyleSchema = {
     sharedStyles.buttonBlueBase,
     sharedStyles.buttonBlueHover,
     sharedStyles.buttonBlueFlex,
+    sharedStyles.gap4,
   ),
-  loginFooter: cn("text-center", sharedStyles.textSmSlate600),
+  loginFooter: cn("text-center", sharedStyles.textSmSlate500),
   loginCreateLink: cn(sharedStyles.linkBlueUnderline, "font-medium"),
 
   // Register Page
   registerCard: cn(
     sharedStyles.maxWmdCenter,
-    sharedStyles.mt20,
-    sharedStyles.p6,
+    sharedStyles.mt10,
+    sharedStyles.p7,
     "shadow-lg border",
     sharedStyles.roundedXl,
   ),
-  registerTitle: cn("text-2xl font-bold", sharedStyles.mb6),
-  registerDescription: cn("text-gray-600", sharedStyles.mb8),
-  registerFooter: cn("text-sm text-center", sharedStyles.mt4),
+  registerTitle: cn("text-2xl font-bold", sharedStyles.mb4),
+  registerDescription: cn("text-gray-600", sharedStyles.mb4),
+  registerFooter: cn("text-sm text-center", sharedStyles.mt10),
   registerLoginLink: sharedStyles.textBlue600,
 
   // Resend Verification Page
   resendContainer: sharedStyles.centerContainer,
-  resendForm:
-    "max-w-sm w-full space-y-4 bg-white p-6 rounded-lg shadow-md border",
+  resendForm: cn(
+    "max-w-sm w-full bg-white p-6 rounded-lg shadow-md border",
+    sharedStyles.spaceY4,
+  ),
   resendTitle: "text-xl font-bold",
   resendDescription: "text-sm text-gray-600",
   resendInput: "w-full p-2 border rounded",
@@ -298,29 +300,34 @@ export const authStyles: AuthStyleSchema = {
   // Reset Password Page
   resetInvalidContainer: cn(
     sharedStyles.maxWmdCenter,
-    sharedStyles.mt20,
+    sharedStyles.mt10,
     "text-center",
-    sharedStyles.p8,
+    sharedStyles.p7,
     "bg-red-50 border border-red-100",
     sharedStyles.roundedXl,
   ),
   resetInvalidMessage: "text-red-600 font-medium",
   resetCard: cn(
     sharedStyles.maxWmdCenter,
-    sharedStyles.mt8,
-    sharedStyles.p6,
+    sharedStyles.mt10,
+    sharedStyles.p7,
     sharedStyles.cardBase,
     sharedStyles.rounded2xl,
   ),
-  resetHeader: cn("flex items-center gap-2 text-blue-600", sharedStyles.mb2),
+  resetHeader: cn(
+    "flex items-center text-blue-600",
+    sharedStyles.gap4,
+    sharedStyles.mb4,
+  ),
   resetTitle: sharedStyles.headingLg,
   resetEmailBox: cn(
-    "flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-lg",
+    "flex items-center bg-slate-50 border border-slate-100 rounded-lg",
+    sharedStyles.gap4,
     sharedStyles.p3Box,
-    sharedStyles.mb6,
+    sharedStyles.mb4,
   ),
-  resetEmailIcon: sharedStyles.textSlate400,
-  resetEmailText: sharedStyles.textSmSlate600,
+  resetEmailIcon: sharedStyles.textSmSlate500,
+  resetEmailText: sharedStyles.textSmSlate500,
   resetEmailSpan: "font-semibold text-slate-900",
   resetForm: sharedStyles.spaceY4,
 
@@ -331,10 +338,11 @@ export const authStyles: AuthStyleSchema = {
 export const contactProfileStyles: ContactProfileStyleSchema = {
   pageContainer: sharedStyles.pageContainerLarge,
   headerCard: cn(
-    "flex items-center space-x-4",
+    "flex items-center",
     sharedStyles.cardBase,
     sharedStyles.roundedXl,
-    sharedStyles.p8,
+    sharedStyles.p7,
+    sharedStyles.spaceX3,
   ),
   avatar: "w-24 h-24 rounded-full border-4 border-blue-50",
   nameTitle: sharedStyles.headingLg,
@@ -342,7 +350,7 @@ export const contactProfileStyles: ContactProfileStyleSchema = {
   infoList: "space-y-0",
   editButton: cn(
     "flex items-center justify-center gap-1.5 bg-transparent hover:bg-green-50 text-slate-600 rounded-md text-sm font-medium transition-all border border-transparent hover:border-green-100",
-    sharedStyles.px3Py1_5,
+    sharedStyles.px4Py2,
   ),
   editIcon: "text-green-600",
   sectionCard: sharedStyles.sectionCard,
@@ -356,7 +364,7 @@ export const contactProfileStyles: ContactProfileStyleSchema = {
   accessRow: "flex items-center gap-2 border-b border-slate-100 pb-1",
   metaLabel: "text-xs text-slate-400 uppercase tracking-wider",
   accessIcon: "inline-flex items-center text-purple-600",
-  badgeRow: cn("flex items-center gap-3", sharedStyles.mt1),
+  badgeRow: cn("flex items-center gap-3", sharedStyles.mt10),
   badge: sharedStyles.badgeBlueSmall,
   badgeTitle: sharedStyles.fontSemiboldSlate800,
   badgeIcon: sharedStyles.textBlue600,
@@ -364,26 +372,26 @@ export const contactProfileStyles: ContactProfileStyleSchema = {
   detailGrid: "grid grid-cols-1 md:grid-cols-2 gap-6",
   payrollLinkButton: cn(
     "w-full text-sm text-left",
-    sharedStyles.mt2,
+    sharedStyles.mt10,
     sharedStyles.linkBlueUnderline,
   ),
   notFoundContainer: cn("max-w-5xl p-12 text-center", sharedStyles.mxAuto),
   notFoundTitle: "text-2xl font-bold text-slate-800",
-  notFoundText: cn(sharedStyles.textSlate500, sharedStyles.mb6),
+  notFoundText: cn(sharedStyles.textSmSlate500, sharedStyles.mb4),
   notFoundLink: sharedStyles.linkBlueUnderline,
   infoItem: sharedStyles.flexCol,
   infoValueRow: "flex items-center space-x-2 text-slate-700 font-medium",
-  infoIcon: sharedStyles.textSlate400,
+  infoIcon: sharedStyles.textSmSlate500,
 };
 
 export const dashboardStyles: DashboardStyleSchema = {
-  pageContainer: cn("max-w-4xl space-y-6", sharedStyles.mxAuto),
-  heroCard: cn(sharedStyles.cardBase, sharedStyles.rounded2xl, sharedStyles.p8),
-  heroTitle: sharedStyles.headingXl,
+  pageContainer: cn("max-w-4xl", sharedStyles.spaceY6, sharedStyles.mxAuto),
+  heroCard: cn(sharedStyles.cardBase, sharedStyles.rounded2xl, sharedStyles.p7),
+  heroTitle: sharedStyles.headingLg,
   heroSubtitle: sharedStyles.textSlate500Mt2,
   heroStatus: "text-green-600 font-medium",
-  statsGrid: "grid grid-cols-1 md:grid-cols-3 gap-4",
-  statCard: cn("bg-blue-50 rounded-xl border border-blue-100", sharedStyles.p6),
+  statsGrid: cn("grid grid-cols-1 md:grid-cols-3", sharedStyles.gap4),
+  statCard: cn("bg-blue-50 rounded-xl border border-blue-100", sharedStyles.p7),
   statLabel: "text-xs font-semibold text-blue-600 uppercase tracking-wider",
   statValue: "text-slate-700 font-medium",
 };
@@ -396,8 +404,10 @@ export const homeStyles: HomeStyleSchema = {
     "max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50",
   heroText: "max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400",
   heroLink: sharedStyles.fontMediumZinc,
-  footer:
-    "flex w-full items-center flex-col gap-4 text-base font-medium sm:flex-row",
+  footer: cn(
+    "flex w-full items-center flex-col text-base font-medium sm:flex-row",
+    sharedStyles.gap4,
+  ),
   footerLink: sharedStyles.fontMediumZinc,
   footerLinkContent: "flex items-center gap-2 font-medium whitespace-nowrap",
   footerLinkContentAlt:
@@ -409,8 +419,9 @@ export const homeStyles: HomeStyleSchema = {
 export const formActionsStyles: FormActionsStyleSchema = {
   container: "flex justify-between items-center w-full",
   saveButtonBase: cn(
-    "flex items-center gap-2 border rounded-lg font-semibold transition-all",
+    "flex items-center border rounded-lg font-semibold transition-all",
     "px-8 py-2",
+    sharedStyles.gap4,
   ),
   saveActive:
     "bg-slate-50 text-emerald-600 border-slate-200 hover:bg-white hover:border-emerald-200 shadow-sm active:scale-95",
@@ -421,16 +432,18 @@ export const formActionsStyles: FormActionsStyleSchema = {
   backLabelBase: cn("text-sm font-medium", "transition-all duration-300"),
   backLabelActive: "text-slate-500 hover:text-slate-800 cursor-pointer",
   backLabelDisabled: "text-slate-100 select-none",
-  showChangesButton:
-    "flex items-center gap-2 text-xs font-semibold tracking-wider text-slate-500 hover:text-slate-800 transition-colors",
-  showChangesIcon: sharedStyles.textSlate400,
+  showChangesButton: cn(
+    "flex items-center text-xs font-semibold tracking-wider text-slate-500 hover:text-slate-800 transition-colors",
+    sharedStyles.gap4,
+  ),
+  showChangesIcon: sharedStyles.textSmSlate500,
   showChangesCount: sharedStyles.camelCase,
 };
 
 export const registerFormStyles: RegisterFormStyleSchema = {
   form: "flex flex-col gap-4",
   errorBox: sharedStyles.errorBox,
-  termsRow: "flex items-start gap-2",
+  termsRow: cn("flex items-start", sharedStyles.gap4),
   termsCheckbox: "mt-1",
   termsLabel: "text-sm",
   termsLink: "underline",
@@ -442,19 +455,19 @@ export const registerFormStyles: RegisterFormStyleSchema = {
 
 export const formLayoutStyles: FormLayoutStyleSchema = {
   container: sharedStyles.pageContainerMedium,
-  actionsWrapper: sharedStyles.mb8,
+  actionsWrapper: sharedStyles.mb4,
 };
 
 export const formSectionStyles: FormSectionStyleSchema = {
   section: sharedStyles.sectionCard,
   title: cn(
     "text-sm font-bold text-slate-900 uppercase tracking-wider pb-2 border-b",
-    sharedStyles.mb6,
+    sharedStyles.mb4,
   ),
 };
 
 export const inputGroupStyles: InputGroupStyleSchema = {
-  wrapper: "flex flex-col space-y-1",
+  wrapper: cn(sharedStyles.flexCol, sharedStyles.spaceY5),
   inputBase: cn(
     "w-full rounded-lg border transition-all text-sm outline-none",
     sharedStyles.px4Py2,
@@ -465,7 +478,7 @@ export const inputGroupStyles: InputGroupStyleSchema = {
 };
 
 export const inputWithChangesStyles: InputWithChangesStyleSchema = {
-  wrapper: sharedStyles.spaceY2,
+  wrapper: sharedStyles.spaceY5,
   headerRow: "flex items-baseline justify-between",
   changeText: "text-xs text-red-500 line-through text-right",
   inputWrapper: sharedStyles.relative,
@@ -474,7 +487,7 @@ export const inputWithChangesStyles: InputWithChangesStyleSchema = {
 };
 
 export const passwordInputStyles: PasswordInputStyleSchema = {
-  wrapper: "space-y-1 w-full",
+  wrapper: cn(sharedStyles.spaceY5, "w-full"),
   label: cn(sharedStyles.labelSmMediumSlate700, "block"),
   inputWrapper: sharedStyles.relative,
   lockIcon: sharedStyles.lockIcon,

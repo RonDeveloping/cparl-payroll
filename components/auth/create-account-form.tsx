@@ -130,7 +130,7 @@ export default function RegisterForm() {
           <span
             className={cn(isSubmitting && registerFormStyles.submitTextHidden)}
           >
-            Register
+            Submit
           </span>
         </button>
       </SmartFormProvider>

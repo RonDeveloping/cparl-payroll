@@ -7,7 +7,7 @@ export default function RegisterPage() {
     <div className={authStyles.registerCard}>
       <h1 className={authStyles.registerTitle}>Create Your Account</h1>
       <p className={authStyles.registerDescription}>
-        To access features and services, please register below.
+        To access services, please register below.
       </p>
 
       <RegisterForm />
