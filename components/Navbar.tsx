@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-
-//Icons library perfectly Tailwind CSS per Gemini
+import { logoutAction } from "@/lib/actions/auth-actions";
 import {
   LayoutDashboard,
   Settings,
@@ -13,13 +12,24 @@ import {
   Plus,
   HelpCircle,
   UserCircle,
+  LogOut,
 } from "lucide-react";
 
+type NavbarUser = {
+  email: string;
+  givenName?: string | null;
+  familyName?: string | null;
+  displayName?: string | null;
+  nickName?: string | null;
+};
+
 //The Navbar component itself is a client component that handles its own visibility state based on scroll position; this bar is a "Smart Header," which stays out of the way while the user is reading (scrolling down) but slides back in instantly the moment they start scrolling up.
-export default function Navbar() {
+export default function Navbar({ user }: { user: NavbarUser | null }) {
   const lastScrollY = useRef(0);
   const [isScrolledDown, setIsScrolledDown] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const closeTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const controlNavbar = () => {
@@ -41,6 +51,21 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", controlNavbar);
   }, []);
 
+  const givenName = user?.givenName?.trim() || "";
+  const familyName = user?.familyName?.trim() || "";
+  const fallbackName =
+    user?.displayName?.trim() || user?.nickName?.trim() || "";
+  const profileName = givenName || fallbackName || "Account";
+  const fullName = [givenName || fallbackName, familyName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  const avatarInitial = (
+    profileName[0] ||
+    user?.email?.[0] ||
+    "U"
+  ).toUpperCase();
+
   // Determine final visibility
   const shouldShow = !isScrolledDown || isHovered;
 
@@ -60,7 +85,7 @@ export default function Navbar() {
 
       {/* --- THE NAVIGATION BAR (Off-White & Green)--- */}
       <nav
-        className={`fixed top-0 left-0 w-full h-16bg-stone-50 border-b border-stone-200 text-stone-800 flex items-center justify-between px-6 z-50 transition-transform duration-500 ease-in-out ${
+        className={`fixed top-0 left-0 w-full h-16 bg-stone-50 border-b border-stone-200 text-stone-800 flex items-center justify-between px-6 z-50 transition-transform duration-500 ease-in-out ${
           shouldShow ? "translate-y-0" : "-translate-y-full"
         }`}
       >
@@ -128,14 +153,70 @@ export default function Navbar() {
           >
             <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6" />
           </Link>
-          {/* NEW: User Profile Icon */}
-          <Link
-            href="/contacts"
-            title="Your Profile"
-            className="ml-1 p-1 hover:text-emerald-800 transition-colors border-l border-stone-200 pl-3"
-          >
-            <UserCircle className="w-7 h-7 sm:w-8 sm:h-8 stroke-[1.5]" />
-          </Link>
+          {/* Profile Menu */}
+          {user ? (
+            <div
+              className="relative ml-1 pl-3 pt-2 border-l border-stone-200"
+              onMouseEnter={() => {
+                if (closeTimeoutRef.current) {
+                  window.clearTimeout(closeTimeoutRef.current);
+                  closeTimeoutRef.current = null;
+                }
+                setIsMenuOpen(true);
+              }}
+              onMouseLeave={() => {
+                if (closeTimeoutRef.current) {
+                  window.clearTimeout(closeTimeoutRef.current);
+                }
+                closeTimeoutRef.current = window.setTimeout(() => {
+                  setIsMenuOpen(false);
+                }, 300);
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setIsMenuOpen((open) => !open)}
+                title="User icon"
+                className="flex items-center rounded-full border border-emerald-100 bg-white p-1 hover:bg-emerald-50 transition-colors"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white text-sm font-semibold">
+                  {avatarInitial}
+                </span>
+              </button>
+
+              {isMenuOpen && (
+                <div className="absolute right-0 top-full w-auto min-w-[200px] max-w-[260px] rounded-xl border border-stone-200 bg-white shadow-lg overflow-hidden">
+                  <div className="px-4 py-3">
+                    <p className="text-sm font-semibold text-stone-800 truncate">
+                      {fullName || profileName}
+                    </p>
+                    <p className="text-xs text-stone-500 truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                  <div className="border-t border-stone-100">
+                    <form action={logoutAction}>
+                      <button
+                        type="submit"
+                        className="w-full px-4 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-2"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Logout
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/auth/login"
+              title="Sign in"
+              className="ml-1 pl-3 border-l border-stone-200 p-1 rounded-full hover:bg-emerald-50 text-emerald-700 transition-colors"
+            >
+              <UserCircle className="h-7 w-7 sm:h-8 sm:w-8 stroke-[1.5]" />
+            </Link>
+          )}
         </div>
       </nav>
     </div>

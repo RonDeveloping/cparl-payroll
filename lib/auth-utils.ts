@@ -14,8 +14,29 @@ export async function getCurrentUser() {
       id: true,
       email: true,
       emailVerifiedAt: true,
+      contactId: true,
     },
   });
 
-  return user;
+  if (!user) return null;
+
+  const contact = user.contactId
+    ? await prisma.contact.findUnique({
+        where: { id: user.contactId },
+        select: {
+          givenName: true,
+          familyName: true,
+          displayName: true,
+          nickName: true,
+        },
+      })
+    : null;
+
+  return {
+    ...user,
+    givenName: contact?.givenName ?? null,
+    familyName: contact?.familyName ?? null,
+    displayName: contact?.displayName ?? null,
+    nickName: contact?.nickName ?? null,
+  };
 }
