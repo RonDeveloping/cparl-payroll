@@ -16,6 +16,7 @@ export default async function DashboardPage() {
 
   const givenName = user.givenName?.trim() || "";
   const familyName = user.familyName?.trim() || "";
+  const primaryPostalCode = user.primaryPostalCode?.trim() || "";
   const fallbackName = user.displayName?.trim() || user.nickName?.trim() || "";
   const profileName = givenName || fallbackName || user.email;
   const fullName = [givenName || fallbackName, familyName]
@@ -51,16 +52,11 @@ export default async function DashboardPage() {
       icon: "security",
     },
     {
-      id: "products",
-      title: "Products",
-      subtitle: "",
+      id: "organizations",
+      title: "Organizations",
+      subtitle: "Employers",
       tone: "violet",
-      items: [
-        { label: "Payroll", value: "Enabled" },
-        { label: "Benefits", value: "Enabled" },
-        { label: "Time Tracking", value: "Enabled" },
-        { label: "Compliance", value: "Enabled" },
-      ],
+      items: [],
       icon: "products",
     },
     {
@@ -93,7 +89,12 @@ export default async function DashboardPage() {
 
   return (
     <div className={dashboardStyles.pageContainer}>
-      <DashboardTiles tiles={tiles} />
+      <DashboardTiles
+        tiles={tiles}
+        userGivenName={givenName}
+        userFamilyName={familyName}
+        userPrimaryPostalCode={primaryPostalCode}
+      />
     </div>
   );
 }

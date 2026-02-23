@@ -13,18 +13,19 @@ export default async function EditTenantPage({
   // Handle new tenant creation
   if (id === "new") {
     const emptyData: TenantFormInput = {
-      name: "",
-      slug: "",
-      legalName: "",
+      coreName: "",
+      legalNameEnding: null,
       businessNumber: null,
       isActive: true,
-      userRole: "owner",
       memberEmails: "",
+      email: null,
+      phone: null,
+      address: null,
     };
     return <EditTenantForm paramsPromise={params} initialData={emptyData} />;
   }
 
-  // Fetch existing tenant
+  // Fetch existing tenant with contact information
   const tenant = await prisma.tenant.findUnique({
     where: { id },
     include: {
@@ -40,14 +41,73 @@ export default async function EditTenantPage({
     );
   }
 
+  // Fetch contact information
+  let email: string | null = null;
+  let phone: string | null = null;
+  let address: {
+    street?: string | null;
+    city?: string | null;
+    province?: string | null;
+    postalCode?: string | null;
+    country?: string | null;
+  } | null = null;
+
+  if (tenant.contactId) {
+    const [primaryEmail, primaryPhone, primaryAddress] = await Promise.all([
+      prisma.email.findFirst({
+        where: { contactId: tenant.contactId, isPrimary: true },
+      }),
+      prisma.phone.findFirst({
+        where: { contactId: tenant.contactId, isPrimary: true },
+      }),
+      prisma.address.findFirst({
+        where: { contactId: tenant.contactId, isPrimary: true },
+      }),
+    ]);
+
+    if (primaryEmail) {
+      email = primaryEmail.emailAddress;
+    }
+
+    if (primaryPhone) {
+      phone = primaryPhone.number;
+    }
+
+    if (primaryAddress) {
+      address = {
+        street: primaryAddress.street,
+        city: primaryAddress.city,
+        province: primaryAddress.province,
+        postalCode: primaryAddress.postalCode,
+        country: primaryAddress.country,
+      };
+    }
+  }
+
+  // Extract coreName and kindName from nameCached JSON
+  const nameCached = tenant.nameCached as {
+    coreName: string;
+    kindName?: string | null;
+  } | null;
+
   const initialData: TenantFormInput = {
-    name: tenant.name,
-    slug: tenant.slug,
-    legalName: tenant.legalName,
+    coreName: nameCached?.coreName || "",
+    legalNameEnding:
+      (nameCached?.kindName as
+        | "Inc."
+        | "Corp."
+        | "Ltd"
+        | "Limited"
+        | "Incorporated"
+        | "Corporation"
+        | undefined
+        | null) || null,
     businessNumber: tenant.businessNumber,
     isActive: tenant.isActive,
-    userRole: undefined,
     memberEmails: "",
+    email,
+    phone,
+    address,
   };
 
   return <EditTenantForm paramsPromise={params} initialData={initialData} />;

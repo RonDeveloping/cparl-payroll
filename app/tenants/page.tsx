@@ -6,9 +6,9 @@ import { Pencil } from "lucide-react";
 
 interface Tenant {
   id: string;
-  name: string;
+  nameCached: { coreName: string; kindName?: string | null };
   slug: string;
-  legalName: string;
+  businessNumber: string | null;
   isActive: boolean;
   createdAt: Date;
 }
@@ -72,10 +72,12 @@ export default function TenantsPage() {
                   href="/payroll"
                   className="text-xl font-semibold text-slate-900 hover:text-emerald-700 transition-colors"
                 >
-                  {tenant.name}
-                  <span className="text-slate-500 font-medium">
-                    {` (${tenant.legalName})`}
-                  </span>
+                  {tenant.nameCached.coreName}
+                  {tenant.nameCached.kindName && (
+                    <span className="text-slate-500 font-medium">
+                      {` (${tenant.nameCached.kindName})`}
+                    </span>
+                  )}
                 </Link>
               </div>
               <Link

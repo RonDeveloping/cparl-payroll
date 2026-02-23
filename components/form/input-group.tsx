@@ -16,6 +16,9 @@ interface InputGroupProps<TFormValues extends FieldValues> {
   placeholder?: string;
   type?: string;
   rules?: RegisterOptions<TFormValues, Path<TFormValues>>;
+  onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  icon?: React.ReactNode;
 }
 
 export default function InputGroup<TFormValues extends FieldValues>({
@@ -26,18 +29,31 @@ export default function InputGroup<TFormValues extends FieldValues>({
   placeholder,
   type = "text",
   rules,
+  onFocus,
+  onChange,
+  icon,
 }: InputGroupProps<TFormValues>) {
   return (
     <div className={inputGroupStyles.wrapper}>
-      <input
-        {...register(name, rules)}
-        type={type}
-        placeholder={placeholder}
-        className={cn(
-          inputGroupStyles.inputBase,
-          error ? inputGroupStyles.inputError : inputGroupStyles.inputDefault,
+      <div className="relative">
+        <input
+          {...register(name, rules)}
+          type={type}
+          placeholder={placeholder}
+          onFocus={onFocus}
+          onChange={onChange}
+          className={cn(
+            inputGroupStyles.inputBase,
+            error ? inputGroupStyles.inputError : inputGroupStyles.inputDefault,
+            icon && "pr-10",
+          )}
+        />
+        {icon && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+            {icon}
+          </div>
         )}
-      />
+      </div>
       {error && <span className={inputGroupStyles.errorText}>{error}</span>}
     </div>
   );

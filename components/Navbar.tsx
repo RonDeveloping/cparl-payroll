@@ -85,7 +85,14 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
     ? "/employees/new"
     : "/tenants/new/edit";
   const createTitle = isPayrollDashboard ? "Create Employee" : "Create Tenant";
+  const isCreatingTenant = pathname?.startsWith("/tenants/new");
   const isAuthenticated = Boolean(user);
+  const homeHref = isCreatingTenant
+    ? "/payments"
+    : user
+      ? "/tenants"
+      : "/auth/login";
+  const homeTitle = isCreatingTenant ? "Payments" : "Home";
   const iconLinkClass = cn(
     navbarStyles.iconLink,
     !isAuthenticated && navbarStyles.iconLinkDisabled,
@@ -156,11 +163,7 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
           >
             <Plus className="w-6 h-6" />
           </Link>
-          <Link
-            href={user ? "/tenants" : "/auth/login"}
-            title="Home"
-            className={iconLinkClass}
-          >
+          <Link href={homeHref} title={homeTitle} className={iconLinkClass}>
             <Home className="w-6 h-6" />
           </Link>
           <Link href="/dashboard" title="Dashboard" className={iconLinkClass}>

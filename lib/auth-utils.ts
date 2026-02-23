@@ -24,19 +24,27 @@ export async function getCurrentUser() {
     ? await prisma.contact.findUnique({
         where: { id: user.contactId },
         select: {
-          givenName: true,
-          familyName: true,
+          coreName: true,
+          kindName: true,
           displayName: true,
-          nickName: true,
+          aliasName: true,
+          addresses: {
+            where: { isPrimary: true },
+            select: { postalCode: true },
+            take: 1,
+          },
         },
       })
     : null;
 
+  const primaryPostalCode = contact?.addresses?.[0]?.postalCode ?? null;
+
   return {
     ...user,
-    givenName: contact?.givenName ?? null,
-    familyName: contact?.familyName ?? null,
+    givenName: contact?.coreName ?? null,
+    familyName: contact?.kindName ?? null,
     displayName: contact?.displayName ?? null,
-    nickName: contact?.nickName ?? null,
+    nickName: contact?.aliasName ?? null,
+    primaryPostalCode,
   };
 }

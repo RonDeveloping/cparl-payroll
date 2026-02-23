@@ -8,6 +8,8 @@ import {
   CreditCard,
   MessageSquare,
 } from "lucide-react";
+import { useTenant } from "@/app/tenants/context/TenantContext";
+import PaymentMethodDetails from "@/components/payments/payment-method-details";
 
 export type DashboardTileItem = {
   label: string;
@@ -39,14 +41,39 @@ const iconMap: Record<DashboardTile["icon"], typeof UserCircle> = {
   communications: MessageSquare,
 };
 
-export default function DashboardTiles({ tiles }: { tiles: DashboardTile[] }) {
+export default function DashboardTiles({
+  tiles,
+  userGivenName,
+  userFamilyName,
+  userPrimaryPostalCode,
+}: {
+  tiles: DashboardTile[];
+  userGivenName?: string | null;
+  userFamilyName?: string | null;
+  userPrimaryPostalCode?: string | null;
+}) {
   const defaultId = tiles[0]?.id ?? null;
   const [openId, setOpenId] = useState<string | null>(defaultId);
+  const { tenants, tenantsLoading } = useTenant();
 
   const activeTile = useMemo(
     () => tiles.find((tile) => tile.id === openId) || null,
     [openId, tiles],
   );
+
+  const organizationItems = useMemo(() => {
+    if (tenantsLoading) {
+      return [{ label: "Employers", value: "Loading..." }];
+    }
+    if (tenants.length === 0) {
+      return [{ label: "Employers", value: "No employers yet" }];
+    }
+
+    return tenants.map((tenant) => ({
+      label: tenant.nameCached?.coreName ?? "Employer",
+      value: tenant.isActive ? "Active" : "Inactive",
+    }));
+  }, [tenants, tenantsLoading]);
 
   return (
     <div className="space-y-5">
@@ -55,12 +82,15 @@ export default function DashboardTiles({ tiles }: { tiles: DashboardTile[] }) {
           const isOpen = tile.id === openId;
           const Icon = iconMap[tile.icon];
           const toneClass = toneStyles[tile.tone];
+          const handleClick = () => {
+            setOpenId(isOpen ? null : tile.id);
+          };
 
           return (
             <button
               key={tile.id}
               type="button"
-              onClick={() => setOpenId(isOpen ? null : tile.id)}
+              onClick={handleClick}
               aria-pressed={isOpen}
               className={`group rounded-xl border border-slate-200 bg-white p-2 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
                 isOpen ? "ring-2 ring-emerald-200" : ""
@@ -101,19 +131,31 @@ export default function DashboardTiles({ tiles }: { tiles: DashboardTile[] }) {
               </span>
             </div>
             <div className="p-5 space-y-4">
-              <div className="space-y-3 text-sm">
-                {activeTile.items.map((item) => (
-                  <div
-                    key={item.label}
-                    className="flex items-center justify-between text-slate-600"
-                  >
-                    <span>{item.label}</span>
-                    <span className="font-medium text-slate-900">
-                      {item.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              {activeTile.id === "payments" ? (
+                <PaymentMethodDetails
+                  variant="tile"
+                  userGivenName={userGivenName}
+                  userFamilyName={userFamilyName}
+                  userPrimaryPostalCode={userPrimaryPostalCode}
+                />
+              ) : (
+                <div className="space-y-3 text-sm">
+                  {(activeTile.id === "organizations"
+                    ? organizationItems
+                    : activeTile.items
+                  ).map((item) => (
+                    <div
+                      key={item.label}
+                      className="flex items-center justify-between text-slate-600"
+                    >
+                      <span>{item.label}</span>
+                      <span className="font-medium text-slate-900">
+                        {item.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ) : (

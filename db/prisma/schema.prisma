@@ -32,6 +32,7 @@ model User {
   twoFactorCode     TwoFactorCode?
   emailVerifications  EmailVerification[]
   phoneVerification  PhoneVerification?
+  paymentCards      PaymentCard[]
 
   @@map("user")
 }
@@ -41,7 +42,7 @@ model EmailVerification {
   token     String   @unique
   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String @map("user_id")
-  type      token_type @default(EMAIL_VERIFICATION)
+  type      TokenType @default(EMAIL_VERIFICATION)
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -74,19 +75,42 @@ model TwoFactorCode {
   @@index([userId]) // Faster lookup during login
 }
 
+model PaymentCard {
+  id                String   @id @default(cuid())
+  userId            String   @map("user_id")
+  brand             String
+  last4             String   @map("last4")
+  expMonth          Int      @map("exp_month")
+  expYear           Int      @map("exp_year")
+  cardholderName    String?  @map("cardholder_name")
+  billingPostalCode String?  @map("billing_postal_code")
+  paymentMethodId   String   @map("payment_method_id")
+  isDefault         Boolean  @default(false) @map("is_default")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("payment_card")
+}
+
 // ==========================================
 // ===== CONTACT SERVICE (Identity)     =====
 // ==========================================
 
 model Contact {
   id          String   @id @default(cuid())
-  givenName   String   @map("given_name")
-  familyName  String   @map("family_name")
+  coreName   String   @map("core_name") //John/ACE Enterprise
+  kindName  String   @map("kind_name") //Doe/Inc.
   middleName  String?  @map("middle_name")
-  suffix      String?
   prefix      String?
-  nickName    String?  @map("nick_name")
-  displayName String?  @map("display_name")
+  suffix      String?
+  aliasName   String?  @map("alias_name") //Johnie a nick name /Starbucks a DBA(doing bz as)
+  displayName String?  @map("display_name") //Johnnie Doe
+  source      NameSource? @map("source") //USER, SUPPORT, IMPORT, SYSTEM
+  subject     Subject 
+  
   isActive    Boolean  @default(true) @map("is_active")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -103,13 +127,14 @@ model Contact {
 model LegalNameHistory {
   id            String    @id @default(cuid())
   contactId     String    @map("contact_id")
-  givenName     String    @map("given_name")
-  familyName    String    @map("family_name")
+  coreName      String    @map("core_name")
+  kindName      String    @map("kind_name")
   middleName    String?   @map("middle_name")
   effectiveFrom DateTime  @map("effective_from")
   effectiveTo   DateTime? @map("effective_to")
   changedBy     String?   @map("changed_by") //e.g. adminId / system
   reason        String?
+  source        NameSource?
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
   contact Contact @relation(fields: [contactId], references: [id]) //so prisma generates the foreign key constraint for us:  ALTER TABLE "LegalNameHistory" ADD CONSTRAINT "LegalNameHistory_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") to ensure referential integrity.
@@ -123,9 +148,9 @@ model ConversationalNameHistory {
   contactId     String                    @map("contact_id")
   suffix        String?
   prefix        String?
-  nickName      String?                   @map("nick_name")
+  aliasName     String?                   @map("alias_name")
   displayName   String?                   @map("display_name")
-  source        conversational_name_source?
+  source        NameSource?
   effectiveFrom DateTime                  @map("effective_from")
   effectiveTo   DateTime?                 @map("effective_to")
   createdAt     DateTime                  @default(now()) @map("created_at")
@@ -188,7 +213,7 @@ model Phone {
   id        String      @id @default(cuid())
   contactId String      @map("contact_id") //it is explicitly given; direct access to ID w/o fetching the relation; otherwise Prisma will create a hidden field.
   number    String
-  type      phone_type? @default(mobile)
+  type      PhoneType? @default(MOBILE) @map("type")
   isPrimary Boolean     @default(false) @map("is_primary")
 
   contact Contact @relation(fields: [contactId], references: [id])
@@ -197,6 +222,130 @@ model Phone {
   @@index([contactId])
   @@map("phone")
 }
+
+// ==========================================
+// ===== TENANT SERVICE (Settings)      =====
+// ==========================================
+
+model Tenant {
+  id             String   @id @default(cuid())
+  contactId      String   @map("contact_id") //soft link only (No @relation)
+  nameCached    Json   @map("name_cached")
+  slug           String   @unique
+  businessNumber String?  @map("business_number")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  members       TenantUser[]
+  settings      TenantSettings?
+  payrollCycles PayrollCycle[]
+  departments   Department[]
+
+  @@map("tenant")
+}
+//TODO: use a middleware or a library (like Prisma's $extends) to automatically inject where: { tenantId: activeTenantId } into every query. This ensures you never forget to filter by the tenant.
+
+model TenantUser {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  role      UserRole  @default(EMPLOYEE) @map("role")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  tenantId  String   @map("tenant_id")
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+  @@map("tenant_user")
+}
+
+model TenantSettings {
+  id       String @id @default(cuid())
+  tenantId String @unique @map("tenant_id")
+  timezone String @default("America/Toronto")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  
+  @@map("tenant_settings")
+}
+
+model PayrollCycle {
+  id        String        @id @default(cuid())
+  tenantId  String        @map("tenant_id")
+  name      String// e.g., "Weekly Bi-weekly", "Monthly
+  frequency PayFrequency @map("frequency")
+
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@map("payroll_cycle")
+}
+
+model Department {
+  id       String  @id @default(cuid())
+  tenantId String  @map("tenant_id")
+  name     String
+  code     String?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, code])
+  @@map("department")
+}
+
+model ChartOfAccount {
+  id        String           @id @default(cuid())
+  tenantId  String           @map("tenant_id")
+  code      String //acct#
+  name      String
+  type      AccountType
+  category  AccountCategory
+  isActive  Boolean          @default(true) @map("is_active")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  glMappings GLMapping[] // Mapping logic: Which payroll items point here?
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("chart_of_account")
+}
+
+model GLMapping {
+  id                String        @id @default(cuid())
+  tenantId          String        @map("tenant_id")
+  chartOfAccountId  String        @map("chart_of_account_id")
+  mappingType       MappingType  @map("mapping_type")
+  earningType       EarningType? @map("earning_type")
+  deductionType     DeductionType? @map("deduction_type")
+  departmentId      String?       @map("department_id")
+
+  chartOfAccount    ChartOfAccount @relation(fields: [chartOfAccountId], references: [id])
+
+  @@index([tenantId, mappingType])
+  @@map("gl_mapping")
+}
+/*
+mapping flow
+1	Line Level	Look at earningType (e.g., "Regular") or deductionType (e.g., "Tax").
+2	Employee Level	Look at the departmentId and costCenterId associated with that specific JobAssignment.
+3	Mapping Level	Find the GLMapping that matches both the type and the department.
+4	Journal Level	Add the amount to the running total for that specific GL Account.
+
+journalEntries look like:
+5100 - Wages (Eng)	DEBIT	$6,000	Total Regular Pay - Engineering
+5100 - Wages (Sales)	DEBIT	$4,000	Total Regular Pay - Sales
+2100 - Tax Payable	CREDIT	$2,500	Total Income Tax Withheld
+2150 - CPP Payable	CREDIT	$1,000	Total CPP (Employee + Employer)
+1010 - Bank Clearing	CREDIT	$6,500	Total Net Pay to be disbursed
+
+Granularity: Analyzes every PayrollLine/Deduction, but exports a Summarized Total per GL Account.
+*/
+
+
+
 
 // ==========================================
 // ===== PAYROLL SERVICE (Logic)        =====
@@ -211,7 +360,7 @@ model Employee {
   taxIdLast4     String          @map("tax_id_last_4") ////last 4 digits for display/search purposes
   dateOfBirth    DateTime        @map("date_of_birth")
   hireDate       DateTime        @map("hire_date")
-  status         employee_status
+  status         EmployeeStatus    @default(ACTIVE) @map("status")
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
  // Cached contact info (latest from Contact)
@@ -281,7 +430,7 @@ model JobAssignment {
   startDate    DateTime  @map("start_date")
   endDate      DateTime? @map("end_date")
   payRate      Decimal   @db.Decimal(10, 2) @map("pay_rate")
-  payType      pay_type  @map("pay_type")
+  payType      PayType   @map("pay_type")
 
   employment   Employment    @relation(fields: [employmentId], references: [id])
   timeEntries  TimeEntry[]
@@ -310,7 +459,7 @@ model PayrollRun {
   periodStart DateTime           @map("period_start")
   periodEnd   DateTime           @map("period_end")
   runDate     DateTime           @map("run_date")
-  status      payroll_run_status
+  status      PayrollRunStatus   @default(DRAFT) @map("status")
   createdAt   DateTime           @default(now()) @map("created_at")
 
   payrollRunEmployees PayrollRunEmployee[]
@@ -352,7 +501,7 @@ model PayrollLine {
   rate                 Decimal      @db.Decimal(10, 2)//payRate from JobAssignment at time of payroll run creation
   units                Decimal      @db.Decimal(6, 2)//hours from TimeEntry for a payroll period; salary 1 
   amount               Decimal      @db.Decimal(10, 2)
-  earningType          earning_type @map("earning_type")
+  earningType          EarningType @map("earning_type")
 
   payrollRunEmployee PayrollRunEmployee @relation(fields: [payrollRunEmployeeId], references: [id])
   jobAssignment      JobAssignment?     @relation(fields: [jobAssignmentId], references: [id])
@@ -363,7 +512,7 @@ model PayrollLine {
 model Deduction {
   id                   String         @id @default(cuid())
   payrollRunEmployeeId String         @map("payroll_run_employee_id")
-  type                 deduction_type
+  type                 DeductionType  @map("type")
   amount               Decimal        @db.Decimal(10, 2)
   createdAt            DateTime       @default(now()) @map("created_at")
 
@@ -383,7 +532,7 @@ model BankAccount {
 
   // Distribution Logic
   label             String?          @map("label") // "Main", "Alimony", "Savings"
-  type              distribution_type    @default(remainder) @map("type")
+  type              DistributionType @default(REMAINDER) @map("type")
   value             Decimal?         @db.Decimal(10, 2) @map("value") // The $ or % amount
   priority          Int              @default(1) @map("priority") // Process Fixed/Percentage before Remainder
   isActive          Boolean          @default(true) @map("is_active")
@@ -407,7 +556,7 @@ model PayrollDisbursement {
   bankLabel            String?            @map("bank_label") // e.g., "Personal Savings" or "Alimony"
 
   amount               Decimal            @db.Decimal(10, 2) @map("amount")
-  status               disbursement_status @default(pending) @map("status")
+  status               DisbursementStatus @default(PENDING) @map("status")
 
   // Tracking for bank file (ACH/EFT) generation
   referenceNumber      String?            @map("reference_number") // Trace ID from the bank
@@ -424,7 +573,7 @@ model PayrollJournal {
   payrollRunId String         @unique @map("payroll_run_id")
   tenantId     String         @map("tenant_id")
 
-  status       journal_status  @default(pending) @map("status")
+  status       JournalStatus  @default(PENDING) @map("status")
   postedAt     DateTime?      @map("posted_at")
 
   // Total checks for the entire journal
@@ -446,7 +595,7 @@ model JournalEntry {
   glAccountNumber  String?        @map("gl_account_number") // e.g., "5100" or "2100" for mapping to Chart of Accounts by computer
   glAccountName    String         @map("gl_account_name") // For human readability in exports
 
-  type             entry_type      @map("type") // DEBIT or CREDIT
+  type             EntryType      @map("type") // DEBIT or CREDIT
   amount           Decimal        @db.Decimal(12, 2) @map("amount")
 
   description      String?        @map("description") // e.g., "Gross Wages - Engineering - Period End 2023-10-01"
@@ -488,7 +637,7 @@ model Remittance {
   totalEmployees    Int                      @map("total_employees")
   totalDue          Decimal                  @db.Decimal(12, 2) @map("total_due")
 
-  status            remittance_status         @default(pending) @map("status")
+  status            RemittanceStatus         @default(PENDING) @map("status")
   paymentReference  String?                  @map("payment_reference") // Confirmation number from CRA My Business Account
   filedAt           DateTime?                @map("filed_at")
 
@@ -514,244 +663,155 @@ model RemittanceToPayrollRun {
 }
 
 // ==========================================
-// ===== TENANT SERVICE (Settings)      =====
-// ==========================================
-
-model Tenant {
-  id             String   @id @default(cuid())
-  name           String
-  slug           String   @unique
-  legalName      String   @map("legal_name")
-  businessNumber String?  @map("business_number")
-  isActive       Boolean  @default(true) @map("is_active")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-
-  members       TenantUser[]
-  settings      TenantSettings?
-  payrollCycles PayrollCycle[]
-  departments   Department[]
-
-  @@map("tenant")
-}
-
-model TenantUser {
-  id        String   @id @default(cuid())
-  tenantId  String   @map("tenant_id")
-  userId    String   @map("user_id")
-  role      String   @default("member")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-
-  @@unique([tenantId, userId])
-  @@index([userId])
-  @@map("tenant_user")
-}
-
-model TenantSettings {
-  id       String @id @default(cuid())
-  tenantId String @unique @map("tenant_id")
-  timezone String @default("America/Toronto")
-
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-  
-  @@map("tenant_settings")
-}
-
-model PayrollCycle {
-  id        String        @id @default(cuid())
-  tenantId  String        @map("tenant_id")
-  name      String// e.g., "Weekly Bi-weekly", "Monthly
-  frequency pay_frequency
-
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-
-  @@index([tenantId])
-  @@map("payroll_cycle")
-}
-
-model Department {
-  id       String  @id @default(cuid())
-  tenantId String  @map("tenant_id")
-  name     String
-  code     String?
-
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-
-  @@unique([tenantId, code])
-  @@map("department")
-}
-
-model ChartOfAccount {
-  id        String           @id @default(cuid())
-  tenantId  String           @map("tenant_id")
-  code      String //acct#
-  name      String
-  type      account_type
-  category  account_category
-  isActive  Boolean          @default(true) @map("is_active")
-  createdAt DateTime         @default(now()) @map("created_at")
-  updatedAt DateTime         @updatedAt @map("updated_at")
-
-  glMappings GLMapping[] // Mapping logic: Which payroll items point here?
-
-  @@unique([tenantId, code])
-  @@index([tenantId])
-  @@map("chart_of_account")
-}
-
-model GLMapping {
-  id                String        @id @default(cuid())
-  tenantId          String        @map("tenant_id")
-  chartOfAccountId  String        @map("chart_of_account_id")
-  mappingType       mapping_type  @map("mapping_type")
-  earningType       earning_type? @map("earning_type")
-  deductionType     deduction_type? @map("deduction_type")
-  departmentId      String?       @map("department_id")
-
-  chartOfAccount    ChartOfAccount @relation(fields: [chartOfAccountId], references: [id])
-
-  @@index([tenantId, mappingType])
-  @@map("gl_mapping")
-}
-/*
-mapping flow
-1	Line Level	Look at earningType (e.g., "Regular") or deductionType (e.g., "Tax").
-2	Employee Level	Look at the departmentId and costCenterId associated with that specific JobAssignment.
-3	Mapping Level	Find the GLMapping that matches both the type and the department.
-4	Journal Level	Add the amount to the running total for that specific GL Account.
-
-journalEntries look like:
-5100 - Wages (Eng)	DEBIT	$6,000	Total Regular Pay - Engineering
-5100 - Wages (Sales)	DEBIT	$4,000	Total Regular Pay - Sales
-2100 - Tax Payable	CREDIT	$2,500	Total Income Tax Withheld
-2150 - CPP Payable	CREDIT	$1,000	Total CPP (Employee + Employer)
-1010 - Bank Clearing	CREDIT	$6,500	Total Net Pay to be disbursed
-
-Granularity: Analyzes every PayrollLine/Deduction, but exports a Summarized Total per GL Account.
-*/
-
-// ==========================================
 // ===== ENUMS (Lowercase for Postgres) =====
 // ==========================================
 
-enum token_type {
-  EMAIL_VERIFICATION
-  PASSWORD_RESET
-  EMAIL_CHANGE
+enum TokenType {
+  EMAIL_VERIFICATION @map("email_verification")
+  PASSWORD_RESET @map("password_reset")
+  EMAIL_CHANGE @map("email_change")
+	@@map("token_type")
+}
+
+enum UserRole {
+  OWNER   @map("owner")      // Full access + billing
+  ADMIN   @map("admin")         // Full payroll access
+  MANAGER @map("manager")       // Can view/approve their department only
+  ACCOUNTANT @map("accountant")    // Read-only access for tax/reports
+  EMPLOYEE @map("employee")      // Can only see their own paystubs/profile
+	@@map("user_role")
 }
 
 //Conflct resolution & precedence USER > SUPPORT > IMPORT > SYSTEM
-enum conversational_name_source {
-  user
-  support //e.g. manual change by support agent
-  import //sync from other services than contact management
-  system  //e.g., auto-generated based on rules such as first name variations plus last name etc.
+enum NameSource {
+  USER @map("user")
+  SUPPORT @map("support") //e.g. manual change by support agent
+  IMPORT @map("import") //sync from other services than contact management
+  SYSTEM @map("system")  //e.g., auto-generated based on rules such as first name variations plus last name etc.
+	@@map("conversational_name_source")
 }
 
 
-
-enum phone_type {
-  mobile
-  home
-  work
+enum PhoneType {
+  MOBILE @map("mobile")
+  HOME @map("home")
+  WORK @map("work")
+	@@map("phone_type")
 }
 
-enum employee_status {
-  active
-  terminated
-  on_leave
+enum EmployeeStatus {
+  ACTIVE @map("active")
+  TERMINATED @map("terminated")
+  ON_LEAVE @map("on_leave")
 }
 
-enum pay_type {
-  hourly
-  salary
+enum PayType {
+  HOURLY @map("hourly")
+  SALARY @map("salary")
+	@@map("pay_type")
 }
 
-enum earning_type {
-  regular
-  overtime
-  bonus
-  commission
-  other
+enum EarningType {
+  REGULAR @map("regular")
+  OVERTIME @map("overtime")
+  BONUS @map("bonus")
+  COMMISSION @map("commission")
+  OTHER @map("other")
+	@@map("earning_type")
 }
 
-enum payroll_run_status {
-  draft
-  finalized
-  paid
+enum PayrollRunStatus {
+  DRAFT @map("draft")
+  FINALIZED @map("finalized")
+  PAID @map("paid")
+	@@map("payroll_run_status")
 }
 
-enum deduction_type {
-  tax
-  cpp
-  ei
-  benefit
-  other
+enum DeductionType {
+  TAX @map("tax")
+  CPP @map("cpp")
+  EI @map("ei")
+  BENEFIT @map("benefit")
+  OTHER @map("other")
+	@@map("deduction_type")
 }
 
 //TODO: Distribution Validation: CREAT UNIQUE INDEX "OneRemainderAccountPerEmployee" ON "BankAccount"("employeeId) WHERE "type" = 'REMAINDER'; AND "isActive" = true;
-enum distribution_type {
-  fixed_amount
-  percentage
-  remainder
+enum DistributionType {
+  FIXED_AMOUNT @map("fixed_amount")
+  PERCENTAGE @map("percentage")
+  REMAINDER @map("remainder")
 }
 
-enum disbursement_status {
-  pending
-  sent
-  failed
-  reconciled
+enum DisbursementStatus {
+  PENDING @map("pending")
+  SENT @map("sent")
+  FAILED @map("failed")
+  RECONCILED @map("reconciled")
+	@@map("disbursement_status")
 }
 
-enum pay_frequency {
-  weekly
-  biweekly
-  semimonthly
-  monthly
+enum PayFrequency {
+  WEEKLY @map("weekly")
+  BIWEEKLY @map("biweekly")
+  SEMIMONTHLY @map("semimonthly")
+  MONTHLY @map("monthly")
+  ANNUALLY @map("annually")
+	@@map("pay_frequency")
 }
 
-enum account_type {
-  asset
-  liability
-  equity
-  revenue
-  expense
+enum AccountType {
+  ASSET @map("asset")
+  LIABILITY @map("liability")
+  EQUITY @map("equity")
+  REVENUE @map("revenue")
+  EXPENSE @map("expense")
+  @@map("account_type")
 }
 
-enum account_category {
-  cash
-  payroll_expense
-  tax_payable
-  benefit_payable
-  wages_payable
-  other
+enum AccountCategory {
+  CASH @map("cash")
+  PAYROLL_EXPENSE @map("payroll_expense")
+  TAX_PAYABLE @map("tax_payable")
+  BENEFIT_PAYABLE @map("benefit_payable")
+  WAGES_PAYABLE @map("wages_payable")
+  OTHER @map("other")
+  @@map("account_category")
 }
 
-enum mapping_type {
-  earning
-  deduction
-  employer_tax
-  net_pay_clearing
+enum MappingType {
+  EARNING @map("earning")
+  DEDUCTION @map("deduction")
+  EMPLOYER_TAX @map("employer_tax")
+  NET_PAY_CLEARING @map("net_pay_clearing")
+  @@map("mapping_type")
 }
 
-enum remittance_status {
-  pending
-  reviewed
-  filed
-  paid
-  cancelled
+enum RemittanceStatus {
+  PENDING @map("pending")
+  REVIEWED @map("reviewed")
+  FILED @map("filed")
+  PAID @map("paid")
+  CANCELLED @map("cancelled")
+	@@map("remittance_status")
 }
 
-enum journal_status {
-  pending
-  posted      // Successfully synced to accounting software
-  failed
-  voided
+enum JournalStatus {
+  PENDING @map("pending")
+  POSTED @map("posted")      // Successfully synced to accounting software
+  FAILED @map("failed")
+  VOIDED @map("voided")
+	@@map("journal_status")
 }
 
-enum entry_type {
-  debit
-  credit
+enum EntryType {
+  DEBIT @map("debit")
+  CREDIT @map("credit")
+	@@map("entry_type")
+}
+
+enum Subject {
+  ORGANIZATION @map("organization")
+  INDIVIDUAL @map("individual")
+	@@map("subject")
 }

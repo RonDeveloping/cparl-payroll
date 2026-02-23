@@ -45,15 +45,15 @@ export default async function EditContactPage({
 
   // FLATTEN the data for the form
   const initialData = {
-    givenName: contact.givenName,
-    familyName: contact.familyName,
+    givenName: contact.coreName,
+    familyName: contact.kindName,
     email: contact.emails[0]?.emailAddress || "",
     street: contact.addresses[0]?.street || "",
     city: contact.addresses[0]?.city || "",
     province: "ON",
     country: "Canada",
-    nickName: "",
-    displayName: "",
+    nickName: contact.aliasName || "",
+    displayName: contact.displayName || "",
     phone: formatPhone(contact.phones[0]?.number) || "",
     postalCode: formatPostalCode(contact.addresses[0]?.postalCode) || "",
   };

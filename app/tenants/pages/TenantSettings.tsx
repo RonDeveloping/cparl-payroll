@@ -7,14 +7,25 @@ export const TenantSettingsPage: React.FC = () => {
 
   if (!tenant) return <div>Loading tenant settings...</div>;
 
+  const nameCached = tenant.nameCached as {
+    coreName?: string;
+    kindName?: string | null;
+    aliasName?: string | null;
+    displayName?: string | null;
+  };
+  const tenantName =
+    nameCached.displayName?.trim() ||
+    nameCached.aliasName?.trim() ||
+    [nameCached.coreName, nameCached.kindName].filter(Boolean).join(" ").trim();
+
   return (
     <div
       style={{
         padding: "20px",
-        borderTop: `4px solid "#000"}`,
+        borderTop: "4px solid #000",
       }}
     >
-      <h1>{tenant.name} Settings</h1>
+      <h1>{tenantName || "Tenant"} Settings</h1>
 
       <section>
         <h3>General Information</h3>
@@ -24,18 +35,18 @@ export const TenantSettingsPage: React.FC = () => {
         <p>
           <strong>URL Slug:</strong> /{tenant.slug}
         </p>
+        <p>
+          <strong>Business Number:</strong> {tenant.businessNumber || "Not set"}
+        </p>
       </section>
 
       <section>
         <h3>Branding</h3>
-        
-        <p>
-          Primary Theme Color:{" "}
-          
-        </p>
+
+        <p>Primary Theme Color: </p>
       </section>
 
-      {tenant.isActive && (
+      {!tenant.isActive && (
         <div
           style={{ background: "#ffebee", color: "#c62828", padding: "10px" }}
         >
