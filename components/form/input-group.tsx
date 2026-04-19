@@ -19,6 +19,11 @@ interface InputGroupProps<TFormValues extends FieldValues> {
   onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   icon?: React.ReactNode;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  autoComplete?: string;
+  maxLength?: number;
+  value?: string;
+  overlay?: React.ReactNode;
 }
 
 export default function InputGroup<TFormValues extends FieldValues>({
@@ -32,20 +37,35 @@ export default function InputGroup<TFormValues extends FieldValues>({
   onFocus,
   onChange,
   icon,
+  inputMode,
+  autoComplete,
+  maxLength,
+  value,
+  overlay,
 }: InputGroupProps<TFormValues>) {
   return (
     <div className={inputGroupStyles.wrapper}>
       <div className="relative">
+        {overlay && (
+          <div className="pointer-events-none absolute inset-0 flex items-center px-5 pr-10 text-sm whitespace-pre">
+            {overlay}
+          </div>
+        )}
         <input
           {...register(name, rules)}
           type={type}
           placeholder={placeholder}
           onFocus={onFocus}
           onChange={onChange}
+          inputMode={inputMode}
+          autoComplete={autoComplete}
+          maxLength={maxLength}
+          value={value}
           className={cn(
             inputGroupStyles.inputBase,
             error ? inputGroupStyles.inputError : inputGroupStyles.inputDefault,
             icon && "pr-10",
+            overlay && "text-transparent caret-slate-900",
           )}
         />
         {icon && (

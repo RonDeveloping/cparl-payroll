@@ -1,33 +1,264 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { useRef, useEffect, useState } from "react";
 import FormSection from "@/components/form/form-section";
 import { FormGrid } from "@/components/form/form-grid";
 import InputGroup from "@/components/form/input-group";
 import { Clarification } from "@/components/clarification";
 import { BUTTON_VARIANTS, LABEL_STYLE } from "@/constants/styles";
-import { inputGroupStyles } from "@/constants/styles";
 import { PAYMENT_FORM_DESCRIPTIONS } from "@/constants/payment-fields";
 import formatPostalCode from "@/utils/formatters/postalCode";
 import CardTypeIcon from "@/components/payments/card-type-icon";
-import { cn } from "@/lib/utils";
 
 type PaymentMethodFormValues = {
   cardholderName: string;
-  cardNumber: string;
-  expiryMonth: string;
-  expiryYear: string;
-  cvc: string;
+  cardDetails: string;
   billingPostalCode: string;
 };
 
 const normalizeDigits = (value: string) => value.replace(/\D/g, "");
 
+type CardBrand = "visa" | "mastercard" | "amex" | "discover" | null;
+
+type ParsedCardDetails = {
+  cardNumber: string;
+  expiryMonth: string;
+  expiryYear: number;
+  cvc: string;
+};
+
+const detectCardBrand = (cardNumber: string): CardBrand => {
+  const digits = normalizeDigits(cardNumber);
+
+  if (/^4/.test(digits)) return "visa";
+
+  if (/^(5[1-5]|222[1-9]|22[3-9]|2[3-6]|27[01]|2720)/.test(digits)) {
+    return "mastercard";
+  }
+
+  if (/^3[47]/.test(digits)) return "amex";
+
+  if (
+    /^(6011|65|64[4-9]|622(12[6-9]|1[3-9]|[2-8])|6220[0-9]|62212[0-5])/.test(
+      digits,
+    )
+  ) {
+    return "discover";
+  }
+
+  return null;
+};
+
+const getAllowedCardLengths = (brand: CardBrand): number[] => {
+  if (brand === "amex") return [15];
+  if (brand === "mastercard") return [16];
+  if (brand === "discover") return [16, 19];
+  if (brand === "visa") return [16, 19, 13];
+  return [16, 15, 19, 13, 14, 17, 18];
+};
+
+const getAllowedCvcLengths = (brand: CardBrand): number[] => {
+  if (brand === "amex") return [4];
+  return [3];
+};
+
+const getCommonCardLength = (brand: CardBrand) => {
+  if (brand === "amex") return 15;
+  return 16;
+};
+
+const getCommonCvcLength = (brand: CardBrand) => {
+  if (brand === "amex") return 4;
+  return 3;
+};
+
+const getCardDetailsTemplate = (brand: CardBrand) => {
+  if (brand === "amex") {
+    return "1234 567890 12345 MM/YY CVCC";
+  }
+
+  return "1234 5678 9012 3456 MM/YY CVC";
+};
+
 const formatCardNumber = (value: string): string => {
   const digits = normalizeDigits(value);
+  const brand = detectCardBrand(digits);
+
+  if (brand === "amex") {
+    const groups = [];
+    if (digits.length > 0) groups.push(digits.slice(0, 4));
+    if (digits.length > 4) groups.push(digits.slice(4, 10));
+    if (digits.length > 10) groups.push(digits.slice(10, 15));
+    return groups.filter(Boolean).join(" ");
+  }
+
   const groups = digits.match(/.{1,4}/g) || [];
   return groups.join(" ");
+};
+
+const expandExpiryYear = (twoDigitYear: string) => {
+  const numericYear = Number(twoDigitYear);
+  if (Number.isNaN(numericYear)) return Number.NaN;
+
+  const currentYear = new Date().getFullYear();
+  const century = Math.floor(currentYear / 100) * 100;
+
+  return century + numericYear;
+};
+
+const isExpired = (month: number, year: number) => {
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+
+  return year < currentYear || (year === currentYear && month < currentMonth);
+};
+
+const parseCardDetails = (value: string): ParsedCardDetails | null => {
+  const digits = normalizeDigits(value);
+  const brand = detectCardBrand(digits);
+  const cardLengths = getAllowedCardLengths(brand);
+  const cvcLengths = getAllowedCvcLengths(brand);
+
+  for (const cardLength of cardLengths) {
+    for (const cvcLength of cvcLengths) {
+      if (digits.length !== cardLength + 4 + cvcLength) {
+        continue;
+      }
+
+      const cardNumber = digits.slice(0, cardLength);
+      const expiryMonth = digits.slice(cardLength, cardLength + 2);
+      const expiryYearShort = digits.slice(cardLength + 2, cardLength + 4);
+      const cvc = digits.slice(cardLength + 4);
+      const monthNumber = Number(expiryMonth);
+      const expiryYear = expandExpiryYear(expiryYearShort);
+
+      if (!isValidLuhn(cardNumber)) {
+        continue;
+      }
+
+      if (monthNumber < 1 || monthNumber > 12) {
+        continue;
+      }
+
+      if (Number.isNaN(expiryYear) || isExpired(monthNumber, expiryYear)) {
+        continue;
+      }
+
+      if (cvc.length !== cvcLength) {
+        continue;
+      }
+
+      return {
+        cardNumber,
+        expiryMonth,
+        expiryYear,
+        cvc,
+      };
+    }
+  }
+
+  return null;
+};
+
+const formatCardDetails = (value: string) => {
+  const digits = normalizeDigits(value).slice(0, 26);
+  const brand = detectCardBrand(digits);
+  const commonCardLength = getCommonCardLength(brand);
+  const commonCvcLength = getCommonCvcLength(brand);
+  const trailingDigitsLength = 4 + commonCvcLength;
+
+  let cardLength = Math.min(digits.length, commonCardLength);
+  if (digits.length > commonCardLength + trailingDigitsLength) {
+    cardLength = Math.min(19, digits.length - trailingDigitsLength);
+  }
+
+  const cardNumber = digits.slice(0, cardLength);
+  const trailingDigits = digits.slice(
+    cardLength,
+    cardLength + trailingDigitsLength,
+  );
+  const expiryMonth = trailingDigits.slice(0, 2);
+  const expiryYear = trailingDigits.slice(2, 4);
+  const cvc = trailingDigits.slice(4, 4 + commonCvcLength);
+  const cardNumberDisplay = formatCardNumber(cardNumber);
+  const expiryDigits = `${expiryMonth}${expiryYear}`;
+  const expiryDisplay =
+    expiryDigits.length > 2
+      ? `${expiryDigits.slice(0, 2)}/${expiryDigits.slice(2)}`
+      : expiryDigits;
+
+  return [cardNumberDisplay, expiryDisplay, cvc].filter(Boolean).join(" ");
+};
+
+const buildCardDetailsOverlay = (value: string) => {
+  const digits = normalizeDigits(value);
+  const brand = detectCardBrand(digits);
+  const template = getCardDetailsTemplate(brand);
+  let digitIndex = 0;
+
+  return template.split("").map((character, index) => {
+    if (/[0-9A-Z]/.test(character)) {
+      const nextDigit = digits[digitIndex];
+
+      if (nextDigit) {
+        digitIndex += 1;
+
+        return (
+          <span key={index} className="text-slate-900">
+            {nextDigit}
+          </span>
+        );
+      }
+
+      return (
+        <span key={index} className="text-slate-400">
+          {character}
+        </span>
+      );
+    }
+
+    return (
+      <span key={index} className="text-slate-400">
+        {character}
+      </span>
+    );
+  });
+};
+
+const getCardNumberPreview = (value: string) => {
+  const digits = normalizeDigits(value);
+  const brand = detectCardBrand(digits);
+  const commonCardLength = getCommonCardLength(brand);
+  const trailingDigitsLength = 4 + getCommonCvcLength(brand);
+
+  if (digits.length <= commonCardLength) {
+    return digits;
+  }
+
+  if (digits.length > commonCardLength + trailingDigitsLength) {
+    return digits.slice(0, Math.min(19, digits.length - trailingDigitsLength));
+  }
+
+  return digits.slice(0, commonCardLength);
+};
+
+const validateCardDetails = (value: string) => {
+  const digits = normalizeDigits(value);
+
+  if (digits.length === 0) {
+    return "Card details are required";
+  }
+
+  if (!parseCardDetails(value)) {
+    if (digits.length < 20) {
+      return "Enter card number, expiry, year, and CVC";
+    }
+
+    return "Card details are invalid or expired";
+  }
+
+  return true;
 };
 
 const isValidLuhn = (value: string) => {
@@ -75,29 +306,16 @@ export default function PaymentMethodForm({
     watch,
     formState: { errors, isSubmitting },
   } = useForm<PaymentMethodFormValues>({
+    mode: "onBlur",
+    reValidateMode: "onChange",
     defaultValues: {
       cardholderName: "",
-      cardNumber: "",
-      expiryMonth: "",
-      expiryYear: "",
-      cvc: "",
+      cardDetails: "",
       billingPostalCode: "",
     },
   });
 
-  const cardNumber = watch("cardNumber");
-  const expiryMonth = watch("expiryMonth");
-  const expiryYear = watch("expiryYear");
-  const cvcTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [cvcHasInvalidChars, setCvcHasInvalidChars] = useState(false);
-
-  useEffect(() => {
-    return () => {
-      if (cvcTimeoutRef.current) {
-        clearTimeout(cvcTimeoutRef.current);
-      }
-    };
-  }, []);
+  const cardDetails = watch("cardDetails");
 
   const handleCardholderNameFocus = () => {
     if (cardholderPlaceholder && cardholderPlaceholder !== "Name on card") {
@@ -113,17 +331,21 @@ export default function PaymentMethodForm({
 
   const onSubmit = async (data: PaymentMethodFormValues) => {
     try {
-      const cardNumberDigits = normalizeDigits(data.cardNumber);
+      const parsedCardDetails = parseCardDetails(data.cardDetails);
+
+      if (!parsedCardDetails) {
+        return;
+      }
 
       const response = await fetch("/api/payments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cardholderName: data.cardholderName,
-          cardNumber: cardNumberDigits,
-          expiryMonth: Number(data.expiryMonth),
-          expiryYear: Number(data.expiryYear),
-          cvc: data.cvc,
+          cardNumber: parsedCardDetails.cardNumber,
+          expiryMonth: Number(parsedCardDetails.expiryMonth),
+          expiryYear: parsedCardDetails.expiryYear,
+          cvc: parsedCardDetails.cvc,
           billingPostalCode: data.billingPostalCode
             .replace(/\s+/g, "")
             .toUpperCase(),
@@ -145,9 +367,45 @@ export default function PaymentMethodForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <FormSection title="Card details">
-        <FormGrid className="md:grid-cols-3">
-          <div className="space-y-1">
+      <FormSection title="Payment Card (Credit/Debit)">
+        <FormGrid className="md:grid-cols-12">
+          <div className="space-y-1 md:col-span-5">
+            <label className={LABEL_STYLE}>
+              <Clarification
+                term="Card Number, Expiry & CVC"
+                description={PAYMENT_FORM_DESCRIPTIONS.cardDetails}
+              />
+            </label>
+            <InputGroup
+              name="cardDetails"
+              register={register}
+              placeholder="1234 5678 9012 3456 MM/YY CVC"
+              error={errors.cardDetails?.message}
+              value={cardDetails}
+              overlay={
+                cardDetails ? buildCardDetailsOverlay(cardDetails) : null
+              }
+              icon={
+                <CardTypeIcon cardNumber={getCardNumberPreview(cardDetails)} />
+              }
+              inputMode="numeric"
+              autoComplete="cc-number"
+              maxLength={34}
+              onChange={(e) => {
+                const formatted = formatCardDetails(e.target.value);
+                setValue("cardDetails", formatted, {
+                  shouldDirty: true,
+                  shouldTouch: true,
+                  shouldValidate: true,
+                });
+              }}
+              rules={{
+                validate: validateCardDetails,
+                setValueAs: (value) => formatCardDetails(value),
+              }}
+            />
+          </div>
+          <div className="space-y-1 md:col-span-5">
             <label className={LABEL_STYLE}>
               <Clarification
                 term="Name on card"
@@ -167,35 +425,7 @@ export default function PaymentMethodForm({
               }}
             />
           </div>
-          <div className="space-y-1">
-            <label className={LABEL_STYLE}>Card number</label>
-            <InputGroup
-              name="cardNumber"
-              register={register}
-              placeholder="1234 5678 9012 3456"
-              error={errors.cardNumber?.message}
-              icon={<CardTypeIcon cardNumber={cardNumber} />}
-              onChange={(e) => {
-                const formatted = formatCardNumber(e.target.value);
-                setValue("cardNumber", formatted);
-              }}
-              rules={{
-                required: "Card number is required",
-                validate: (value) => {
-                  const digits = normalizeDigits(value);
-                  if (digits.length < 13 || digits.length > 19) {
-                    return "Card number must be 13-19 digits";
-                  }
-                  if (!isValidLuhn(digits)) {
-                    return "Card number is invalid";
-                  }
-                  return true;
-                },
-                setValueAs: (value) => value.replace(/\s+/g, " ").trim(),
-              }}
-            />
-          </div>
-          <div className="space-y-1">
+          <div className="space-y-1 md:col-span-2">
             <label className={LABEL_STYLE}>
               <Clarification
                 term="Postal code"
@@ -227,147 +457,6 @@ export default function PaymentMethodForm({
                 setValueAs: (value) => value.replace(/\s+/g, "").toUpperCase(),
               }}
             />
-          </div>
-          <div className="space-y-1">
-            <label className={LABEL_STYLE}>Expiry month</label>
-            <select
-              {...register("expiryMonth", {
-                required: "Expiry month is required",
-              })}
-              className={cn(
-                inputGroupStyles.inputBase,
-                errors.expiryMonth
-                  ? inputGroupStyles.inputError
-                  : inputGroupStyles.inputDefault,
-              )}
-            >
-              <option value="">Select month</option>
-              {Array.from({ length: 12 }, (_, i) => {
-                const month = i + 1;
-                const now = new Date();
-                const currentMonth = now.getMonth() + 1;
-                const currentYear = now.getFullYear();
-                const year = Number(expiryYear);
-
-                // If year is current year, only show months >= current month
-                if (year === currentYear && month < currentMonth) {
-                  return null;
-                }
-
-                return (
-                  <option key={month} value={month}>
-                    {String(month).padStart(2, "0")}
-                  </option>
-                );
-              }).filter(Boolean)}
-            </select>
-            {errors.expiryMonth && (
-              <span className={inputGroupStyles.errorText}>
-                {errors.expiryMonth.message}
-              </span>
-            )}
-          </div>
-          <div className="space-y-1">
-            <label className={LABEL_STYLE}>Expiry year</label>
-            <select
-              {...register("expiryYear", {
-                required: "Expiry year is required",
-                validate: (value) => {
-                  const year = Number(value);
-                  const month = Number(expiryMonth);
-                  const now = new Date();
-                  const currentMonth = now.getMonth() + 1;
-                  const currentYear = now.getFullYear();
-
-                  if (year === currentYear && month && month < currentMonth) {
-                    return "Card is expired";
-                  }
-                  return true;
-                },
-              })}
-              className={cn(
-                inputGroupStyles.inputBase,
-                errors.expiryYear
-                  ? inputGroupStyles.inputError
-                  : inputGroupStyles.inputDefault,
-              )}
-            >
-              <option value="">Select year</option>
-              {Array.from({ length: 10 }, (_, i) => {
-                const now = new Date();
-                const currentYear = now.getFullYear();
-                const currentMonth = now.getMonth() + 1;
-                const month = Number(expiryMonth);
-
-                // If month < current month, start from next year
-                const startYear =
-                  month && month < currentMonth ? currentYear + 1 : currentYear;
-                const year = startYear + i;
-
-                return (
-                  <option key={year} value={year}>
-                    {String(year).slice(-2)}
-                  </option>
-                );
-              })}
-            </select>
-            {errors.expiryYear && (
-              <span className={inputGroupStyles.errorText}>
-                {errors.expiryYear.message}
-              </span>
-            )}
-          </div>
-          <div className="space-y-1">
-            <label className={LABEL_STYLE}>
-              <Clarification
-                term="CVC"
-                description={PAYMENT_FORM_DESCRIPTIONS.cvc}
-              />
-            </label>
-            <InputGroup
-              name="cvc"
-              register={register}
-              placeholder="123"
-              error={errors.cvc?.message}
-              onChange={(e) => {
-                // Check if there are non-digit characters
-                const hasInvalid = /\D/.test(e.target.value);
-                setCvcHasInvalidChars(hasInvalid);
-
-                // Clear any pending timeout
-                if (cvcTimeoutRef.current) {
-                  clearTimeout(cvcTimeoutRef.current);
-                }
-
-                // After 500ms, filter out non-digits
-                cvcTimeoutRef.current = setTimeout(() => {
-                  const digitsOnly = normalizeDigits(e.target.value);
-                  setValue("cvc", digitsOnly);
-                  // Clear the invalid chars flag after filtering
-                  setCvcHasInvalidChars(false);
-                }, 500);
-              }}
-              rules={{
-                required: "CVC is required",
-                validate: (value) => {
-                  const digits = normalizeDigits(value);
-                  if (digits.length === 0) {
-                    return true; // Let required rule handle empty state
-                  }
-                  if (!/^\d+$/.test(value)) {
-                    return "CVC must contain only digits";
-                  }
-                  if (digits.length < 3 || digits.length > 4) {
-                    return "CVC must be 3-4 digits";
-                  }
-                  return true;
-                },
-                setValueAs: (value) => value.trim(),
-              }}
-            />
-            {cvcHasInvalidChars && (
-              <p className="text-xs text-slate-500">Only digits 0-9 allowed</p>
-            )}
           </div>
         </FormGrid>
       </FormSection>

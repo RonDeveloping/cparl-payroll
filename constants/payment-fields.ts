@@ -1,5 +1,7 @@
 // Clarification descriptions for payment form fields
 export const PAYMENT_FORM_DESCRIPTIONS = {
+  cardDetails:
+    "Enter card number, expiry month, expiry year, and CVC in one continuous numeric entry. Example: 42424242424242421229123.",
   cardholderName:
     "This will be auto-filled from the placeholder when you focus on the field. Please verify it matches the name on your card statement.",
   postalCode:
