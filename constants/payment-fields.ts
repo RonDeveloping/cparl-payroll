@@ -1,10 +1,9 @@
 // Clarification descriptions for payment form fields
 export const PAYMENT_FORM_DESCRIPTIONS = {
   cardDetails:
-    "Enter card number, expiry month, expiry year, and CVC in one continuous numeric entry. Example: 42424242424242421229123.",
+    "Enter your card number, expiry date (MM/YY), and CVV (the 3-4 digit security code on your card).",
   cardholderName:
-    "This will be auto-filled from the placeholder when you focus on the field. Please verify it matches the name on your card statement.",
-  postalCode:
-    "If provided in registration, your address postal code will be auto-filled from the placeholder when you focus on the field. Please verify it matches the postal code on your card statement.",
-  cvc: "The 3-4 digit security code found on the back of your card, shown in the diagram.",
+    "Enter the cardholder name exactly as it appears on the card.",
+  postalCode: "Enter the billing postal code tied to this payment card.",
+  cvc: "CVV means Card Verification Value, the 3-4 digit security code found on your card.",
 } as const;

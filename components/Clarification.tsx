@@ -13,7 +13,7 @@ export function Clarification({ term, description }: ClarificationProps) {
       <span>{term}</span>
 
       {/* The Tooltip wrapping the icon */}
-      <Tooltip content={description} placement="top">
+      <Tooltip content={description} placement="top" align="start" bottomAnchor>
         <button
           type="button"
           className="text-gray-400 hover:text-blue-500 transition-colors focus:outline-none cursor-help"

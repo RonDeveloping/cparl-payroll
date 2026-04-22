@@ -6,6 +6,8 @@ type TooltipProps = {
   children: React.ReactNode;
   delay?: number; // ms delay before showing
   placement?: "top" | "bottom"; // support top/bottom
+  align?: "center" | "start"; // horizontal alignment of tooltip bubble
+  bottomAnchor?: boolean; // anchor tooltip bottom to the trigger bottom instead of above it
 };
 
 export default function Tooltip({
@@ -13,6 +15,8 @@ export default function Tooltip({
   content,
   delay = 300,
   placement = "top",
+  align = "center",
+  bottomAnchor = false,
 }: TooltipProps) {
   const [visible, setVisible] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
@@ -49,13 +53,20 @@ export default function Tooltip({
     };
   }, []);
 
+  const alignClasses =
+    align === "start" ? "left-0" : "left-1/2 -translate-x-1/2";
+
   const tooltipClasses =
-    "absolute left-1/2 z-50 w-max max-w-xs -translate-x-1/2 rounded px-3 py-1.5 text-sm shadow-lg transition-opacity duration-200" +
+    `absolute ${alignClasses} z-50 w-max max-w-xs rounded px-3 py-1.5 text-xs shadow-lg transition-opacity duration-200` +
     (visible ? " opacity-100" : " opacity-0") +
     " bg-blue-50/62 text-sky-900 dark:bg-blue-900/62 dark:text-white normal-case tracking-normal font-normal";
 
   const positionClasses =
-    placement === "top" ? "bottom-full mb-2" : "top-full mt-2";
+    placement === "bottom"
+      ? "top-full mt-2"
+      : bottomAnchor
+        ? "bottom-0"
+        : "bottom-full mb-2";
 
   return (
     <span
