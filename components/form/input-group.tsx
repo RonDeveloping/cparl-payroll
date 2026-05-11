@@ -41,6 +41,7 @@ interface InputGroupProps<TFormValues extends FieldValues> {
   overlayClassName?: string;
   inputClassName?: string;
   floatingPlaceholder?: string;
+  formatOnChange?: (value: string) => string;
   iconPosition?: "left" | "right";
   inputRef?: React.Ref<HTMLInputElement>;
 }
@@ -65,10 +66,12 @@ export default function InputGroup<TFormValues extends FieldValues>({
   overlayClassName,
   inputClassName,
   floatingPlaceholder,
+  formatOnChange,
   iconPosition = "right",
   inputRef,
 }: InputGroupProps<TFormValues>) {
   const [isFocused, setIsFocused] = useState(false);
+  const [previousValue, setPreviousValue] = useState("");
   const hasValue = typeof value === "string" && value.trim().length > 0;
   const isFloatingActive =
     Boolean(floatingPlaceholder) && (isFocused || hasValue);
@@ -119,6 +122,30 @@ export default function InputGroup<TFormValues extends FieldValues>({
             registration.onBlur(e);
           }}
           onChange={(e) => {
+            if (formatOnChange) {
+              e.target.value = formatOnChange(e.target.value);
+            }
+            const newFormattedValue = e.target.value;
+
+            // Handle business number cursor positioning
+            const isBusinessNumber =
+              typeof name === "string" && name.includes("businessNumber");
+            if (isBusinessNumber && formatOnChange) {
+              const rpJustAdded =
+                !previousValue.includes(" RP ") &&
+                newFormattedValue.includes(" RP ");
+              if (rpJustAdded && e.target) {
+                // Position cursor at the end after RP0000
+                setTimeout(() => {
+                  e.target.setSelectionRange(
+                    e.target.value.length,
+                    e.target.value.length,
+                  );
+                }, 0);
+              }
+            }
+
+            setPreviousValue(newFormattedValue);
             registration.onChange(e);
             onChange?.(e);
           }}

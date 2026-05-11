@@ -2,6 +2,7 @@
 import prisma from "@/db/prismaDrizzle";
 import EditTenantForm from "./edit-tenant";
 import { TenantFormInput } from "@/lib/validations/tenant-schema";
+import formatBusinessNumber from "@/utils/formatters/businessNumber";
 
 export default async function EditTenantPage({
   params,
@@ -14,6 +15,7 @@ export default async function EditTenantPage({
   if (id === "new") {
     const emptyData: TenantFormInput = {
       coreName: "",
+      operatingName: null,
       legalNameEnding: null,
       businessNumber: null,
       isActive: true,
@@ -88,10 +90,12 @@ export default async function EditTenantPage({
   const nameCached = tenant.nameCached as {
     coreName: string;
     kindName?: string | null;
+    aliasName?: string | null;
   } | null;
 
   const initialData: TenantFormInput = {
     coreName: nameCached?.coreName || "",
+    operatingName: nameCached?.aliasName || null,
     legalNameEnding:
       (nameCached?.kindName as
         | "Inc."
@@ -102,7 +106,9 @@ export default async function EditTenantPage({
         | "Corporation"
         | undefined
         | null) || null,
-    businessNumber: tenant.businessNumber,
+    businessNumber: tenant.businessNumber
+      ? formatBusinessNumber(tenant.businessNumber)
+      : null,
     isActive: tenant.isActive,
     memberEmails: "",
     email,

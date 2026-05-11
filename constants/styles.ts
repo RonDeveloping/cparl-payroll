@@ -433,11 +433,14 @@ export const formActionsStyles: FormActionsStyleSchema = {
   backLabelActive: "text-slate-500 hover:text-slate-800 cursor-pointer",
   backLabelDisabled: "text-slate-100 select-none",
   showChangesButton: cn(
-    "flex items-center text-xs font-semibold tracking-wider text-slate-500 hover:text-slate-800 transition-colors",
+    "flex items-center text-xs font-semibold tracking-wider text-slate-500 hover:text-slate-800 transition-colors whitespace-nowrap",
     sharedStyles.gap4,
   ),
   showChangesIcon: sharedStyles.textSmSlate500,
-  showChangesCount: sharedStyles.camelCase,
+  showChangesCount: cn(
+    sharedStyles.camelCase,
+    "inline-flex items-center gap-1",
+  ),
 };
 
 export const registerFormStyles: RegisterFormStyleSchema = {
@@ -469,7 +472,7 @@ export const formSectionStyles: FormSectionStyleSchema = {
 export const inputGroupStyles: InputGroupStyleSchema = {
   wrapper: cn(sharedStyles.flexCol, sharedStyles.spaceY5),
   inputBase: cn(
-    "w-full rounded-lg border transition-all text-sm outline-none",
+    "w-full rounded-lg border transition-all text-sm outline-none placeholder:text-slate-300",
     sharedStyles.px4Py2,
   ),
   inputError: "border-red-500 focus:ring-2 focus:ring-red-100",

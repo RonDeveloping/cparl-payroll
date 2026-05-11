@@ -72,7 +72,7 @@ export default function EditTenantForm({
       formId="tenant-form"
       isDirty={isDirty}
       isSubmitting={isSubmitting}
-      changeLabel="Change(s) on the Tenant Form"
+      changeLabel="Employer Info"
       changeCount={changeCount}
       showChanges={showChanges}
       onEyeToggle={() => setShowChanges((v) => !v)}

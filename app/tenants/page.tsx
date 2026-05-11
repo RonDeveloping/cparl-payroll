@@ -6,7 +6,11 @@ import { Pencil } from "lucide-react";
 
 interface Tenant {
   id: string;
-  nameCached: { coreName: string; kindName?: string | null };
+  nameCached: {
+    coreName: string;
+    kindName?: string | null;
+    aliasName?: string | null;
+  };
   slug: string;
   businessNumber: string | null;
   isActive: boolean;
@@ -43,54 +47,58 @@ export default function TenantsPage() {
     );
   }
 
-  if (tenants.length === 0) {
-    return (
-      <div className="p-10">
-        <p className="text-slate-600">
-          No tenants found. Create one to get started.
-        </p>
-      </div>
-    );
-  }
+  const employerHeading =
+    tenants.length === 0
+      ? "No employers under your management"
+      : tenants.length === 1
+        ? "1 employer under your management"
+        : `${tenants.length} employers under your management`;
 
   return (
     <div className="p-10 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Employers</h1>
-        <p className="text-slate-600">Manage your employer organizations</p>
+        <p className="text-slate-600">{employerHeading}</p>
       </div>
 
-      <div className="grid gap-4">
-        {tenants.map((tenant) => (
-          <div
-            key={tenant.id}
-            className="border border-slate-200 rounded-xl p-6 bg-white hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
+      {tenants.length === 0 ? (
+        <p className="text-slate-600">Create one to get started.</p>
+      ) : (
+        <div className="grid gap-4">
+          {tenants.map((tenant) => (
+            <div
+              key={tenant.id}
+              className="border border-slate-200 rounded-xl p-6 bg-white hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <Link
+                    href="/payroll"
+                    className="text-xl font-semibold text-slate-900 hover:text-emerald-700 transition-colors"
+                  >
+                    {tenant.nameCached.coreName}
+                    {tenant.nameCached.aliasName && (
+                      <span className="text-slate-500 font-medium">
+                        {` (o/a ${tenant.nameCached.aliasName})`}
+                      </span>
+                    )}
+                  </Link>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {tenant.businessNumber ||
+                      "Valid business no. is required in remitting and reporting."}
+                  </p>
+                </div>
                 <Link
-                  href="/payroll"
-                  className="text-xl font-semibold text-slate-900 hover:text-emerald-700 transition-colors"
+                  href={`/tenants/${tenant.id}/edit`}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-colors"
                 >
-                  {tenant.nameCached.coreName}
-                  {tenant.nameCached.kindName && (
-                    <span className="text-slate-500 font-medium">
-                      {` (${tenant.nameCached.kindName})`}
-                    </span>
-                  )}
+                  <Pencil size={16} />
+                  Edit
                 </Link>
               </div>
-              <Link
-                href={`/tenants/${tenant.id}/edit`}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-colors"
-              >
-                <Pencil size={16} />
-                Edit
-              </Link>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

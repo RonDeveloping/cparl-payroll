@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { logoutAction } from "@/lib/actions/auth-actions";
 import { navbarStyles } from "@/constants/styles";
 import { cn } from "@/lib/utils";
@@ -30,13 +30,16 @@ type NavbarUser = {
 //The Navbar component itself is a client component that handles its own visibility state based on scroll position; this bar is a "Smart Header," which stays out of the way while the user is reading (scrolling down) but slides back in instantly the moment they start scrolling up.
 export default function Navbar({ user }: { user: NavbarUser | null }) {
   const pathname = usePathname();
+  const router = useRouter();
   const lastScrollY = useRef(0);
   const [isScrolledDown, setIsScrolledDown] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
   const closeTimeoutRef = useRef<number | null>(null);
   const settingsCloseTimeoutRef = useRef<number | null>(null);
+  const createCloseTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const controlNavbar = () => {
@@ -63,6 +66,9 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
       if (settingsCloseTimeoutRef.current) {
         window.clearTimeout(settingsCloseTimeoutRef.current);
       }
+      if (createCloseTimeoutRef.current) {
+        window.clearTimeout(createCloseTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -81,9 +87,6 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
     "U"
   ).toUpperCase();
   const isPayrollDashboard = pathname?.startsWith("/payroll");
-  const createHref = isPayrollDashboard
-    ? "/employees/new"
-    : "/tenants/new/edit";
   const createTitle = isPayrollDashboard ? "Create Employee" : "Create Tenant";
   const isCreatingTenant = pathname?.startsWith("/tenants/new");
   const isAuthenticated = Boolean(user);
@@ -156,13 +159,81 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
         {/* Icon Navigation (Green) */}
         <div className={navbarStyles.iconNavigation}>
           {/* Create action icon */}
-          <Link
-            href={createHref}
-            title={createTitle}
-            className={iconLinkPrimaryClass}
+          <div
+            className={navbarStyles.settingsMenuContainer}
+            onMouseEnter={() => {
+              if (!isAuthenticated) return;
+              if (createCloseTimeoutRef.current) {
+                window.clearTimeout(createCloseTimeoutRef.current);
+                createCloseTimeoutRef.current = null;
+              }
+              setIsCreateMenuOpen(true);
+            }}
+            onMouseLeave={() => {
+              if (!isAuthenticated) return;
+              if (createCloseTimeoutRef.current) {
+                window.clearTimeout(createCloseTimeoutRef.current);
+              }
+              createCloseTimeoutRef.current = window.setTimeout(() => {
+                setIsCreateMenuOpen(false);
+              }, 200);
+            }}
           >
-            <Plus className="w-6 h-6" />
-          </Link>
+            <button
+              type="button"
+              title={createTitle}
+              className={iconLinkPrimaryClass}
+              onClick={() => setIsCreateMenuOpen((open) => !open)}
+              aria-expanded={isCreateMenuOpen}
+            >
+              <Plus className="w-6 h-6" />
+            </button>
+
+            {isCreateMenuOpen && (
+              <div className={navbarStyles.settingsMenuDropdown}>
+                <button
+                  type="button"
+                  className={navbarStyles.settingsMenuItem}
+                  onClick={() => {
+                    router.push("/tenants/new/edit");
+                    setIsCreateMenuOpen(false);
+                  }}
+                >
+                  New Employer
+                </button>
+                <button
+                  type="button"
+                  className={navbarStyles.settingsMenuItem}
+                  onClick={() => {
+                    router.push("/employees/new");
+                    setIsCreateMenuOpen(false);
+                  }}
+                >
+                  New Employee
+                </button>
+                <button
+                  type="button"
+                  className={navbarStyles.settingsMenuItem}
+                  onClick={() => {
+                    router.push("/professionals/new");
+                    setIsCreateMenuOpen(false);
+                  }}
+                >
+                  New Professional
+                </button>
+                <button
+                  type="button"
+                  className={navbarStyles.settingsMenuItem}
+                  onClick={() => {
+                    router.push("/employees/import");
+                    setIsCreateMenuOpen(false);
+                  }}
+                >
+                  Import Employees
+                </button>
+              </div>
+            )}
+          </div>
           <Link href={homeHref} title={homeTitle} className={iconLinkClass}>
             <Home className="w-6 h-6" />
           </Link>

@@ -9,6 +9,7 @@ import {
   trimDuplicateEnding,
 } from "@/utils/formatters/slugify";
 import { upsertAddress } from "@/lib/utils/address-hash";
+import { normalizeBusinessNumber } from "@/utils/formatters/businessNumber";
 
 /**
  * Updates an existing tenant or creates a new one.
@@ -75,6 +76,7 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
           data: {
             coreName: trimmedCoreName,
             kindName: data.legalNameEnding || "", // Empty string if null
+            aliasName: data.operatingName ?? null,
             subject: "ORGANIZATION", // Assuming organization type
             source: "USER", // User-provided input
           },
@@ -128,6 +130,7 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
             data: {
               coreName: trimmedCoreName,
               kindName: data.legalNameEnding || "",
+              aliasName: data.operatingName ?? null,
             },
           });
           contactForCache = {
@@ -203,6 +206,7 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
             data: {
               coreName: trimmedCoreName,
               kindName: data.legalNameEnding || "",
+              aliasName: data.operatingName ?? null,
               subject: "ORGANIZATION",
               source: "USER", // User-provided input
             },
@@ -263,9 +267,13 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
             middleName: null,
             prefix: null,
             suffix: null,
-            aliasName: null,
+            aliasName: data.operatingName ?? null,
             displayName: null,
           };
+
+      const normalizedBusinessNumber = data.businessNumber
+        ? normalizeBusinessNumber(data.businessNumber)
+        : null;
 
       const tenant = await tx.tenant.upsert({
         where: { id: id && id !== "new" ? id : "placeholder-id" },
@@ -273,14 +281,14 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
           nameCached: nameCached,
           slug: generatedSlug,
           contactId: contactId,
-          businessNumber: data.businessNumber ?? null,
+          businessNumber: normalizedBusinessNumber,
           isActive: data.isActive,
         },
         create: {
           nameCached: nameCached,
           slug: generatedSlug,
           contactId: contactId,
-          businessNumber: data.businessNumber ?? null,
+          businessNumber: normalizedBusinessNumber,
           isActive: data.isActive,
           settings: {
             create: {

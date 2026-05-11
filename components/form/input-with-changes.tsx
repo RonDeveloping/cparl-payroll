@@ -15,6 +15,8 @@ export interface InputWithChangesProps<TFormValues extends FieldValues> {
   placeholder?: string;
   type?: string;
   rules?: RegisterOptions<TFormValues, Path<TFormValues>>;
+  formatOnChange?: (value: string) => string;
+  maxLength?: number;
 }
 
 export default function InputWithChanges<TFormValues extends FieldValues>({
@@ -24,6 +26,8 @@ export default function InputWithChanges<TFormValues extends FieldValues>({
   placeholder,
   type = "text",
   rules,
+  formatOnChange,
+  maxLength,
 }: InputWithChangesProps<TFormValues>) {
   const [showPassword, setShowPassword] = useState(false);
   const { changes, showChanges, register } =
@@ -53,6 +57,8 @@ export default function InputWithChanges<TFormValues extends FieldValues>({
           error={error}
           type={inputType}
           rules={rules} // Pass rules down to InputGroup (like async validation)
+          formatOnChange={formatOnChange}
+          maxLength={maxLength}
         />
 
         {type === "password" && (

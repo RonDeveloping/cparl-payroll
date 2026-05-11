@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   UserCircle,
@@ -155,6 +156,14 @@ export default function DashboardTiles({
                     </div>
                   ))}
                 </div>
+              )}
+              {activeTile.id === "organizations" && (
+                <Link
+                  href="/tenants"
+                  className="inline-block mt-4 text-sm font-medium text-violet-600 hover:text-violet-700 underline"
+                >
+                  View all employers →
+                </Link>
               )}
             </div>
           </div>

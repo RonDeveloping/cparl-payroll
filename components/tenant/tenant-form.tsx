@@ -4,8 +4,8 @@ import { FieldErrors } from "react-hook-form";
 import { TenantFormInput } from "@/lib/validations/tenant-schema";
 import FormSection from "@/components/form/form-section";
 import InputWithChanges from "@/components/form/input-with-changes";
-import SelectWithChanges from "@/components/form/select-with-changes";
 import { FormGrid } from "@/components/form/form-grid";
+import formatBusinessNumber from "@/utils/formatters/businessNumber";
 
 interface TenantFormProps {
   errors: FieldErrors<TenantFormInput>;
@@ -13,23 +13,28 @@ interface TenantFormProps {
 }
 
 const TENANT_FIELDS = {
-  mandatory: [
+  general: [
     {
-      label: "Organization Name",
+      label: "Legal Name",
       name: "coreName" as const,
-      rules: { required: "Organization name is required" },
+      rules: { required: "Legal name is required" },
+      placeholder: "1234567 Cananda Inc.",
+      formatOnChange: undefined,
     },
     {
-      label: "Legal Name Ending",
-      name: "legalNameEnding" as const,
+      label: "Operating Name",
+      name: "operatingName" as const,
       rules: {},
+      placeholder: "All Stuff Depot",
+      formatOnChange: undefined,
     },
-  ],
-  optional: [
     {
       label: "Business Number",
       name: "businessNumber" as const,
       rules: {},
+      placeholder: "999-999-999 RP 0001",
+      formatOnChange: formatBusinessNumber,
+      maxLength: 19, // "999-999-999 RP 0001" is 19 characters
     },
   ],
   contact: [
@@ -78,51 +83,18 @@ const TENANT_FIELDS = {
 export function TenantForm({ errors, showMembership }: TenantFormProps) {
   return (
     <>
-      {/* General Information Section */}
-      <FormSection title="General Information">
+      {/* Identification Section */}
+      <FormSection title="Identification">
         <FormGrid>
-          {TENANT_FIELDS.mandatory.map((field) => {
-            // For legalNameEnding, render as select instead of input
-            if (field.name === "legalNameEnding") {
-              return (
-                <SelectWithChanges<TenantFormInput>
-                  key={field.name}
-                  label={field.label}
-                  name={field.name}
-                  error={errors[field.name]?.message}
-                  options={[
-                    { label: "Inc.", value: "Inc." },
-                    { label: "Corp.", value: "Corp." },
-                    { label: "Ltd", value: "Ltd" },
-                    { label: "Limited", value: "Limited" },
-                    { label: "Incorporated", value: "Incorporated" },
-                    { label: "Corporation", value: "Corporation" },
-                  ]}
-                />
-              );
-            }
-            return (
-              <InputWithChanges<TenantFormInput>
-                key={field.name}
-                label={field.label}
-                name={field.name}
-                rules={field.rules}
-                error={errors[field.name]?.message}
-              />
-            );
-          })}
-        </FormGrid>
-      </FormSection>
-
-      {/* Optional Section */}
-      <FormSection title="Optional">
-        <FormGrid>
-          {TENANT_FIELDS.optional.map((field) => (
+          {TENANT_FIELDS.general.map((field) => (
             <InputWithChanges<TenantFormInput>
               key={field.name}
               label={field.label}
               name={field.name}
+              placeholder={field.placeholder}
+              formatOnChange={field.formatOnChange}
               rules={field.rules}
+              maxLength={field.maxLength}
               error={errors[field.name]?.message}
             />
           ))}

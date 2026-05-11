@@ -88,6 +88,7 @@ export function FormActions({
       {BackActionContent}
     </button>
   );
+  const changeWord = changeCount === 1 ? "change" : "changes";
 
   const ShowChangesToggle =
     changeLabel && onEyeToggle ? (
@@ -97,14 +98,22 @@ export function FormActions({
         aria-expanded={showB4Change}
         className={formActionsStyles.showChangesButton}
       >
-        {showB4Change ? (
-          <EyeOff size={14} className={formActionsStyles.showChangesIcon} />
-        ) : (
-          <Eye size={14} className={formActionsStyles.showChangesIcon} />
-        )}
-
         <span className={formActionsStyles.showChangesCount}>
-          {changeCount} {changeLabel}
+          {changeLabel} (
+          {showB4Change ? (
+            <EyeOff
+              size={14}
+              className={formActionsStyles.showChangesIcon}
+              aria-hidden="true"
+            />
+          ) : (
+            <Eye
+              size={14}
+              className={formActionsStyles.showChangesIcon}
+              aria-hidden="true"
+            />
+          )}{" "}
+          {changeCount} {changeWord})
         </span>
       </button>
     ) : null;
