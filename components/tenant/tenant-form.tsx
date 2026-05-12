@@ -6,6 +6,7 @@ import FormSection from "@/components/form/form-section";
 import InputWithChanges from "@/components/form/input-with-changes";
 import { FormGrid } from "@/components/form/form-grid";
 import formatBusinessNumber from "@/utils/formatters/businessNumber";
+import { Clarification } from "@/components/clarification";
 
 interface TenantFormProps {
   errors: FieldErrors<TenantFormInput>;
@@ -72,11 +73,6 @@ const TENANT_FIELDS = {
       name: "address.postalCode" as const,
       rules: {},
     },
-    {
-      label: "Country",
-      name: "address.country" as const,
-      rules: {},
-    },
   ],
 };
 
@@ -86,34 +82,83 @@ export function TenantForm({ errors, showMembership }: TenantFormProps) {
       {/* Identification Section */}
       <FormSection title="Identification">
         <FormGrid>
-          {TENANT_FIELDS.general.map((field) => (
-            <InputWithChanges<TenantFormInput>
-              key={field.name}
-              label={field.label}
-              name={field.name}
-              placeholder={field.placeholder}
-              formatOnChange={field.formatOnChange}
-              rules={field.rules}
-              maxLength={field.maxLength}
-              error={errors[field.name]?.message}
-            />
-          ))}
+          <InputWithChanges<TenantFormInput>
+            label="Legal Name"
+            name="coreName"
+            placeholder="e.g. 1234567 Canada Inc."
+            rules={{ required: "Legal name is required" }}
+            error={errors.coreName?.message}
+          />
+          <InputWithChanges<TenantFormInput>
+            label={
+              <Clarification
+                term="Operating As (O/A)"
+                description={
+                  'This helps employees recognize the employer on documents such as T4 slips, normally registered as a "Trade/Business Name".'
+                }
+              />
+            }
+            name="operatingName"
+            placeholder="e.g. All Stuff Depot"
+            rules={{}}
+            error={errors.operatingName?.message}
+          />
+          <InputWithChanges<TenantFormInput>
+            label={
+              <Clarification
+                term="Business Number"
+                description="A CRA-issued, unique identifier for the employer or branch, enterable later if no remittance or reporting is due"
+              />
+            }
+            name="businessNumber"
+            placeholder="###-###-### RP ####"
+            rules={{}}
+            formatOnChange={formatBusinessNumber}
+            maxLength={19}
+            error={errors.businessNumber?.message}
+          />
         </FormGrid>
       </FormSection>
 
-      {/* Contact Information Section */}
-      <FormSection title="Contact Information">
+      {/* Contact Section */}
+      <FormSection title="Contact">
         <FormGrid>
-          {TENANT_FIELDS.contact.map((field) => (
-            <InputWithChanges<TenantFormInput>
-              key={field.name}
-              label={field.label}
-              name={field.name}
-              type={field.type as "email" | "tel"}
-              rules={field.rules}
-              error={errors[field.name as keyof TenantFormInput]?.message}
-            />
-          ))}
+          <InputWithChanges<TenantFormInput>
+            label={
+              <Clarification
+                term="Attention"
+                description="Contact person name to address in emails or phone calls."
+              />
+            }
+            name="contactPerson"
+            placeholder="e.g. Jane Doe"
+            rules={{}}
+            error={errors.contactPerson?.message}
+          />
+          <InputWithChanges<TenantFormInput>
+            label={
+              <Clarification
+                term="Email"
+                description="Used to receive notifications such as acknowledgment, processing, and completion updates."
+              />
+            }
+            name="email"
+            type="email"
+            rules={{}}
+            error={errors.email?.message}
+          />
+          <InputWithChanges<TenantFormInput>
+            label={
+              <Clarification
+                term="Phone"
+                description="Used for unusual events such as insufficient funds, deposit failures, or other urgent issues."
+              />
+            }
+            name="phone"
+            type="tel"
+            rules={{}}
+            error={errors.phone?.message}
+          />
         </FormGrid>
       </FormSection>
 

@@ -232,7 +232,9 @@ model Tenant {
   contactId      String   @map("contact_id") //soft link only (No @relation)
   nameCached    Json   @map("name_cached")
   slug           String   @unique
-  businessNumber String?  @map("business_number")
+  businessBn9    String?  @map("business_bn9") @db.Char(9)
+  businessProgramId String? @map("business_program_id") @db.Char(2)
+  businessAccountRef String? @map("business_account_ref") @db.Char(4)
   isActive       Boolean  @default(true) @map("is_active")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
@@ -242,6 +244,7 @@ model Tenant {
   payrollCycles PayrollCycle[]
   departments   Department[]
 
+  @@index([businessBn9, businessProgramId, businessAccountRef])
   @@map("tenant")
 }
 //TODO: use a middleware or a library (like Prisma's $extends) to automatically inject where: { tenantId: activeTenantId } into every query. This ensures you never forget to filter by the tenant.

@@ -9,7 +9,7 @@ import {
   trimDuplicateEnding,
 } from "@/utils/formatters/slugify";
 import { upsertAddress } from "@/lib/utils/address-hash";
-import { normalizeBusinessNumber } from "@/utils/formatters/businessNumber";
+import { splitBusinessNumber } from "@/utils/formatters/businessNumber";
 
 /**
  * Updates an existing tenant or creates a new one.
@@ -77,6 +77,7 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
             coreName: trimmedCoreName,
             kindName: data.legalNameEnding || "", // Empty string if null
             aliasName: data.operatingName ?? null,
+            displayName: data.contactPerson ?? null,
             subject: "ORGANIZATION", // Assuming organization type
             source: "USER", // User-provided input
           },
@@ -131,6 +132,7 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
               coreName: trimmedCoreName,
               kindName: data.legalNameEnding || "",
               aliasName: data.operatingName ?? null,
+              displayName: data.contactPerson ?? null,
             },
           });
           contactForCache = {
@@ -207,6 +209,7 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
               coreName: trimmedCoreName,
               kindName: data.legalNameEnding || "",
               aliasName: data.operatingName ?? null,
+              displayName: data.contactPerson ?? null,
               subject: "ORGANIZATION",
               source: "USER", // User-provided input
             },
@@ -271,8 +274,8 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
             displayName: null,
           };
 
-      const normalizedBusinessNumber = data.businessNumber
-        ? normalizeBusinessNumber(data.businessNumber)
+      const splitBusinessParts = data.businessNumber
+        ? splitBusinessNumber(data.businessNumber)
         : null;
 
       const tenant = await tx.tenant.upsert({
@@ -281,14 +284,18 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
           nameCached: nameCached,
           slug: generatedSlug,
           contactId: contactId,
-          businessNumber: normalizedBusinessNumber,
+          businessBn9: splitBusinessParts?.bn9 ?? null,
+          businessProgramId: splitBusinessParts?.programId ?? null,
+          businessAccountRef: splitBusinessParts?.accountRef ?? null,
           isActive: data.isActive,
         },
         create: {
           nameCached: nameCached,
           slug: generatedSlug,
           contactId: contactId,
-          businessNumber: normalizedBusinessNumber,
+          businessBn9: splitBusinessParts?.bn9 ?? null,
+          businessProgramId: splitBusinessParts?.programId ?? null,
+          businessAccountRef: splitBusinessParts?.accountRef ?? null,
           isActive: data.isActive,
           settings: {
             create: {

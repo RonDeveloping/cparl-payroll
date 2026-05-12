@@ -144,9 +144,9 @@ export default function DashboardTiles({
                   {(activeTile.id === "organizations"
                     ? organizationItems
                     : activeTile.items
-                  ).map((item) => (
+                  ).map((item, index) => (
                     <div
-                      key={item.label}
+                      key={`${activeTile.id}-${item.label}-${item.value}-${index}`}
                       className="flex items-center justify-between text-slate-600"
                     >
                       <span>{item.label}</span>

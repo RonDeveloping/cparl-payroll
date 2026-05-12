@@ -2,7 +2,9 @@
 import prisma from "@/db/prismaDrizzle";
 import EditTenantForm from "./edit-tenant";
 import { TenantFormInput } from "@/lib/validations/tenant-schema";
-import formatBusinessNumber from "@/utils/formatters/businessNumber";
+import formatBusinessNumber, {
+  composeBusinessNumberFromParts,
+} from "@/utils/formatters/businessNumber";
 
 export default async function EditTenantPage({
   params,
@@ -20,6 +22,7 @@ export default async function EditTenantPage({
       businessNumber: null,
       isActive: true,
       memberEmails: "",
+      contactPerson: null,
       email: null,
       phone: null,
       address: null,
@@ -44,6 +47,7 @@ export default async function EditTenantPage({
   }
 
   // Fetch contact information
+  let contactPerson: string | null = null;
   let email: string | null = null;
   let phone: string | null = null;
   let address: {
@@ -55,17 +59,25 @@ export default async function EditTenantPage({
   } | null = null;
 
   if (tenant.contactId) {
-    const [primaryEmail, primaryPhone, primaryAddress] = await Promise.all([
-      prisma.email.findFirst({
-        where: { contactId: tenant.contactId, isPrimary: true },
-      }),
-      prisma.phone.findFirst({
-        where: { contactId: tenant.contactId, isPrimary: true },
-      }),
-      prisma.address.findFirst({
-        where: { contactId: tenant.contactId, isPrimary: true },
-      }),
-    ]);
+    const [primaryContact, primaryEmail, primaryPhone, primaryAddress] =
+      await Promise.all([
+        prisma.contact.findUnique({
+          where: { id: tenant.contactId },
+        }),
+        prisma.email.findFirst({
+          where: { contactId: tenant.contactId, isPrimary: true },
+        }),
+        prisma.phone.findFirst({
+          where: { contactId: tenant.contactId, isPrimary: true },
+        }),
+        prisma.address.findFirst({
+          where: { contactId: tenant.contactId, isPrimary: true },
+        }),
+      ]);
+
+    if (primaryContact) {
+      contactPerson = primaryContact.displayName;
+    }
 
     if (primaryEmail) {
       email = primaryEmail.emailAddress;
@@ -92,6 +104,11 @@ export default async function EditTenantPage({
     kindName?: string | null;
     aliasName?: string | null;
   } | null;
+  const businessBn9 = (tenant as { businessBn9?: string | null }).businessBn9;
+  const businessProgramId = (tenant as { businessProgramId?: string | null })
+    .businessProgramId;
+  const businessAccountRef = (tenant as { businessAccountRef?: string | null })
+    .businessAccountRef;
 
   const initialData: TenantFormInput = {
     coreName: nameCached?.coreName || "",
@@ -106,11 +123,17 @@ export default async function EditTenantPage({
         | "Corporation"
         | undefined
         | null) || null,
-    businessNumber: tenant.businessNumber
-      ? formatBusinessNumber(tenant.businessNumber)
-      : null,
+    businessNumber:
+      formatBusinessNumber(
+        composeBusinessNumberFromParts({
+          bn9: businessBn9,
+          programId: businessProgramId,
+          accountRef: businessAccountRef,
+        }) ?? "",
+      ) || null,
     isActive: tenant.isActive,
     memberEmails: "",
+    contactPerson,
     email,
     phone,
     address,

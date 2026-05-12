@@ -7,7 +7,9 @@ type TenantSummary = {
   id: string;
   nameCached: { coreName: string; kindName?: string | null };
   slug: string;
-  businessNumber: string | null;
+  businessBn9: string | null;
+  businessProgramId: string | null;
+  businessAccountRef: string | null;
   isActive: boolean;
   createdAt: string;
 };

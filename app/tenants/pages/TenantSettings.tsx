@@ -1,6 +1,9 @@
 // pages/TenantSettings.tsx
 import React from "react";
 import { useTenant } from "../context/TenantContext";
+import formatBusinessNumber, {
+  composeBusinessNumberFromParts,
+} from "@/utils/formatters/businessNumber";
 
 export const TenantSettingsPage: React.FC = () => {
   const { tenant } = useTenant();
@@ -17,6 +20,16 @@ export const TenantSettingsPage: React.FC = () => {
     nameCached.displayName?.trim() ||
     nameCached.aliasName?.trim() ||
     [nameCached.coreName, nameCached.kindName].filter(Boolean).join(" ").trim();
+  const businessNumberDisplay =
+    formatBusinessNumber(
+      composeBusinessNumberFromParts({
+        bn9: (tenant as { businessBn9?: string | null }).businessBn9,
+        programId: (tenant as { businessProgramId?: string | null })
+          .businessProgramId,
+        accountRef: (tenant as { businessAccountRef?: string | null })
+          .businessAccountRef,
+      }) ?? "",
+    ) || null;
 
   return (
     <div
@@ -36,7 +49,7 @@ export const TenantSettingsPage: React.FC = () => {
           <strong>URL Slug:</strong> /{tenant.slug}
         </p>
         <p>
-          <strong>Business Number:</strong> {tenant.businessNumber || "Not set"}
+          <strong>Business Number:</strong> {businessNumberDisplay || "Not set"}
         </p>
       </section>
 

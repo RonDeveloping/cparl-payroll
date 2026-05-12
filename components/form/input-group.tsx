@@ -44,6 +44,7 @@ interface InputGroupProps<TFormValues extends FieldValues> {
   formatOnChange?: (value: string) => string;
   iconPosition?: "left" | "right";
   inputRef?: React.Ref<HTMLInputElement>;
+  errorClassName?: string;
 }
 
 export default function InputGroup<TFormValues extends FieldValues>({
@@ -69,6 +70,7 @@ export default function InputGroup<TFormValues extends FieldValues>({
   formatOnChange,
   iconPosition = "right",
   inputRef,
+  errorClassName,
 }: InputGroupProps<TFormValues>) {
   const [isFocused, setIsFocused] = useState(false);
   const [previousValue, setPreviousValue] = useState("");
@@ -175,7 +177,11 @@ export default function InputGroup<TFormValues extends FieldValues>({
           </div>
         )}
       </div>
-      {error && <span className={inputGroupStyles.errorText}>{error}</span>}
+      {error && (
+        <span className={cn(inputGroupStyles.errorText, errorClassName)}>
+          {error}
+        </span>
+      )}
     </div>
   );
 }
