@@ -14,6 +14,8 @@ export interface InputWithChangesProps<TFormValues extends FieldValues> {
   error?: string;
   placeholder?: string;
   type?: string;
+  min?: string;
+  max?: string;
   rules?: RegisterOptions<TFormValues, Path<TFormValues>>;
   formatOnChange?: (value: string) => string;
   maxLength?: number;
@@ -25,6 +27,8 @@ export default function InputWithChanges<TFormValues extends FieldValues>({
   error,
   placeholder,
   type = "text",
+  min,
+  max,
   rules,
   formatOnChange,
   maxLength,
@@ -56,6 +60,8 @@ export default function InputWithChanges<TFormValues extends FieldValues>({
           placeholder={placeholder}
           error={error}
           type={inputType}
+          min={min}
+          max={max}
           rules={rules} // Pass rules down to InputGroup (like async validation)
           formatOnChange={formatOnChange}
           maxLength={maxLength}

@@ -1,16 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   UserCircle,
   Shield,
   Package,
   CreditCard,
   MessageSquare,
+  MoreHorizontal,
+  Trash2,
+  UserRoundX,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useTenant } from "@/app/tenants/context/TenantContext";
 import PaymentMethodDetails from "@/components/payments/payment-method-details";
+import { deleteTenant, setTenantActiveState } from "@/lib/actions/tenant";
+import formatBusinessNumber, {
+  composeBusinessNumberFromParts,
+} from "@/utils/formatters/businessNumber";
 
 export type DashboardTileItem = {
   label: string;
@@ -25,6 +34,26 @@ export type DashboardTile = {
   items: DashboardTileItem[];
   icon: "profile" | "security" | "products" | "payments" | "communications";
 };
+
+type OrganizationTenant = {
+  id: string;
+  nameCached: {
+    coreName: string;
+    kindName?: string | null;
+    aliasName?: string | null;
+  };
+  businessBn9: string | null;
+  businessProgramId: string | null;
+  businessAccountRef: string | null;
+  isActive: boolean;
+};
+
+type OrganizationFilter = "all" | "active" | "inactive";
+type OrganizationSort =
+  | "name-asc"
+  | "name-desc"
+  | "operating-as-asc"
+  | "operating-as-desc";
 
 const toneStyles: Record<DashboardTile["tone"], string> = {
   emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -42,6 +71,18 @@ const iconMap: Record<DashboardTile["icon"], typeof UserCircle> = {
   communications: MessageSquare,
 };
 
+function getOrganizationDisplayName(tenant: OrganizationTenant) {
+  return `${tenant.nameCached?.coreName ?? "Employer"}${
+    tenant.nameCached?.kindName ? ` ${tenant.nameCached.kindName}` : ""
+  }${tenant.nameCached?.aliasName ? ` (o/a ${tenant.nameCached.aliasName})` : ""}`;
+}
+
+function getOrganizationOperatingAsName(tenant: OrganizationTenant) {
+  return (
+    tenant.nameCached?.aliasName?.trim() || tenant.nameCached?.coreName || ""
+  );
+}
+
 export default function DashboardTiles({
   tiles,
   userGivenName,
@@ -53,28 +94,174 @@ export default function DashboardTiles({
   userFamilyName?: string | null;
   userPrimaryPostalCode?: string | null;
 }) {
+  const router = useRouter();
   const defaultId = tiles[0]?.id ?? null;
   const [openId, setOpenId] = useState<string | null>(defaultId);
   const { tenants, tenantsLoading } = useTenant();
+  const [organizationTenants, setOrganizationTenants] = useState<
+    OrganizationTenant[]
+  >([]);
+  const [openOrganizationActionId, setOpenOrganizationActionId] = useState<
+    string | null
+  >(null);
+  const [pendingOrganizationAction, setPendingOrganizationAction] = useState<
+    string | null
+  >(null);
+  const [organizationFilter, setOrganizationFilter] =
+    useState<OrganizationFilter>("all");
+  const [organizationSort, setOrganizationSort] =
+    useState<OrganizationSort>("name-asc");
+  const [isOrganizationListMenuOpen, setIsOrganizationListMenuOpen] =
+    useState(false);
+
+  useEffect(() => {
+    setOrganizationTenants(tenants);
+  }, [tenants]);
 
   const activeTile = useMemo(
     () => tiles.find((tile) => tile.id === openId) || null,
     [openId, tiles],
   );
 
+  useEffect(() => {
+    if (activeTile?.id !== "organizations") {
+      setIsOrganizationListMenuOpen(false);
+    }
+  }, [activeTile?.id]);
+
+  const handleOrganizationAction = async (
+    tenant: OrganizationTenant,
+    action: "toggle-active" | "delete",
+  ) => {
+    setOpenOrganizationActionId(null);
+
+    if (action === "toggle-active") {
+      const nextIsActive = !tenant.isActive;
+      const confirmed = window.confirm(
+        nextIsActive
+          ? `Reactivate ${tenant.nameCached.coreName}?`
+          : `Set ${tenant.nameCached.coreName} inactive?`,
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      setPendingOrganizationAction(`${tenant.id}:toggle-active`);
+      const result = await setTenantActiveState(tenant.id, nextIsActive);
+      setPendingOrganizationAction(null);
+
+      if (!result.success) {
+        alert(result.error || "Employer status could not be updated.");
+        return;
+      }
+
+      setOrganizationTenants((currentTenants) =>
+        currentTenants.map((currentTenant) =>
+          currentTenant.id === tenant.id
+            ? { ...currentTenant, isActive: nextIsActive }
+            : currentTenant,
+        ),
+      );
+      router.refresh();
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete ${tenant.nameCached.coreName}? This only works when the employer has no related records.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setPendingOrganizationAction(`${tenant.id}:delete`);
+    const result = await deleteTenant(tenant.id);
+    setPendingOrganizationAction(null);
+
+    if (!result.success) {
+      alert(
+        result.error ||
+          "Employer could not be deleted. Set it inactive instead.",
+      );
+      return;
+    }
+
+    setOrganizationTenants((currentTenants) =>
+      currentTenants.filter((currentTenant) => currentTenant.id !== tenant.id),
+    );
+    router.refresh();
+  };
+
   const organizationItems = useMemo(() => {
     if (tenantsLoading) {
       return [{ label: "Employers", value: "Loading..." }];
     }
-    if (tenants.length === 0) {
+    if (organizationTenants.length === 0) {
       return [{ label: "Employers", value: "No employers yet" }];
     }
 
-    return tenants.map((tenant) => ({
-      label: tenant.nameCached?.coreName ?? "Employer",
-      value: tenant.isActive ? "Active" : "Inactive",
+    const filteredTenants = organizationTenants
+      .filter((tenant) => {
+        if (organizationFilter === "active") {
+          return tenant.isActive;
+        }
+        if (organizationFilter === "inactive") {
+          return !tenant.isActive;
+        }
+        return true;
+      })
+      .sort((leftTenant, rightTenant) => {
+        const sortByOperatingAs =
+          organizationSort === "operating-as-asc" ||
+          organizationSort === "operating-as-desc";
+        const leftName = sortByOperatingAs
+          ? getOrganizationOperatingAsName(leftTenant).toLowerCase()
+          : getOrganizationDisplayName(leftTenant).toLowerCase();
+        const rightName = sortByOperatingAs
+          ? getOrganizationOperatingAsName(rightTenant).toLowerCase()
+          : getOrganizationDisplayName(rightTenant).toLowerCase();
+        if (leftName === rightName) {
+          return 0;
+        }
+        if (
+          organizationSort === "name-asc" ||
+          organizationSort === "operating-as-asc"
+        ) {
+          return leftName < rightName ? -1 : 1;
+        }
+        return leftName > rightName ? -1 : 1;
+      });
+
+    if (filteredTenants.length === 0) {
+      return [
+        {
+          label: "Employers",
+          value:
+            organizationFilter === "active"
+              ? "No active employers"
+              : "No inactive employers",
+        },
+      ];
+    }
+
+    return filteredTenants.map((tenant) => ({
+      ...tenant,
+      businessNumber:
+        formatBusinessNumber(
+          composeBusinessNumberFromParts({
+            bn9: tenant.businessBn9,
+            programId: tenant.businessProgramId,
+            accountRef: tenant.businessAccountRef,
+          }) ?? "",
+        ) || "Valid business no. is required in remitting and reporting.",
+      displayName: getOrganizationDisplayName(tenant),
     }));
-  }, [tenants, tenantsLoading]);
+  }, [
+    organizationFilter,
+    organizationSort,
+    organizationTenants,
+    tenantsLoading,
+  ]);
 
   return (
     <div className="space-y-5">
@@ -115,21 +302,149 @@ export default function DashboardTiles({
         })}
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div
+        className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${
+          activeTile?.id === "organizations" && isOrganizationListMenuOpen
+            ? "overflow-visible"
+            : "overflow-hidden"
+        }`}
+      >
         {activeTile ? (
           <div>
-            <div className="flex items-center gap-2 border-b border-slate-200 px-5 py-3 bg-slate-50">
-              <div
-                className={`flex h-6 w-6 items-center justify-center rounded-full ${toneStyles[activeTile.tone].split(" ")[2]}`}
-              >
-                {(() => {
-                  const Icon = iconMap[activeTile.icon];
-                  return <Icon className="h-3 w-3" />;
-                })()}
+            <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-5 py-3 bg-slate-50">
+              <div className="flex items-center gap-2">
+                <div
+                  className={`flex h-6 w-6 items-center justify-center rounded-full ${toneStyles[activeTile.tone].split(" ")[2]}`}
+                >
+                  {(() => {
+                    const Icon = iconMap[activeTile.icon];
+                    return <Icon className="h-3 w-3" />;
+                  })()}
+                </div>
+                <span className="text-sm font-semibold text-slate-900">
+                  {activeTile.title}
+                </span>
               </div>
-              <span className="text-sm font-semibold text-slate-900">
-                {activeTile.title}
-              </span>
+              {activeTile.id === "organizations" && (
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setIsOrganizationListMenuOpen((isOpen) => !isOpen)
+                    }
+                    aria-expanded={isOrganizationListMenuOpen}
+                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    Sort / Filter
+                  </button>
+                  {isOrganizationListMenuOpen && (
+                    <div className="absolute right-0 top-10 z-20 min-w-52 rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
+                      <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                        Filter
+                      </p>
+                      <div className="space-y-1 pb-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOrganizationFilter("all");
+                          }}
+                          className={`w-full rounded-md px-2 py-1.5 text-left text-sm transition ${
+                            organizationFilter === "all"
+                              ? "bg-slate-100 text-slate-900"
+                              : "text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          All employers
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOrganizationFilter("active");
+                          }}
+                          className={`w-full rounded-md px-2 py-1.5 text-left text-sm transition ${
+                            organizationFilter === "active"
+                              ? "bg-slate-100 text-slate-900"
+                              : "text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          Active only
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOrganizationFilter("inactive");
+                          }}
+                          className={`w-full rounded-md px-2 py-1.5 text-left text-sm transition ${
+                            organizationFilter === "inactive"
+                              ? "bg-slate-100 text-slate-900"
+                              : "text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          Inactive only
+                        </button>
+                      </div>
+                      <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                        Sort
+                      </p>
+                      <div className="space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOrganizationSort("name-asc");
+                          }}
+                          className={`w-full rounded-md px-2 py-1.5 text-left text-sm transition ${
+                            organizationSort === "name-asc"
+                              ? "bg-slate-100 text-slate-900"
+                              : "text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          Name A-Z
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOrganizationSort("name-desc");
+                          }}
+                          className={`w-full rounded-md px-2 py-1.5 text-left text-sm transition ${
+                            organizationSort === "name-desc"
+                              ? "bg-slate-100 text-slate-900"
+                              : "text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          Name Z-A
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOrganizationSort("operating-as-asc");
+                          }}
+                          className={`w-full rounded-md px-2 py-1.5 text-left text-sm transition ${
+                            organizationSort === "operating-as-asc"
+                              ? "bg-slate-100 text-slate-900"
+                              : "text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          Operating As A-Z
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOrganizationSort("operating-as-desc");
+                          }}
+                          className={`w-full rounded-md px-2 py-1.5 text-left text-sm transition ${
+                            organizationSort === "operating-as-desc"
+                              ? "bg-slate-100 text-slate-900"
+                              : "text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          Operating As Z-A
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div className="p-5 space-y-4">
               {activeTile.id === "payments" ? (
@@ -141,20 +456,125 @@ export default function DashboardTiles({
                 />
               ) : (
                 <div className="space-y-3 text-sm">
-                  {(activeTile.id === "organizations"
-                    ? organizationItems
-                    : activeTile.items
-                  ).map((item, index) => (
-                    <div
-                      key={`${activeTile.id}-${item.label}-${item.value}-${index}`}
-                      className="flex items-center justify-between text-slate-600"
-                    >
-                      <span>{item.label}</span>
-                      <span className="font-medium text-slate-900">
-                        {item.value}
-                      </span>
-                    </div>
-                  ))}
+                  {activeTile.id === "organizations"
+                    ? organizationItems.map((tenant) => {
+                        if (!("id" in tenant)) {
+                          return (
+                            <div
+                              key={`${activeTile.id}-${tenant.label}-${tenant.value}`}
+                              className="flex items-center justify-between text-slate-600"
+                            >
+                              <span>{tenant.label}</span>
+                              <span className="font-medium text-slate-900">
+                                {tenant.value}
+                              </span>
+                            </div>
+                          );
+                        }
+
+                        const isActionMenuOpen =
+                          openOrganizationActionId === tenant.id;
+                        const isToggling =
+                          pendingOrganizationAction ===
+                          `${tenant.id}:toggle-active`;
+                        const isDeleting =
+                          pendingOrganizationAction === `${tenant.id}:delete`;
+
+                        return (
+                          <div
+                            key={tenant.id}
+                            className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-slate-900">
+                                    {tenant.displayName}
+                                  </span>
+                                  {!tenant.isActive && (
+                                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                                      Inactive
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="mt-1 text-xs text-slate-500">
+                                  {tenant.businessNumber}
+                                </p>
+                              </div>
+                              <div className="relative flex shrink-0 justify-end">
+                                <button
+                                  type="button"
+                                  aria-label={`Manage ${tenant.displayName}`}
+                                  aria-expanded={isActionMenuOpen}
+                                  onClick={() =>
+                                    setOpenOrganizationActionId((currentId) =>
+                                      currentId === tenant.id
+                                        ? null
+                                        : tenant.id,
+                                    )
+                                  }
+                                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </button>
+                                {isActionMenuOpen && (
+                                  <div className="absolute right-0 top-11 z-10 min-w-44 rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        void handleOrganizationAction(
+                                          tenant,
+                                          "toggle-active",
+                                        )
+                                      }
+                                      disabled={isToggling || isDeleting}
+                                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      <UserRoundX className="h-4 w-4" />
+                                      <span>
+                                        {tenant.isActive
+                                          ? isToggling
+                                            ? "Setting inactive..."
+                                            : "Set inactive"
+                                          : isToggling
+                                            ? "Reactivating..."
+                                            : "Reactivate"}
+                                      </span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        void handleOrganizationAction(
+                                          tenant,
+                                          "delete",
+                                        )
+                                      }
+                                      disabled={isToggling || isDeleting}
+                                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                      <span>
+                                        {isDeleting ? "Deleting..." : "Delete"}
+                                      </span>
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    : activeTile.items.map((item, index) => (
+                        <div
+                          key={`${activeTile.id}-${item.label}-${item.value}-${index}`}
+                          className="flex items-center justify-between text-slate-600"
+                        >
+                          <span>{item.label}</span>
+                          <span className="font-medium text-slate-900">
+                            {item.value}
+                          </span>
+                        </div>
+                      ))}
                 </div>
               )}
               {activeTile.id === "organizations" && (

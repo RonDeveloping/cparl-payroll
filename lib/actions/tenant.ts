@@ -349,3 +349,85 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
     }),
   );
 }
+
+async function requireOwnedTenant(tenantId: string, userId: string) {
+  const tenant = await prisma.tenant.findFirst({
+    where: {
+      id: tenantId,
+      members: {
+        some: {
+          userId,
+          role: "OWNER",
+        },
+      },
+    },
+    select: {
+      id: true,
+      isActive: true,
+    },
+  });
+
+  if (!tenant) {
+    throw new Error("Employer not found or access denied.");
+  }
+
+  return tenant;
+}
+
+export async function setTenantActiveState(
+  tenantId: string,
+  isActive: boolean,
+) {
+  const session = await getSession();
+  if (!session?.userId) {
+    return { success: false, error: "Unauthorized" } as const;
+  }
+
+  return await safe(
+    (async () => {
+      await requireOwnedTenant(tenantId, session.userId);
+
+      return prisma.tenant.update({
+        where: { id: tenantId },
+        data: { isActive },
+        select: {
+          id: true,
+          isActive: true,
+        },
+      });
+    })(),
+  );
+}
+
+export async function deleteTenant(tenantId: string) {
+  const session = await getSession();
+  if (!session?.userId) {
+    return { success: false, error: "Unauthorized" } as const;
+  }
+
+  return await safe(
+    (async () => {
+      await requireOwnedTenant(tenantId, session.userId);
+
+      try {
+        return await prisma.$transaction(async (tx) => {
+          await tx.tenantSettings.deleteMany({
+            where: { tenantId },
+          });
+          await tx.tenantUser.deleteMany({
+            where: { tenantId },
+          });
+
+          return tx.tenant.delete({
+            where: { id: tenantId },
+            select: { id: true },
+          });
+        });
+      } catch {
+        throw new Error(
+          "This employer can't be deleted because it has related records. Set it inactive instead.",
+        );
+      }
+    })(),
+  );
+}

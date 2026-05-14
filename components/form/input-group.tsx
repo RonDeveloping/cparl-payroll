@@ -35,6 +35,8 @@ interface InputGroupProps<TFormValues extends FieldValues> {
   icon?: React.ReactNode;
   inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
   autoComplete?: string;
+  min?: string;
+  max?: string;
   maxLength?: number;
   value?: string;
   overlay?: React.ReactNode;
@@ -61,6 +63,8 @@ export default function InputGroup<TFormValues extends FieldValues>({
   icon,
   inputMode,
   autoComplete,
+  min,
+  max,
   maxLength,
   value,
   overlay,
@@ -154,6 +158,8 @@ export default function InputGroup<TFormValues extends FieldValues>({
           onClick={onClick}
           inputMode={inputMode}
           autoComplete={autoComplete}
+          min={min}
+          max={max}
           maxLength={maxLength}
           value={value}
           className={cn(

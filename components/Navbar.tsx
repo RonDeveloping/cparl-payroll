@@ -205,7 +205,7 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
                   type="button"
                   className={navbarStyles.settingsMenuItem}
                   onClick={() => {
-                    router.push("/employees/new");
+                    router.push("/employees/new/edit");
                     setIsCreateMenuOpen(false);
                   }}
                 >

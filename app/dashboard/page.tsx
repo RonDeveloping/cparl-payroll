@@ -53,8 +53,8 @@ export default async function DashboardPage() {
     },
     {
       id: "organizations",
-      title: "Organizations",
-      subtitle: "Employers",
+      title: "Employers",
+      subtitle: "",
       tone: "violet",
       items: [],
       icon: "products",

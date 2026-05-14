@@ -5,7 +5,11 @@ import { Tenant } from "@prisma/client"; //schema generated types from Prisma
 
 type TenantSummary = {
   id: string;
-  nameCached: { coreName: string; kindName?: string | null };
+  nameCached: {
+    coreName: string;
+    kindName?: string | null;
+    aliasName?: string | null;
+  };
   slug: string;
   businessBn9: string | null;
   businessProgramId: string | null;
