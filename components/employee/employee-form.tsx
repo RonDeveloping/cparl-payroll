@@ -52,7 +52,9 @@ export function EmployeeForm({ errors }: EmployeeFormProps) {
             error={errors.sin?.message}
           />
           <CustomDatePickerWithChanges<ContactFormInput>
-            label="Date of Birth"
+            label={
+              <Clarification term="Date of Birth" description="YYYY-MM-DD" />
+            }
             name="dob"
             minDate={minDob}
             maxDate={maxDob}

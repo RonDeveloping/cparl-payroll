@@ -81,9 +81,21 @@ function isValidDobRange(value: string) {
 }
 
 export const contactSchema = z.object({
-  givenName: z.string().min(1, "First name is required"),
+  givenName: z
+    .string()
+    .trim()
+    .min(1, "First name is required")
+    .refine((val) => !/\d/.test(val), {
+      message: "First name cannot contain numbers",
+    }),
   middleName: z.string().optional(),
-  familyName: z.string().min(1, "Last name is required"),
+  familyName: z
+    .string()
+    .trim()
+    .min(1, "Last name is required")
+    .refine((val) => !/\d/.test(val), {
+      message: "Last name cannot contain numbers",
+    }),
   nickName: z.string().optional(),
   prefix: z.string().optional(),
   suffix: z.string().optional(),

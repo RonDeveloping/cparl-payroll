@@ -48,7 +48,9 @@ export default function InputWithChanges<TFormValues extends FieldValues>({
         {/* Change indicator */}
         {showChanges && change && (
           <span className={inputWithChangesStyles.changeText}>
-            {String(change.before)}
+            {change.before === "" || change.before == null
+              ? "(empty)"
+              : String(change.before)}
           </span>
         )}
       </div>

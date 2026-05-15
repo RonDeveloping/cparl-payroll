@@ -1,12 +1,24 @@
 // lib/validations/register-schema.ts
 
 import { z } from "zod";
-import { passwordRules, resetPasswordSchema } from "./password-schema";
+import { passwordRules } from "./password-schema";
 
 export const registerSchema = z
   .object({
-    givenName: z.string().min(1, "Given name is required"),
-    familyName: z.string().min(1, "Family name is required"),
+    givenName: z
+      .string()
+      .trim()
+      .min(1, "Given name is required")
+      .refine((val) => !/\d/.test(val), {
+        message: "Given name cannot contain numbers",
+      }),
+    familyName: z
+      .string()
+      .trim()
+      .min(1, "Family name is required")
+      .refine((val) => !/\d/.test(val), {
+        message: "Family name cannot contain numbers",
+      }),
     email: z.string().email("Invalid email address").trim(),
     phone: z
       .string()

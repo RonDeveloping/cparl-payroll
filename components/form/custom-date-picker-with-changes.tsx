@@ -240,7 +240,9 @@ export default function CustomDatePickerWithChanges<
         <CapLabel>{label}</CapLabel>
         {showChanges && change && (
           <span className={inputWithChangesStyles.changeText}>
-            {String(change.before)}
+            {change.before === "" || change.before == null
+              ? "(empty)"
+              : String(change.before)}
           </span>
         )}
       </div>
@@ -404,7 +406,7 @@ export default function CustomDatePickerWithChanges<
                 ))}
               </div>
 
-              <div className="grid w-full grid-cols-[auto_1fr_auto_auto] gap-0.5">
+              <div className="grid w-full grid-cols-[auto_1fr_auto] gap-0.5">
                 <button
                   type="button"
                   onClick={() => {
@@ -433,35 +435,14 @@ export default function CustomDatePickerWithChanges<
                       new Date(visibleMonth.getFullYear(), month, 1),
                     );
                   }}
-                  className="rounded-md border border-slate-300 bg-slate-100/80 px-2 py-1.5 text-right text-sm font-semibold text-slate-900"
+                  className="rounded-md border border-slate-300 bg-slate-100/80 px-2 py-1.5 text-center text-sm font-semibold text-slate-900"
                 >
                   {MONTH_NAMES.map((monthName, idx) => (
                     <option key={monthName} value={idx}>
-                      {monthName}
+                      {String(idx + 1).padStart(2, "0")}-{monthName}
                     </option>
                   ))}
                 </select>
-
-                <input
-                  aria-label="Select month number"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={2}
-                  value={String(visibleMonth.getMonth() + 1).padStart(2, "0")}
-                  onChange={(e) => {
-                    const digits = e.target.value
-                      .replace(/\D/g, "")
-                      .slice(0, 2);
-                    if (digits.length === 0) return;
-                    const nextMonth = Number(digits);
-                    if (Number.isNaN(nextMonth)) return;
-                    if (nextMonth < 1 || nextMonth > 12) return;
-                    setVisibleMonthSafely(
-                      new Date(visibleMonth.getFullYear(), nextMonth - 1, 1),
-                    );
-                  }}
-                  className="w-16 rounded-md border border-slate-300 bg-slate-100/80 px-2 py-1.5 text-center text-sm font-semibold tabular-nums text-slate-900"
-                />
 
                 <button
                   type="button"
@@ -514,6 +495,7 @@ export default function CustomDatePickerWithChanges<
                 );
                 const disabled = isDisabled(date);
                 const selected = day === selectedDayInVisibleMonth;
+                const isFallbackDefaultDay = !selectedDate && selected;
 
                 return (
                   <button
@@ -522,10 +504,12 @@ export default function CustomDatePickerWithChanges<
                     onClick={() => onSelectDate(date)}
                     disabled={disabled}
                     className={cn(
-                      "h-6 w-full rounded-md text-[11px] transition-transform duration-150 hover:scale-105",
-                      selected
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-700 hover:bg-slate-100",
+                      "h-6 w-full rounded-md text-[11px] transition-transform duration-150 hover:scale-110",
+                      isFallbackDefaultDay
+                        ? "bg-slate-200 text-slate-500"
+                        : selected
+                          ? "bg-slate-900 text-white"
+                          : "text-slate-700 hover:bg-slate-100",
                       disabled &&
                         "cursor-not-allowed text-slate-300 hover:bg-transparent",
                     )}

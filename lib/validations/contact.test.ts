@@ -45,4 +45,22 @@ describe("contactSchema postalCode", () => {
     });
     expect(result.success).toBe(true);
   });
+
+  it("rejects digits in given/family names", () => {
+    const result = contactSchema.safeParse({
+      givenName: "J0hn",
+      familyName: "D03",
+      city: "Ottawa",
+      province: "ON",
+      country: "Canada",
+      email: "john@example.com",
+      postalCode: "K1A 0B1",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const messages = result.error.issues.map((issue) => issue.message);
+      expect(messages).toContain("First name cannot contain numbers");
+      expect(messages).toContain("Last name cannot contain numbers");
+    }
+  });
 });
