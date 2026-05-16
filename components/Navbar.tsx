@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { logoutAction } from "@/lib/actions/auth-actions";
 import { navbarStyles } from "@/constants/styles";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,7 @@ type NavbarUser = {
 export default function Navbar({ user }: { user: NavbarUser | null }) {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const lastScrollY = useRef(0);
   const [isScrolledDown, setIsScrolledDown] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -88,8 +89,13 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
   ).toUpperCase();
   const isPayrollDashboard = pathname?.startsWith("/payroll");
   const createTitle = isPayrollDashboard ? "Create Employee" : "Create Tenant";
-  const isCreatingTenant = pathname?.startsWith("/tenants/new");
   const isAuthenticated = Boolean(user);
+  const selectedTenantId = searchParams.get("tenantId")?.trim() || "";
+  const isInEmployerPayrollOverview =
+    isPayrollDashboard && Boolean(selectedTenantId);
+  const canCreateEmployer = isAuthenticated && !isInEmployerPayrollOverview;
+  const canCreateEmployee = isAuthenticated && Boolean(selectedTenantId);
+  const isCreatingTenant = pathname?.startsWith("/tenants/new");
   const homeHref = isCreatingTenant
     ? "/payments"
     : user
@@ -193,8 +199,14 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
               <div className={navbarStyles.settingsMenuDropdown}>
                 <button
                   type="button"
-                  className={navbarStyles.settingsMenuItem}
+                  className={cn(
+                    navbarStyles.settingsMenuItem,
+                    !canCreateEmployer &&
+                      "cursor-not-allowed text-stone-400 hover:bg-transparent",
+                  )}
+                  disabled={!canCreateEmployer}
                   onClick={() => {
+                    if (!canCreateEmployer) return;
                     router.push("/tenants/new/edit");
                     setIsCreateMenuOpen(false);
                   }}
@@ -203,9 +215,17 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
                 </button>
                 <button
                   type="button"
-                  className={navbarStyles.settingsMenuItem}
+                  className={cn(
+                    navbarStyles.settingsMenuItem,
+                    !canCreateEmployee &&
+                      "cursor-not-allowed text-stone-400 hover:bg-transparent",
+                  )}
+                  disabled={!canCreateEmployee}
                   onClick={() => {
-                    router.push("/employees/new/edit");
+                    if (!canCreateEmployee) return;
+                    router.push(
+                      `/employees/new/edit?tenantId=${selectedTenantId}`,
+                    );
                     setIsCreateMenuOpen(false);
                   }}
                 >

@@ -87,7 +87,7 @@ export default function TenantsPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <Link
-                      href="/payroll"
+                      href={`/payroll?tenantId=${tenant.id}`}
                       className="text-xl font-semibold text-slate-900 hover:text-emerald-700 transition-colors"
                     >
                       {tenant.nameCached.coreName}

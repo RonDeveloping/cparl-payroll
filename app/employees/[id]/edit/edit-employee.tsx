@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -23,26 +23,32 @@ import { EmployeeForm } from "@/components/employee/employee-form";
 interface EditEmployeeFormProps {
   paramsPromise: Promise<{ id: string }>;
   initialData: ContactFormInput;
+  bankAccountStatuses: readonly string[];
+  tenantId?: string;
 }
 
 export default function EditEmployeeForm({
   paramsPromise,
   initialData,
+  bankAccountStatuses,
+  tenantId,
 }: EditEmployeeFormProps) {
   const params = use(paramsPromise);
   const router = useRouter();
+
+  const form = useForm<ContactFormInput>({
+    resolver: zodResolver(contactSchema),
+    values: initialData,
+    shouldFocusError: false,
+    mode: "onChange",
+  });
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting, isDirty, dirtyFields },
     getValues,
-  } = useForm<ContactFormInput>({
-    resolver: zodResolver(contactSchema),
-    values: initialData,
-    shouldFocusError: false,
-    mode: "onChange",
-  });
+  } = form;
 
   const currentValues = getValues();
 
@@ -65,7 +71,7 @@ export default function EditEmployeeForm({
 
   const onSave = async (data: ContactFormInput) => {
     try {
-      const result = await upsertContactPEA(data, params.id);
+      const result = await upsertContactPEA(data, params.id, tenantId);
       if (result.success && result.data?.id) {
         router.refresh();
         router.push(`/employees`);
@@ -90,21 +96,26 @@ export default function EditEmployeeForm({
       showChanges={showChanges}
       onEyeToggle={() => setShowChanges((v) => !v)}
     >
-      <SmartFormProvider<ContactFormInput>
-        value={{
-          register: registerFormatted,
-          changes,
-          showChanges,
-        }}
-      >
-        <form
-          id="employee-form"
-          onSubmit={handleSubmit(onSave)}
-          className="space-y-4"
+      <FormProvider {...form}>
+        <SmartFormProvider<ContactFormInput>
+          value={{
+            register: registerFormatted,
+            changes,
+            showChanges,
+          }}
         >
-          <EmployeeForm errors={errors} />
-        </form>
-      </SmartFormProvider>
+          <form
+            id="employee-form"
+            onSubmit={handleSubmit(onSave)}
+            className="space-y-4"
+          >
+            <EmployeeForm
+              errors={errors}
+              bankAccountStatuses={bankAccountStatuses}
+            />
+          </form>
+        </SmartFormProvider>
+      </FormProvider>
     </FormLayout>
   );
 }

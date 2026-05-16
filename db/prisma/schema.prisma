@@ -402,6 +402,7 @@ model Employment {
   department   String?
   startDate    DateTime  @map("start_date")
   endDate      DateTime? @map("end_date")
+  terminationReason TerminationReason? @map("termination_reason")
   countryCode  String    @default("CA") @map("country_code")
   provinceCode String    @map("province_code")
   createdAt    DateTime  @default(now()) @map("created_at")
@@ -539,6 +540,9 @@ model BankAccount {
   value             Decimal?         @db.Decimal(10, 2) @map("value") // The $ or % amount
   priority          Int              @default(1) @map("priority") // Process Fixed/Percentage before Remainder
   isActive          Boolean          @default(true) @map("is_active")
+
+  // Micro-deposit verification
+  verificationStatus BankAccountVerificationStatus @default(UNVERIFIED) @map("verification_status")
 
   employee          Employee         @relation(fields: [employeeId], references: [id])
   // Prisma uses the @relation line to understand how to perform JOINs
@@ -708,6 +712,24 @@ enum EmployeeStatus {
   ON_LEAVE @map("on_leave")
 }
 
+enum TerminationReason {
+  ROE_A_SHORTAGE_OF_WORK @map("A") // A - Shortage of work / end of contract or season
+  ROE_B_STRIKE_OR_LOCKOUT @map("B") // B - Strike or lockout
+  ROE_C_RETURN_TO_SCHOOL @map("C") // C - Return to school
+  ROE_D_ILLNESS_OR_INJURY @map("D") // D - Illness or injury
+  ROE_E_QUIT @map("E") // E - Quit
+  ROE_F_MATERNITY @map("F") // F - Maternity
+  ROE_G_RETIREMENT @map("G") // G - Retirement
+  ROE_H_WORK_SHARING @map("H") // H - Work-sharing
+  ROE_J_APPRENTICE_TRAINING @map("J") // J - Apprentice training
+  ROE_K_OTHER @map("K") // K - Other
+  ROE_M_DISMISSAL @map("M") // M - Dismissal
+  ROE_N_LEAVE_OF_ABSENCE @map("N") // N - Leave of absence
+  ROE_P_PARENTAL @map("P") // P - Parental
+  ROE_Z_COMPASSIONATE_CARE_OR_FAMILY_CAREGIVER @map("Z") // Z - Compassionate care / family caregiver
+  @@map("termination_reason")
+}
+
 enum PayType {
   HOURLY @map("hourly")
   SALARY @map("salary")
@@ -744,6 +766,14 @@ enum DistributionType {
   FIXED_AMOUNT @map("fixed_amount")
   PERCENTAGE @map("percentage")
   REMAINDER @map("remainder")
+}
+
+enum BankAccountVerificationStatus {
+  UNVERIFIED @map("unverified")
+  PENDING    @map("pending")
+  VERIFIED   @map("verified")
+  FAILED     @map("failed")
+  @@map("bank_account_verification_status")
 }
 
 enum DisbursementStatus {

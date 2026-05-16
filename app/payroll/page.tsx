@@ -1,32 +1,153 @@
 import Link from "next/link";
+import { getUserTenants } from "@/lib/dal/tenant";
+import prisma from "@/db/prismaDrizzle";
 
-export default function PayrollOverviewPage() {
+function getEmployerDisplayName(nameCached: unknown): string {
+  const fallback = "Employer";
+  if (!nameCached || typeof nameCached !== "object") return fallback;
+
+  const record = nameCached as {
+    coreName?: unknown;
+    kindName?: unknown;
+    aliasName?: unknown;
+    displayName?: unknown;
+  };
+
+  const displayName =
+    typeof record.displayName === "string" ? record.displayName.trim() : "";
+  const aliasName =
+    typeof record.aliasName === "string" ? record.aliasName.trim() : "";
+  const coreName =
+    typeof record.coreName === "string" ? record.coreName.trim() : "";
+  const kindName =
+    typeof record.kindName === "string" ? record.kindName.trim() : "";
+
+  if (displayName) return displayName;
+  if (aliasName && coreName) {
+    return `${coreName}${kindName ? ` ${kindName}` : ""} (o/a ${aliasName})`;
+  }
+
+  const legalName = [coreName, kindName].filter(Boolean).join(" ").trim();
+  if (legalName) return legalName;
+  if (aliasName) return aliasName;
+
+  return fallback;
+}
+
+function getEmployeeDisplayName(nameCached: unknown): string {
+  if (!nameCached || typeof nameCached !== "object") return "Unnamed employee";
+
+  const record = nameCached as {
+    displayName?: unknown;
+    coreName?: unknown;
+    kindName?: unknown;
+    aliasName?: unknown;
+  };
+
+  const displayName =
+    typeof record.displayName === "string" ? record.displayName.trim() : "";
+  const coreName =
+    typeof record.coreName === "string" ? record.coreName.trim() : "";
+  const kindName =
+    typeof record.kindName === "string" ? record.kindName.trim() : "";
+  const aliasName =
+    typeof record.aliasName === "string" ? record.aliasName.trim() : "";
+
+  if (displayName) return displayName;
+  const fullName = [coreName, kindName].filter(Boolean).join(" ").trim();
+  if (fullName) return fullName;
+  if (aliasName) return aliasName;
+  return "Unnamed employee";
+}
+
+export default async function PayrollOverviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tenantId?: string }>;
+}) {
+  const { tenantId } = await searchParams;
+  const tenants = await getUserTenants();
+  const activeTenants = tenants.filter((tenant) => tenant.isActive);
+  const selectedTenant = tenantId
+    ? (tenants.find((tenant) => tenant.id === tenantId) ?? null)
+    : null;
+  const hasInvalidTenantSelection = Boolean(tenantId) && !selectedTenant;
+  const preferredTenant = hasInvalidTenantSelection
+    ? null
+    : (selectedTenant ?? activeTenants[0] ?? tenants[0] ?? null);
+  const employerName = preferredTenant
+    ? getEmployerDisplayName(preferredTenant.nameCached)
+    : "No employer selected";
+  const selectedTenantId = preferredTenant?.id ?? "";
+  const payrollHref = selectedTenantId
+    ? `/payroll?tenantId=${selectedTenantId}`
+    : "/payroll";
+  const startPayrollHref = `${payrollHref}#upcoming-payroll-calendar`;
+  const reviewDraftsHref = `${payrollHref}#payroll-activity`;
+  const viewEmployeesHref = selectedTenantId
+    ? `/employees?tenantId=${selectedTenantId}`
+    : "/employees";
+  const totalEmployeeCount = selectedTenantId
+    ? await prisma.employee.count({ where: { tenantId: selectedTenantId } })
+    : 0;
+  const employees = selectedTenantId
+    ? await prisma.employee.findMany({
+        where: { tenantId: selectedTenantId },
+        select: {
+          contactId: true,
+          nameCached: true,
+          emailCached: true,
+          status: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      })
+    : [];
+
+  if (hasInvalidTenantSelection) {
+    return (
+      <div className="min-h-[calc(100vh-70px)] bg-slate-50 px-6 py-10">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
+          <h1 className="text-xl font-semibold">Employer context not found</h1>
+          <p className="mt-2 text-sm">
+            The selected employer no longer exists or is unavailable. Choose an
+            employer to continue to payroll.
+          </p>
+          <Link
+            href="/tenants"
+            className="mt-4 inline-flex items-center rounded-md bg-amber-700 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-800"
+          >
+            Go to Employers
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-[calc(100vh-70px)] bg-slate-50 px-6 py-10">
       <div className="mx-auto max-w-6xl space-y-8">
         <header className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-600">
-                Payroll Overview
-              </p>
               <h1 className="mt-3 text-3xl font-semibold text-slate-900">
-                Run, review, and reconcile payroll in one view
+                {`Payroll Overview of ${employerName}`}
               </h1>
               <p className="mt-2 text-slate-600">
                 Monitor upcoming runs, funding readiness, and compliance status
-                for your employer organizations.
+                for this employer.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Link
-                href="/payroll"
+                href={startPayrollHref}
                 className="rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
               >
                 Start Payroll Run
               </Link>
               <Link
-                href="/payroll"
+                href={reviewDraftsHref}
                 className="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:text-emerald-700"
               >
                 Review Drafts
@@ -70,7 +191,10 @@ export default function PayrollOverviewPage() {
               ))}
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div
+              id="upcoming-payroll-calendar"
+              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+            >
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-900">
                   Upcoming Payroll Calendar
@@ -115,13 +239,16 @@ export default function PayrollOverviewPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div
+              id="payroll-activity"
+              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+            >
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-900">
                   Payroll Activity
                 </h2>
                 <Link
-                  href="/payroll"
+                  href={payrollHref}
                   className="text-sm font-semibold text-emerald-700 hover:text-emerald-600"
                 >
                   View all activity
@@ -160,9 +287,7 @@ export default function PayrollOverviewPage() {
                 ))}
               </div>
             </div>
-          </div>
 
-          <aside className="space-y-6">
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
                 Compliance
@@ -185,6 +310,76 @@ export default function PayrollOverviewPage() {
                 ))}
               </div>
             </div>
+          </div>
+
+          <aside className="space-y-6">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Employees for This Employer ({totalEmployeeCount})
+                </h2>
+                <div className="flex items-center gap-4">
+                  <Link
+                    href={viewEmployeesHref}
+                    className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                  >
+                    View all
+                  </Link>
+                  <Link
+                    href={
+                      selectedTenantId
+                        ? `/employees/new/edit?tenantId=${selectedTenantId}`
+                        : "/employees/new/edit"
+                    }
+                    className="text-sm font-semibold text-emerald-700 hover:text-emerald-600"
+                  >
+                    Add employee
+                  </Link>
+                </div>
+              </div>
+
+              {totalEmployeeCount > employees.length && (
+                <p className="mt-2 text-xs text-slate-500">
+                  Showing the most recent {employees.length} of{" "}
+                  {totalEmployeeCount} employees.
+                </p>
+              )}
+
+              {employees.length === 0 ? (
+                <p className="mt-4 text-sm text-slate-500">
+                  No employees linked to this employer yet.
+                </p>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {employees.map((employee) => (
+                    <div
+                      key={`${employee.contactId}-${employee.createdAt.toISOString()}`}
+                      className="flex items-center justify-between rounded-xl border border-slate-100 px-4 py-3"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {getEmployeeDisplayName(employee.nameCached)}
+                        </p>
+                        <p className="text-sm text-slate-500">
+                          {employee.emailCached || "No email on file"}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                          {employee.status.toLowerCase()}
+                        </span>
+                        <Link
+                          href={`/employees/${employee.contactId}/edit?tenantId=${selectedTenantId}`}
+                          className="text-sm font-semibold text-emerald-700 hover:text-emerald-600"
+                        >
+                          Edit
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-6 text-emerald-900">
               <h3 className="text-base font-semibold">Suggested next step</h3>
@@ -193,7 +388,7 @@ export default function PayrollOverviewPage() {
                 confirmations before Feb 24.
               </p>
               <Link
-                href="/payroll"
+                href={payrollHref}
                 className="mt-4 inline-flex items-center text-sm font-semibold text-emerald-700 hover:text-emerald-600"
               >
                 Open checklist

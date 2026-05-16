@@ -18,6 +18,16 @@ interface CustomDatePickerWithChangesProps<TFormValues extends FieldValues> {
   maxDate?: string; // YYYY-MM-DD
   /** Year jump amounts shown as buttons. Defaults to [30, 20, 10]. */
   yearJumps?: number[];
+  /**
+   * Default year offset when field has no value.
+   * Example: -18 shows 18 years earlier; 0 shows current year.
+   */
+  defaultYearOffset?: number;
+  /**
+   * Whether positive year jumps are shown in reverse order.
+   * Defaults to true for legacy layout (e.g. +10 +20 +30 for [30,20,10]).
+   */
+  reversePositiveYearJumps?: boolean;
   /** Show SMTWTFS weekday header row and align days to weekday columns. Defaults to false. */
   showWeekdays?: boolean;
 }
@@ -88,6 +98,8 @@ export default function CustomDatePickerWithChanges<
   minDate,
   maxDate,
   yearJumps = [30, 20, 10],
+  defaultYearOffset = -18,
+  reversePositiveYearJumps = true,
   showWeekdays = false,
 }: CustomDatePickerWithChangesProps<TFormValues>) {
   const { changes, showChanges, register } =
@@ -100,7 +112,7 @@ export default function CustomDatePickerWithChanges<
 
   const now = new Date();
   // Default to mid-year for easier year-first navigation.
-  const defaultMonth = new Date(now.getFullYear() - 18, 6, 1);
+  const defaultMonth = new Date(now.getFullYear() + defaultYearOffset, 6, 1);
   const [isOpen, setIsOpen] = useState(false);
   const [value, setValue] = useState("");
   const [visibleMonth, setVisibleMonth] = useState<Date>(defaultMonth);
@@ -385,7 +397,10 @@ export default function CustomDatePickerWithChanges<
                   </button>
                 </div>
 
-                {[...yearJumps].reverse().map((jump) => (
+                {(reversePositiveYearJumps
+                  ? [...yearJumps].reverse()
+                  : yearJumps
+                ).map((jump) => (
                   <button
                     key={`+${jump}`}
                     type="button"

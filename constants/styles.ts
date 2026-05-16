@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 export const FORM_GRID_STYLE = "grid grid-cols-1 md:grid-cols-2 px-1 gap-6";
 
 export const LABEL_STYLE =
-  "text-[11px] font-bold text-slate-500 uppercase ml-1";
+  "text-[11px] font-semibold text-slate-500 uppercase tracking-wide ml-1";
 
 export const BUTTON_VARIANTS = {
   // Bold, clear, and high-priority
@@ -472,7 +472,7 @@ export const formSectionStyles: FormSectionStyleSchema = {
 export const inputGroupStyles: InputGroupStyleSchema = {
   wrapper: cn(sharedStyles.flexCol, sharedStyles.spaceY5),
   inputBase: cn(
-    "w-full rounded-lg border transition-all text-sm outline-none placeholder:text-slate-300",
+    "w-full rounded-lg border transition-all text-sm outline-none placeholder:text-slate-400",
     sharedStyles.px4Py2,
   ),
   inputError: "border-red-500 focus:ring-2 focus:ring-red-100",
@@ -495,7 +495,7 @@ export const passwordInputStyles: PasswordInputStyleSchema = {
   inputWrapper: sharedStyles.relative,
   lockIcon: sharedStyles.lockIcon,
   inputBase: cn(
-    "w-full border rounded-lg outline-none transition-all",
+    "w-full border rounded-lg outline-none transition-all placeholder:text-slate-400",
     sharedStyles.inputPaddingLg,
   ),
   inputError: "border-red-500 focus:ring-red-200",
