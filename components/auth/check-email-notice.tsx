@@ -71,7 +71,12 @@ export default function CheckEmailNotice() {
 
         <h1 className={s.title}>{c.verifyEmail.title}</h1>
         {/* MAIN INSTRUCTION */}
-        <p className={s.bodyText}>{c.verifyEmail.mainInstruction(email)}</p>
+        <p
+          className={s.bodyText}
+          dangerouslySetInnerHTML={{
+            __html: c.verifyEmail.mainInstruction(email),
+          }}
+        />
 
         {/* SECONDARY REMINDER */}
         <div className={s.reminderBox}>
@@ -81,8 +86,7 @@ export default function CheckEmailNotice() {
         </div>
         <p className={s.instructionText}>{c.verifyEmail.keepOpenReminder}</p>
 
-        <div className={s.troubleshootWrapper}>
-          <p className={s.troubleshootText}>{c.verifyEmail.troubleshoot}</p>
+        <div className={s.resendWrapper}>
           <AuthButton
             label="Click here to resend"
             isPending={isPending}

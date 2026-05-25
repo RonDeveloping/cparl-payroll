@@ -45,7 +45,16 @@ const sharedStyles: Record<string, string> = {
   iconToggleRight:
     "absolute right-3 top-2.5 text-slate-400 hover:text-slate-600",
   buttonBlueBase: "bg-blue-600 text-white",
-  buttonBlueHover: "hover:bg-blue-700",
+  // ...existing styles
+  form: "w-full max-w-md mx-auto p-6 bg-white rounded shadow-md flex flex-col gap-4",
+  errorBox: "bg-red-100 text-red-700 p-2 rounded mb-2 text-sm",
+  fieldGroup: "mb-4 flex flex-col gap-1",
+  fieldLabel: "block text-sm font-medium text-gray-700 mb-1",
+  input:
+    "w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500",
+  fieldError: "text-xs text-red-600 mt-1",
+  submitButton:
+    "w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors",
   buttonBlueFlex: "transition-colors flex items-center justify-center",
   inlineFlexGap2: "inline-flex items-center",
   // Padding composites (normalized)
@@ -84,7 +93,6 @@ const sharedStyles: Record<string, string> = {
     "text-slate-400 hover:text-slate-600",
   ),
   // Alert/Error/Info Box Composites
-  errorBox: "text-red-600 bg-red-100 p-2 rounded",
   infoBox: cn("mb-6", "p-3 bg-slate-50 rounded-md border border-slate-100"),
   // Composite tokens (cross-map reusable)
   sectionCard: cn(
@@ -112,6 +120,13 @@ const sharedStyles: Record<string, string> = {
 };
 
 export const authStyles: AuthStyleSchema = {
+  form: sharedStyles.form,
+  errorBox: sharedStyles.errorBox,
+  fieldGroup: sharedStyles.fieldGroup,
+  fieldLabel: sharedStyles.fieldLabel,
+  input: sharedStyles.input,
+  fieldError: sharedStyles.fieldError,
+  submitButton: sharedStyles.submitButton,
   // Layout Containers
   pageWrapper:
     "flex flex-col items-center justify-center min-h-screen p-0 text-center",
@@ -142,7 +157,7 @@ export const authStyles: AuthStyleSchema = {
     "text-sm text-slate-400 hover:text-slate-600 transition-colors inline-block",
 
   // Troubleshooting Section (The "Didn't receive email?" part)
-  troubleshootWrapper: cn(sharedStyles.spaceY5, "mb-6"),
+  resendWrapper: cn(sharedStyles.spaceY5, "mb-6"),
   troubleshootText: "text-sm text-slate-500",
   // Notice/Alert Boxes
   alertBox: cn(
@@ -599,6 +614,13 @@ interface NavbarStyleSchema {
 }
 
 interface AuthStyleSchema {
+  form: string;
+  errorBox: string;
+  fieldGroup: string;
+  fieldLabel: string;
+  input: string;
+  fieldError: string;
+  submitButton: string;
   // Layout
   pageWrapper: string;
   card: string;
@@ -617,7 +639,7 @@ interface AuthStyleSchema {
   linkBack: string;
 
   // Troubleshooting & Feedback
-  troubleshootWrapper: string;
+  resendWrapper: string;
   troubleshootText: string;
   alertBox: string;
   alertText: string;

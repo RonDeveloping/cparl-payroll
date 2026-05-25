@@ -32,6 +32,7 @@ export async function upSertUserSendEmailVeriRequest(
   data: RegisterInput,
   existingUserId?: string,
 ) {
+  console.log("[upSertUserSendEmailVeriRequest] is called");
   const normalizedSlug = normalizeId(data.email);
   const displayEmail = data.email.trim();
   const phone = data.phone ? data.phone.trim() : null;
@@ -51,7 +52,16 @@ export async function upSertUserSendEmailVeriRequest(
         }
       }
 
-      const contact = await upsertContactPEAInternal(data, targetContactId, tx);
+      // Provide required defaults for contact creation
+      const contactInput = {
+        ...data,
+        bankAccounts: [], // Add other required fields with defaults if needed
+      };
+      const contact = await upsertContactPEAInternal(
+        contactInput,
+        targetContactId,
+        tx,
+      );
 
       const hashedPassword = data.password
         ? await bcrypt.hash(data.password, 10)
@@ -96,13 +106,22 @@ export async function upSertUserSendEmailVeriRequest(
 
   // 2. CHECK DB SUCCESS
   if (!dbResult.success) {
+    console.log(
+      "[upSertUserSendEmailVeriRequest] DB transaction failed, returning early.",
+    );
     return { success: false, error: "Registration failed. Please try again." };
   }
 
   // 3. TRIGGER EMAIL (Now safely outside the transaction)
   try {
     const { user, token } = dbResult.data;
+    console.log(
+      `[upSertUserSendEmailVeriRequest] About to send verification email to: ${user.email}`,
+    );
     await sendVerificationEmail(user.email, token, new Date());
+    console.log(
+      `[upSertUserSendEmailVeriRequest] sendVerificationEmail finished for: ${user.email}`,
+    );
   } catch (error) {
     // We log the error but don't fail the whole registration
     // because the user account was successfully created/updated in the DB.
@@ -110,6 +129,9 @@ export async function upSertUserSendEmailVeriRequest(
 
     // Optional: Return a specific flag so the UI can tell the user
     // "Account created, but we couldn't send the email right now."
+    console.log(
+      "[upSertUserSendEmailVeriRequest] Returning with warning after email failure.",
+    );
     return {
       success: true,
       data: dbResult.data,
@@ -118,5 +140,8 @@ export async function upSertUserSendEmailVeriRequest(
     };
   }
 
+  console.log(
+    "[upSertUserSendEmailVeriRequest] Returning success after email.",
+  );
   return { success: true, data: dbResult.data };
 }

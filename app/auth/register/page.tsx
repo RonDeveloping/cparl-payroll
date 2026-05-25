@@ -1,16 +1,17 @@
-import RegisterForm from "@/components/auth/create-account-form";
+import RegisterEmailForm from "@/components/auth/register-email-form";
 import { ROUTES } from "@/constants/routes";
 import { authStyles } from "@/constants/styles";
 
 export default function RegisterPage() {
   return (
     <div className={authStyles.registerCard}>
-      <h1 className={authStyles.registerTitle}>Create Your Account</h1>
+      <h1 className={authStyles.registerTitle}>Start Registration</h1>
       <p className={authStyles.registerDescription}>
-        To access services, please register below.
+        Enter your email to begin. We’ll send you a verification link. You’ll
+        complete your profile after verifying your email.
       </p>
 
-      <RegisterForm />
+      <RegisterEmailForm />
 
       <p className={authStyles.registerFooter}>
         Already have an account?{" "}

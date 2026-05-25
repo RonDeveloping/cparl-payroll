@@ -1,15 +1,27 @@
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native"]
+  provider = "prisma-client-js"
 }
-
 datasource db {
   provider = "postgresql"
 }
 
+
 // ==========================================
 // ===== USER SERVICE (Authentication)  =====
 // ==========================================
+
+model pendingEmailVerification {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("pending_email_verification")
+  @@index([email])
+  @@index([token])
+}
 
 model User {
   id           String   @id @default(cuid()) // Internal, never changes

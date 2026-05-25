@@ -19,7 +19,6 @@ export const registerSchema = z
       .refine((val) => !/\d/.test(val), {
         message: "Family name cannot contain numbers",
       }),
-    email: z.string().email("Invalid email address").trim(),
     phone: z
       .string()
       .optional()

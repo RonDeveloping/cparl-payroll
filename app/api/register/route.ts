@@ -1,10 +1,10 @@
 // app/api/register/route.ts
 import { NextResponse } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
-import {
-  isEmailTaken,
-  upSertUserSendEmailVeriRequest,
-} from "@/lib/actions/of_user";
+import { sendVerificationEmail } from "@/lib/mail";
+import crypto from "crypto";
+import prisma from "@/db/prismaDrizzle";
+// Removed unused import for pendingEmailVerification
 import { Redis } from "@upstash/redis";
 
 // This automatically looks for UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN
@@ -17,41 +17,60 @@ export const ratelimit = new Ratelimit({
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function POST(req: Request) {
+  // Only accept email in the body
   const startTime = Date.now();
-  // 1. IP Rate Limiting
   const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1";
   const { success } = await ratelimit.limit(ip);
-
   if (!success) {
     return NextResponse.json(
       { error: "Too many attempts. Please try again in an hour." },
       { status: 429 },
     );
   }
-
   try {
-    const data = await req.json();
-    const emailTaken = await isEmailTaken(data.email);
-
-    if (!emailTaken) {
-      // 3. DATABASE OPERATION: Create the user & contact & send verification email (all in one transaction)
-      const result = await upSertUserSendEmailVeriRequest(data);
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-    } else {
-      // OPTIONAL: Trigger a "You already have an account" email here
+    const { email } = await req.json();
+    if (!email || typeof email !== "string") {
+      return NextResponse.json({ error: "Invalid email." }, { status: 400 });
     }
+    // Check for existing pending verification
+    const existing = await prisma.pendingEmailVerification.findFirst({
+      where: { email: email.toLowerCase().trim() },
+    }); // If error: Property does not exist, run `npx prisma generate` and check schema
+    if (existing && existing.expiresAt > new Date()) {
+      // If a valid pending exists, do not send another
+      return NextResponse.json({
+        success: true,
+        message:
+          "A verification email has already been sent. Please check your inbox.",
+      });
+    }
+    // Generate a token
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiry
+    // Store pending verification (since email is not unique, upsert by findFirst+update/create)
+    if (existing) {
+      await prisma.pendingEmailVerification.update({
+        where: { id: existing.id },
+        data: { token, expiresAt },
+      });
+    } else {
+      await prisma.pendingEmailVerification.create({
+        data: {
+          email: email.toLowerCase().trim(),
+          token,
+          expiresAt,
+        },
+      });
+    }
+    await sendVerificationEmail(email, token, new Date());
     const elapsedTime = Date.now() - startTime;
-    const minResponseTime = 500; // 0.5 second
+    const minResponseTime = 500;
     if (elapsedTime < minResponseTime) {
       await sleep(minResponseTime - elapsedTime);
     }
-    // 4. GENERIC RESPONSE
-    // We return 200 even if the user already existed.
     return NextResponse.json({
       success: true,
-      message: "Registration processed. Please check your email.",
+      message: "Verification email sent. Please check your inbox.",
     });
   } catch (error: unknown) {
     const errorMessage =
@@ -59,3 +78,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
+// Removed unused import for isEmailTaken

@@ -52,8 +52,8 @@ export const sendVerificationEmail = async (
     replyTo: mailContent.verification.replyTo,
     html: `
       <div style="${s.container}">
-        <h2 style="${s.heading}">Verify your account</h2>
-        <p style="${s.text}">Click the button below to verify your email address and activate your account:</p>
+        <h2 style="${s.heading}">${mailContent.verification.heading}</h2>
+        <p style="${s.text}">${mailContent.verification.activateInstruction}</p>
         <div style="${s.buttonRow}">
           <div style="${s.buttonCell}">
             <a href="${confirmLink}" style="${s.button}">
