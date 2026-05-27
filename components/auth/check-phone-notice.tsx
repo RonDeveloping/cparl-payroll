@@ -80,8 +80,7 @@ export default function CheckPhoneNotice() {
         </div>
         <p className={s.instructionText}>{c.verifyEmail.keepOpenReminder}</p>
 
-        <div className={s.troubleshootWrapper}>
-          <p className={s.troubleshootText}>{c.verifyEmail.troubleshoot}</p>
+        <div className={s.resendWrapper}>
           <AuthButton
             label="Click here to resend"
             isPending={isPending}
@@ -89,18 +88,12 @@ export default function CheckPhoneNotice() {
             onClick={handleResend}
           />
         </div>
-
-        {/* --- DEACTIVATION WARNING --- */}
-        <Alert
-          variant="warning"
-          title="Security Note"
-          message={c.security.deactivationWarning}
-        />
+        <Alert variant="warning" message={c.security.deactivationWarning} />
 
         <hr className={s.divider} />
 
         <Link href={ROUTES.AUTH.LOGIN} className={s.linkBack}>
-          &larr; Back to login
+          &larr; Login
         </Link>
       </div>
     </div>

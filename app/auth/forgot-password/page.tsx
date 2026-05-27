@@ -52,7 +52,7 @@ export default function ForgotPasswordPage() {
           href={ROUTES.AUTH.LOGIN}
           className={authStyles.forgotPasswordBackLink}
         >
-          <ArrowLeft size={16} /> Back to Login
+          <ArrowLeft size={16} /> Login
         </Link>
       </div>
     );

@@ -91,25 +91,17 @@ export default function CheckEmailNotice() {
             href={`${ROUTES.AUTH.LOGIN}${email ? `?email=${encodeURIComponent(email)}` : ""}`}
             className={s.linkBack + " mr-4 min-w-max"}
           >
-            &larr; Back to login
+            &larr; Login
           </Link>
-          <div className="flex-1">
+          <div className="flex-1 flex flex-col gap-2">
             <AuthButton
-              label="Resend verification email"
+              label="Resend Verification Email"
               isPending={isPending}
               countdown={countdown}
               onClick={handleResend}
             />
+            <Alert variant="warning" message={c.security.deactivationWarning} />
           </div>
-        </div>
-
-        {/* --- DEACTIVATION WARNING --- */}
-        <div className="mb-2">
-          <Alert
-            variant="warning"
-            title="Security Note"
-            message={c.security.deactivationWarning}
-          />
         </div>
         <hr className={s.divider} />
       </div>

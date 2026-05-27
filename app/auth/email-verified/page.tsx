@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authStyles } from "@/constants/styles";
+import { ROUTES } from "@/constants/routes";
 
 export default function VerifyPages() {
   const router = useRouter();
@@ -11,7 +12,7 @@ export default function VerifyPages() {
   useEffect(() => {
     if (token) {
       router.replace(
-        `/auth/complete-profile?token=${encodeURIComponent(token)}`,
+        `${ROUTES.AUTH.RESET_PASSWORD.replace("/reset-password", "/setup-password")}?token=${encodeURIComponent(token)}`,
       );
     }
   }, [token, router]);
@@ -30,7 +31,7 @@ export default function VerifyPages() {
       <div className={authStyles.successCard}>
         <h1 className={authStyles.successTitle}>Email Verified!</h1>
         <p className={authStyles.successMessage}>
-          Redirecting to complete your profile...
+          Email verified! Redirecting to set up your password…
         </p>
       </div>
     </div>
