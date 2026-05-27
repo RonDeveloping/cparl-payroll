@@ -4,15 +4,14 @@ export const authContent = {
   verifyEmail: {
     title: "Check your email",
     mainInstruction: (email: string) =>
-      `at <strong>${email}</strong> to find the button to click and verify.`,
+      `Check your inbox at <strong>${email}</strong> and click the verification button in the email we sent you.`,
     secondaryNote:
-      "If it's a registered one, a password reset email will be sent instead.",
-    keepOpenReminder:
-      "Please keep this page open until you have received the email, sometimes in your spam folder, in case you need to ",
+      "If the email doesn’t arrive soon, 1) check your spam folder, 2) use Resend button below, or 3) try logging in to see if it's already been used with a registered account.",
+    keepOpenReminder: "",
   },
   security: {
     deactivationWarning:
-      "Resending a link will instantly deactivate any previous verification links; please always use the most recent one.",
+      "Resending will instantly deactivate any previous ones; so please always sort out the most recent.",
     resendSuccessToast:
       "A new verification link has been dispatched to your email address. Note that any previous links are now invalid for security reasons.",
   },
@@ -31,7 +30,13 @@ export const mailContent = {
     replyTo: "ron@cparl.com",
     buttonText: "Verify Email",
     activateInstruction:
-      "Click the button below to verify your email address and activate your account(If you didn't request this, you can safely ignore this email. No account will be activated without verification):",
-    heading: "Verify your email and activate your account",
+      "Click the button below to verify your email address and go to profile page to complete the registration of your account(If you didn't request this, you can safely ignore this email. No account will be activated without verification):",
+    heading: "Verify your email first",
   },
+};
+
+export const registerPageContent = {
+  title: "Start Registration",
+  description:
+    "Enter your email to get a verification link. Your email will be your login username and for account updates once it's verified.",
 };

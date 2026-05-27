@@ -13,13 +13,17 @@ export const passwordRules = z
   );
 
 // 2. Define the Reset Schema independently
+
 export const resetPasswordSchema = z
   .object({
     password: passwordRules,
     confirmPassword: z.string(),
+    acceptTerms: z.literal(true, {
+      message: "You must accept the terms and conditions",
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
+    message: "The re-entered does not match.",
     path: ["confirmPassword"],
   });
 

@@ -150,7 +150,8 @@ export const authStyles: AuthStyleSchema = {
 
   // Interactive Elements
   buttonResend: cn(
-    "text-blue-600 font-medium hover:underline disabled:text-slate-400 disabled:no-underline flex items-center justify-center w-full",
+    "w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded border-b-4 border-blue-800 shadow active:translate-y-0.5 transition-all flex items-center justify-center",
+    "hover:bg-blue-700 hover:border-blue-900 focus:ring-2 focus:ring-blue-400 focus:outline-none disabled:bg-blue-300 disabled:border-blue-300 disabled:shadow-none",
     sharedStyles.gap4,
   ),
   linkBack:

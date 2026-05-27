@@ -50,7 +50,7 @@ export default function CheckEmailNotice() {
           duration: 8000, // Make it stay longer since the text is long
         });
       }
-    } catch (_error) {
+    } catch {
       toast.error(c.errors.generic, {
         duration: 8000, // Make it stay longer since the text is long
       });
@@ -79,34 +79,39 @@ export default function CheckEmailNotice() {
         />
 
         {/* SECONDARY REMINDER */}
-        <div className={s.reminderBox}>
-          <p className={s.reminderText}>
+        <div className="mb-6 p-3 bg-blue-50 rounded-md border border-blue-100">
+          <p className="text-sm text-blue-700">
             <strong>Note:</strong> {c.verifyEmail.secondaryNote}
           </p>
         </div>
         <p className={s.instructionText}>{c.verifyEmail.keepOpenReminder}</p>
 
-        <div className={s.resendWrapper}>
-          <AuthButton
-            label="Click here to resend"
-            isPending={isPending}
-            countdown={countdown}
-            onClick={handleResend}
-          />
+        <div className="flex items-center w-full gap-4 mb-6">
+          <Link
+            href={`${ROUTES.AUTH.LOGIN}${email ? `?email=${encodeURIComponent(email)}` : ""}`}
+            className={s.linkBack + " mr-4 min-w-max"}
+          >
+            &larr; Back to login
+          </Link>
+          <div className="flex-1">
+            <AuthButton
+              label="Resend verification email"
+              isPending={isPending}
+              countdown={countdown}
+              onClick={handleResend}
+            />
+          </div>
         </div>
 
         {/* --- DEACTIVATION WARNING --- */}
-        <Alert
-          variant="warning"
-          title="Security Note"
-          message={c.security.deactivationWarning}
-        />
-
+        <div className="mb-2">
+          <Alert
+            variant="warning"
+            title="Security Note"
+            message={c.security.deactivationWarning}
+          />
+        </div>
         <hr className={s.divider} />
-
-        <Link href={ROUTES.AUTH.LOGIN} className={s.linkBack}>
-          &larr; Back to login
-        </Link>
       </div>
     </div>
   );

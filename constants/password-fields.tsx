@@ -17,7 +17,7 @@ export const PASSWORD_FIELDS: BaseFieldDef<ResetPasswordInput>[] = [
   {
     label: (
       <Clarification
-        term="New Password"
+        term="Password"
         description="Use 8+ characters with at least one uppercase, lowercase, number and symbol like !@#$%^&*."
       />
     ),
@@ -26,7 +26,7 @@ export const PASSWORD_FIELDS: BaseFieldDef<ResetPasswordInput>[] = [
     rules: { required: "Password is required" },
   },
   {
-    label: "Re-Type New Password",
+    label: "Re-enter Password",
     name: "confirmPassword",
     type: "password",
     rules: { required: "Please confirm your password" },

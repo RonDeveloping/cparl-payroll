@@ -15,8 +15,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // ✅ ADDED: State to track the email input
-  const [emailValue, setEmailValue] = useState("");
+  // Prefill email from query param if present
+  const initialEmail = searchParams.get("email") || "";
+  const [emailValue, setEmailValue] = useState(initialEmail);
 
   // Check if we arrived here after a successful registration
   const justRegistered = searchParams.get("registered") === "true";
@@ -48,7 +49,7 @@ export default function LoginPage() {
   return (
     <div className={authStyles.loginCard}>
       <div className={authStyles.loginHeader}>
-        <h1 className={authStyles.loginTitle}>Sign In</h1>
+        <h1 className={authStyles.loginTitle}>Log In</h1>
       </div>
 
       {justRegistered && (
