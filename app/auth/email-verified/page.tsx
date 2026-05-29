@@ -12,7 +12,7 @@ export default function VerifyPages() {
   useEffect(() => {
     if (token) {
       router.replace(
-        `${ROUTES.AUTH.RESET_PASSWORD.replace("/reset-password", "/setup-password")}?token=${encodeURIComponent(token)}`,
+        `${ROUTES.AUTH.SETUP_PASSWORD}?token=${encodeURIComponent(token)}`,
       );
     }
   }, [token, router]);

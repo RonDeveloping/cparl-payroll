@@ -1,3 +1,7 @@
+export const setupPasswordContent = {
+  heading:
+    "This email address is now verified; please set up a password for the account with this email address:",
+};
 // constants/content.ts
 
 export const authContent = {
