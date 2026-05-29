@@ -6,13 +6,14 @@ import { phoneCheckLimit, phoneSendLimit } from "@/lib/ratelimit"; //assuming up
 import { headers } from "next/headers";
 import { getSession } from "../session";
 import { safe } from "@/utils/validators/safe";
+import { ERRORS } from "@/constants/errors";
 
 //Generate and send a phone verification code
 export async function sendPhoneVerification() {
   // 1. Authenticate the user
   const session = await getSession();
   if (!session?.userId) {
-    return { success: false, error: "Unauthorized" };
+    return { success: false, error: ERRORS.UNAUTHORIZED };
   }
   const userId = session.userId;
 
@@ -21,10 +22,7 @@ export async function sendPhoneVerification() {
   const ip = headerList.get("x-forwarded-for") ?? "127.0.0.1";
   const { success: limitOk } = await phoneSendLimit.limit(`sms_${ip}`);
   if (!limitOk) {
-    return {
-      success: false,
-      error: "Too many attempts. Please try again in 10 minutes.",
-    };
+    return { success: false, error: ERRORS.PHONE_TOO_MANY_ATTEMPTS };
   }
   return await safe(
     (async () => {
@@ -54,11 +52,7 @@ export async function verifyPhoneCode(userId: string, inputCode: string) {
   const { success: limitOK } = await phoneCheckLimit.limit(`phone_check_${ip}`);
 
   if (!limitOK) {
-    return {
-      success: false,
-      error:
-        "Too many incorrect attempts. Please wait 5 minutes before trying again.",
-    };
+    return { success: false, error: ERRORS.PHONE_TOO_MANY_CHECKS };
   }
 
   return await safe(
@@ -68,11 +62,11 @@ export async function verifyPhoneCode(userId: string, inputCode: string) {
       });
 
       if (!record || record.code !== inputCode) {
-        throw new Error("Invalid verification code.");
+        throw new Error(ERRORS.PHONE_INVALID_CODE);
       }
 
       if (new Date() > record.expiresAt) {
-        throw new Error("Code has expired.");
+        throw new Error(ERRORS.PHONE_CODE_EXPIRED);
       }
 
       // Success: Update user and delete the verification token
@@ -99,11 +93,8 @@ export async function resendVerificationPhone(phone: string) {
   const { success: limitOK } = await phoneSendLimit.limit(`resend_${ip}`);
 
   if (!limitOK) {
-    return {
-      success: false,
-      error: "Too many requests. Please wait a moment before trying again.",
-    };
+    return { success: false, error: ERRORS.PHONE_TOO_MANY_REQUESTS };
   }
 
-  return { success: true, message: "Verification phone sent." };
+  return { success: true, message: ERRORS.PHONE_SENT };
 }

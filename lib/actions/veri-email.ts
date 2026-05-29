@@ -7,6 +7,7 @@ import { sendVerificationEmail } from "@/lib/mail";
 import crypto from "crypto";
 import { emailSendLimit } from "../ratelimit";
 import { headers } from "next/headers";
+import { ERRORS } from "@/constants/errors";
 
 export async function verifyEmailAction(token: string) {
   return await safe(
@@ -18,18 +19,22 @@ export async function verifyEmailAction(token: string) {
       });
       // 2. Validate token existence and expiration
       if (!tokenRecord) {
-        throw new Error("Invalid or expired token");
+        throw new Error(ERRORS.MISSING_OR_INVALID_TOKEN);
       }
 
       if (tokenRecord.expiresAt < new Date()) {
         // Optional: delete expired token here
         await tx.emailVerification.delete({ where: { id: tokenRecord.id } });
-        throw new Error(
-          "Verification link has expired. Please request a new one.",
-        );
+        throw new Error(ERRORS.VERIFICATION_LINK_EXPIRED);
       }
       const { user } = tokenRecord;
 
+      // If already verified, don't update again
+      if (user.emailVerifiedAt) {
+        // Optionally, delete the token
+        await tx.emailVerification.delete({ where: { id: tokenRecord.id } });
+        throw new Error(ERRORS.VERIFICATION_ALREADY_VERIFIED);
+      }
       // 3. Update the User (The Status-Gate)
       // We flip emailVerifiedAt and handle any pending email changes
       const updatedUser = await tx.user.update({
@@ -65,7 +70,7 @@ export async function resendVerificationEmail(email: string) {
   if (!limitOK) {
     return {
       success: false,
-      error: "Too many requests. Please wait a moment before trying again.",
+      error: ERRORS.TOO_MANY_REQUESTS,
     };
   }
 
@@ -98,7 +103,7 @@ export async function resendVerificationEmail(email: string) {
 
   // 3. HANDLE DB ERROR
   if (!dbResult.success) {
-    return { success: false, error: "Database error. Please try again." };
+    return { success: false, error: ERRORS.DATABASE_ERROR };
   }
 
   // 4. ONLY TRIGGER EMAIL NOW (after the transaction is committed) to ensure we don't send emails for tokens that might later be rolled back and to avoid long-running transactions due to email sending delays or service interruptions suchas Resend server issues.
@@ -116,7 +121,7 @@ export async function resendVerificationEmail(email: string) {
       // But for a 'resend' action, the user expects the email to work.
       return {
         success: false,
-        error: "Failed to send email. Please try again.",
+        error: ERRORS.FAILED_TO_SEND_EMAIL,
       };
     }
   }

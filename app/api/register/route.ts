@@ -4,7 +4,7 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { sendVerificationEmail } from "@/lib/mail";
 import crypto from "crypto";
 import prisma from "@/db/prismaDrizzle";
-// Removed unused import for pendingEmailVerification
+import { ERRORS } from "@/constants/errors";
 import { Redis } from "@upstash/redis";
 
 // This automatically looks for UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN
@@ -23,14 +23,17 @@ export async function POST(req: Request) {
   const { success } = await ratelimit.limit(ip);
   if (!success) {
     return NextResponse.json(
-      { error: "Too many attempts. Please try again in an hour." },
+      { error: ERRORS.TOO_MANY_ATTEMPTS },
       { status: 429 },
     );
   }
   try {
     const { email } = await req.json();
     if (!email || typeof email !== "string") {
-      return NextResponse.json({ error: "Invalid email." }, { status: 400 });
+      return NextResponse.json(
+        { error: ERRORS.INVALID_EMAIL },
+        { status: 400 },
+      );
     }
     // Check for existing pending verification
     const existing = await prisma.pendingEmailVerification.findFirst({
@@ -40,8 +43,7 @@ export async function POST(req: Request) {
       // If a valid pending exists, do not send another
       return NextResponse.json({
         success: true,
-        message:
-          "A verification email has already been sent. Please check your inbox.",
+        message: "Verification email sent. Please check your inbox.",
       });
     }
     // Generate a token

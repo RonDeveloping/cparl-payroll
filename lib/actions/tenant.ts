@@ -17,7 +17,7 @@ import { splitBusinessNumber } from "@/utils/formatters/businessNumber";
 export async function upsertTenant(data: TenantFormInput, id?: string) {
   const session = await getSession();
   if (!session?.userId) {
-    return { success: false, error: "Unauthorized" } as const;
+    return { success: false, error: ERRORS.UNAUTHORIZED } as const;
   }
 
   // Trim coreName if it ends with legalNameEnding to avoid duplication
@@ -44,7 +44,7 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
           where: { slug: generatedSlug },
         });
         if (existingSlug) {
-          throw new Error("This slug is already taken");
+          throw new Error(ERRORS.SLUG_TAKEN);
         }
       } else {
         const existingSlug = await tx.tenant.findFirst({
@@ -54,7 +54,7 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
           },
         });
         if (existingSlug) {
-          throw new Error("This slug is already taken");
+          throw new Error(ERRORS.SLUG_TAKEN);
         }
       }
 

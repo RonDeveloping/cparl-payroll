@@ -109,7 +109,7 @@ export async function upSertUserSendEmailVeriRequest(
     console.log(
       "[upSertUserSendEmailVeriRequest] DB transaction failed, returning early.",
     );
-    return { success: false, error: "Registration failed. Please try again." };
+    return { success: false, error: ERRORS.REGISTRATION_FAILED };
   }
 
   // 3. TRIGGER EMAIL (Now safely outside the transaction)
