@@ -25,6 +25,6 @@ export const ROUTES = {
     LOGIN: "/api/login",
     RESEND_VERIFICATION: "/api/resend-verification",
     COMPLETE_PROFILE: "/api/complete-profile",
-    SETUP_PASSWORD: "/api/setup-password",
+    SETUP_PASSWORD: "/api/activate-account",
   },
 } as const;
