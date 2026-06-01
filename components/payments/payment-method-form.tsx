@@ -12,8 +12,9 @@ import formatPostalCode from "@/utils/formatters/postalCode";
 import { isValidCanadianPostalCode } from "@/utils/validators/postalCode";
 import CardTypeIcon from "@/components/payments/card-type-icon";
 import { cn } from "@/lib/utils";
+import { createPaymentMethod } from "@/lib/api";
 
-type PaymentMethodFormValues = {
+export type PaymentMethodFormValues = {
   cardholderName: string;
   cardDetails: string;
   billingPostalCode: string;
@@ -1106,33 +1107,17 @@ export default function PaymentMethodForm({
   const onSubmit = async (data: PaymentMethodFormValues) => {
     try {
       const parsedCardDetails = parseCardDetails(data.cardDetails);
-
       if (!parsedCardDetails) {
         return;
       }
-
-      const response = await fetch("/api/payments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cardholderName: data.cardholderName,
-          cardNumber: parsedCardDetails.cardNumber,
-          expiryMonth: Number(parsedCardDetails.expiryMonth),
-          expiryYear: parsedCardDetails.expiryYear,
-          cvc: parsedCardDetails.cvc,
-          billingPostalCode: data.billingPostalCode
-            .replace(/\s+/g, "")
-            .toUpperCase(),
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error("Payment save failed:", error);
-        return;
-      }
-
-      const result = await response.json();
+      const payload: PaymentMethodFormValues = {
+        cardholderName: data.cardholderName,
+        cardDetails: data.cardDetails,
+        billingPostalCode: data.billingPostalCode
+          .replace(/\s+/g, "")
+          .toUpperCase(),
+      };
+      const result = await createPaymentMethod(payload);
       console.log("Card saved successfully:", result);
     } catch (error) {
       console.error("Error saving card:", error);

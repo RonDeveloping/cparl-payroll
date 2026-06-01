@@ -187,6 +187,12 @@ export const authStyles: AuthStyleSchema = {
   emailVerificationContainer: sharedStyles.centerContainer,
   missingTokenContainer:
     "flex flex-col items-center justify-center min-h-screen",
+  verificationTopContainer:
+    "flex flex-col items-center justify-start min-h-screen p-4 pt-4 md:pt-6 text-center",
+  verificationCardWrapper: "w-full flex justify-center",
+  verificationMissingTopContainer:
+    "flex flex-col items-center justify-start min-h-screen pt-4 md:pt-6",
+  verificationMessageText: "mt-3 text-sm text-amber-700",
   missingTokenTitle: "text-xl font-bold text-red-600",
   errorCard: "bg-red-50 p-8 rounded-lg border border-red-200 shadow-sm",
   errorTitle: cn("text-2xl font-bold text-red-700", sharedStyles.mb4),
@@ -656,6 +662,10 @@ interface AuthStyleSchema {
   // Email Verification States
   emailVerificationContainer: string;
   missingTokenContainer: string;
+  verificationTopContainer: string;
+  verificationCardWrapper: string;
+  verificationMissingTopContainer: string;
+  verificationMessageText: string;
   missingTokenTitle: string;
   errorCard: string;
   errorTitle: string;

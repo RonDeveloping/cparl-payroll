@@ -1,6 +1,7 @@
 "use client";
 // context/TenantContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { getTenants } from "@/lib/api";
 import { Tenant } from "@prisma/client"; //schema generated types from Prisma
 
 type TenantSummary = {
@@ -38,33 +39,25 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     let isMounted = true;
-
-    const fetchTenants = async () => {
-      try {
-        const response = await fetch("/api/tenants");
-        if (!response.ok) {
-          throw new Error("Failed to fetch tenants");
-        }
-        const data = (await response.json()) as TenantSummary[];
+    getTenants()
+      .then((data) => {
         if (isMounted) {
           setTenants(data);
           setTenantsError(null);
         }
-      } catch (error) {
+      })
+      .catch((error) => {
         if (isMounted) {
           setTenantsError(
             error instanceof Error ? error.message : "Failed to fetch tenants",
           );
         }
-      } finally {
+      })
+      .finally(() => {
         if (isMounted) {
           setTenantsLoading(false);
         }
-      }
-    };
-
-    fetchTenants();
-
+      });
     return () => {
       isMounted = false;
     };

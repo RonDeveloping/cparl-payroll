@@ -60,6 +60,7 @@ export default function InputGroup<TFormValues extends FieldValues>({
   onFocus,
   onChange,
   onClick,
+  onBlur,
   icon,
   inputMode,
   autoComplete,
@@ -75,7 +76,9 @@ export default function InputGroup<TFormValues extends FieldValues>({
   iconPosition = "right",
   inputRef,
   errorClassName,
-}: InputGroupProps<TFormValues>) {
+}: InputGroupProps<TFormValues> & {
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+}) {
   const [isFocused, setIsFocused] = useState(false);
   const [previousValue, setPreviousValue] = useState("");
   const hasValue = typeof value === "string" && value.trim().length > 0;
@@ -126,6 +129,7 @@ export default function InputGroup<TFormValues extends FieldValues>({
           onBlur={(e) => {
             setIsFocused(false);
             registration.onBlur(e);
+            onBlur?.(e);
           }}
           onChange={(e) => {
             if (formatOnChange) {

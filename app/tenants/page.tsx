@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getTenants } from "@/lib/api";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 import formatBusinessNumber, {
@@ -27,21 +28,12 @@ export default function TenantsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTenants = async () => {
-      try {
-        const response = await fetch("/api/tenants");
-        if (response.ok) {
-          const data = await response.json();
-          setTenants(data);
-        }
-      } catch (error) {
+    getTenants()
+      .then((data) => setTenants(data))
+      .catch((error) => {
         console.error("Failed to fetch tenants:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTenants();
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
   if (isLoading) {

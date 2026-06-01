@@ -19,7 +19,7 @@ export async function verifyEmailAction(token: string) {
       });
       // 2. Validate token existence and expiration
       if (!tokenRecord) {
-        throw new Error(ERRORS.MISSING_OR_INVALID_TOKEN);
+        throw new Error(ERRORS.INVALID_TOKEN);
       }
 
       if (tokenRecord.expiresAt < new Date()) {
@@ -33,7 +33,7 @@ export async function verifyEmailAction(token: string) {
       if (user.emailVerifiedAt) {
         // Optionally, delete the token
         await tx.emailVerification.delete({ where: { id: tokenRecord.id } });
-        throw new Error(ERRORS.VERIFICATION_ALREADY_VERIFIED);
+        throw new Error(ERRORS.VERIFICATION_TOKEN_GONE);
       }
       // 3. Update the User (The Status-Gate)
       // We flip emailVerifiedAt and handle any pending email changes

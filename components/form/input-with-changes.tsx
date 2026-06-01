@@ -41,6 +41,13 @@ export default function InputWithChanges<TFormValues extends FieldValues>({
   const change = changes.find((c) => c.name === name);
   const inputType = type === "password" && showPassword ? "text" : type;
 
+  // Handler to auto-hide password on blur
+  const handleBlur = () => {
+    if (type === "password" && showPassword) {
+      setShowPassword(false);
+    }
+  };
+
   return (
     <div className={inputWithChangesStyles.wrapper}>
       <div className={inputWithChangesStyles.headerRow}>
@@ -67,12 +74,15 @@ export default function InputWithChanges<TFormValues extends FieldValues>({
           rules={rules} // Pass rules down to InputGroup (like async validation)
           formatOnChange={formatOnChange}
           maxLength={maxLength}
+          onBlur={handleBlur}
         />
 
         {type === "password" && (
           <button
             type="button"
-            onClick={() => setShowPassword(!showPassword)}
+            tabIndex={-1}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => setShowPassword((prev) => !prev)}
             className={inputWithChangesStyles.toggleButton}
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
