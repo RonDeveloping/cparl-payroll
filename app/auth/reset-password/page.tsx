@@ -65,7 +65,7 @@ export default function ResetPasswordPage() {
       </div>
     );
   }
-  8;
+
   return (
     <div className={authStyles.resetCard}>
       <div className={authStyles.resetHeader}>
@@ -85,14 +85,14 @@ export default function ResetPasswordPage() {
       {/* Provide the context that InputWithChanges needs */}
       <SmartFormProvider
         value={{
-          register: register,
+          register,
           changes: [],
           showChanges: false,
         }}
       >
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className={authStyles.resetForm}
+          className={cn(authStyles.resetForm, "space-y-6")}
         >
           {PASSWORD_FIELDS.map((field) => (
             <InputWithChanges<ResetPasswordInput>

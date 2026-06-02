@@ -1,3 +1,4 @@
+// components/payments/payment-method-details.tsx
 "use client";
 
 import PaymentMethodForm from "@/components/payments/payment-method-form";

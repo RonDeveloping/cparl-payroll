@@ -1,3 +1,4 @@
+// constants/register-fields.tsx
 import { RegisterInput } from "@/lib/validations/register-schema";
 import { Clarification } from "@/components/clarification";
 import { BaseFieldDef, PASSWORD_FIELDS } from "./password-fields";

@@ -12,9 +12,19 @@ export const passwordRules = z
     "Password must include at least one symbol like !@#$%^&*.",
   );
 
-// 2. Define the Reset Schema independently
-
 export const resetPasswordSchema = z
+  .object({
+    password: passwordRules,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "The re-entered does not match.",
+    path: ["confirmPassword"],
+  });
+
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+export const setupPasswordSchema = z
   .object({
     password: passwordRules,
     confirmPassword: z.string(),
@@ -27,4 +37,4 @@ export const resetPasswordSchema = z
     path: ["confirmPassword"],
   });
 
-export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type SetupPasswordInput = z.infer<typeof setupPasswordSchema>;
