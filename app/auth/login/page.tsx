@@ -1,3 +1,4 @@
+// app/auth/login/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -8,6 +9,7 @@ import { toast } from "sonner";
 import { loginAction } from "@/lib/actions/auth-actions";
 import { ROUTES } from "@/constants/routes";
 import { authStyles } from "@/constants/styles";
+import { Clarification } from "@/components/clarification";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -77,7 +79,12 @@ export default function LoginPage() {
 
         <div className={authStyles.loginFieldGroup}>
           <div className={authStyles.loginPasswordHeader}>
-            <label className={authStyles.loginFieldLabel}>Password</label>
+            <label className={authStyles.loginFieldLabel}>
+              <Clarification
+                term="Password"
+                description="Use 8+ characters with at least one uppercase, lowercase, number and symbol like !@#$%^&*."
+              />
+            </label>
             <Link
               href={`${ROUTES.AUTH.FORGOT_PASSWORD}?email=${encodeURIComponent(emailValue)}`}
               className={authStyles.loginForgotLink}

@@ -1,5 +1,4 @@
-//constants/password-fields.tsx
-
+// constants/password-fields.tsx
 import { Clarification } from "@/components/clarification";
 import { ResetPasswordInput } from "@/lib/validations/password-schema";
 import { ReactNode } from "react";

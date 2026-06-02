@@ -19,6 +19,11 @@ export const registerSchema = z
       .refine((val) => !/\d/.test(val), {
         message: "Family name cannot contain numbers",
       }),
+    email: z
+      .string()
+      .trim()
+      .min(1, "Email is required")
+      .email("Please enter a valid email address"),
     phone: z
       .string()
       .optional()

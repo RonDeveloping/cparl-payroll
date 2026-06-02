@@ -1,3 +1,4 @@
+// components/payments/card-type-icon.tsx
 type CardBrand = "visa" | "mastercard" | "amex" | "discover" | null;
 
 function detectCardBrand(cardNumber: string): CardBrand {

@@ -1,4 +1,4 @@
-//app/components/auth/check-phone-notice.tsx
+// components/auth/check-phone-notice.tsx
 "use client";
 
 import { useSearchParams } from "next/navigation";

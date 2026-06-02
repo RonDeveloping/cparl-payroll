@@ -1,4 +1,4 @@
-//app/components/auth/check-email-notice.tsx
+// components/auth/check-email-notice.tsx
 "use client";
 
 import { useSearchParams } from "next/navigation";

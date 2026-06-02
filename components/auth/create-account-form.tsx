@@ -1,5 +1,4 @@
 // components/auth/create-account-form.tsx
-
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -68,7 +67,7 @@ export default function RegisterForm() {
       router.push(
         `${ROUTES.AUTH.CHECK_EMAIL}?email=${encodeURIComponent(data.email)}`,
       );
-    } catch (err) {
+    } catch {
       setServerError("Failed to connect to the server.");
     }
   };

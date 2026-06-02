@@ -1,3 +1,4 @@
+// components/payments/cvc-demo.tsx
 import { ShieldCheck } from "lucide-react";
 
 export default function CvcDemo() {
