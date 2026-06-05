@@ -13,7 +13,7 @@ export async function verifyEmailAction(token: string) {
   return await safe(
     prisma.$transaction(async (tx) => {
       // 1. Find the token and include the user
-      const tokenRecord = await tx.emailVerification.findUnique({
+      const tokenRecord = await tx.authToken.findUnique({
         where: { token },
         include: { user: true },
       });
@@ -24,7 +24,7 @@ export async function verifyEmailAction(token: string) {
 
       if (tokenRecord.expiresAt < new Date()) {
         // Optional: delete expired token here
-        await tx.emailVerification.delete({ where: { id: tokenRecord.id } });
+        await tx.authToken.delete({ where: { id: tokenRecord.id } });
         throw new Error(ERRORS.VERIFICATION_LINK_EXPIRED);
       }
       const { user } = tokenRecord;
@@ -32,7 +32,7 @@ export async function verifyEmailAction(token: string) {
       // If already verified, don't update again
       if (user.emailVerifiedAt) {
         // Optionally, delete the token
-        await tx.emailVerification.delete({ where: { id: tokenRecord.id } });
+        await tx.authToken.delete({ where: { id: tokenRecord.id } });
         throw new Error(ERRORS.VERIFICATION_TOKEN_GONE);
       }
       // 3. Update the User (The Status-Gate)
@@ -41,17 +41,17 @@ export async function verifyEmailAction(token: string) {
         where: { id: user.id },
         data: {
           emailVerifiedAt: new Date(),
-          // If the user was changing their email, apply it now
-          ...(user.pendingEmail && {
-            email: user.pendingEmail,
-            slug: user.pendingEmail.toLowerCase().trim(),
-            pendingEmail: null,
+          // If the user has a candidate email awaiting verification, promote it
+          ...(user.candidateEmail && {
+            email: user.candidateEmail,
+            slug: user.candidateEmail.toLowerCase().trim(),
+            candidateEmail: null,
           }),
         },
       });
 
       // 4. Delete the token so it cannot be reused
-      await tx.emailVerification.delete({
+      await tx.authToken.delete({
         where: { id: tokenRecord.id },
       });
 
@@ -85,14 +85,14 @@ export async function resendVerificationEmail(email: string) {
       if (!user) return null;
 
       // Enforce "One Active Token"
-      await tx.emailVerification.deleteMany({
+      await tx.authToken.deleteMany({
         where: { userId: user.id },
       });
 
       const token = crypto.randomBytes(32).toString("hex");
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000); //60 min expiry
 
-      const newToken = await tx.emailVerification.create({
+      const newToken = await tx.authToken.create({
         data: { token, userId: user.id, expiresAt },
       });
 

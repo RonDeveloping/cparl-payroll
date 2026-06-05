@@ -10,7 +10,7 @@ datasource db {
 // ===== USER SERVICE (Authentication)  =====
 // ==========================================
 
-model pendingEmailVerification {
+model verificationEmailToken {
   id        String   @id @default(uuid())
   email     String
   token     String   @unique
@@ -28,28 +28,30 @@ model User {
   slug         String   @unique // Normalized email, all lowercase
   email  String   @unique @map("email") //original format user inputs; case-insensitive in practice.
   emailVerifiedAt       DateTime? @map("email_verified_at")
-  pendingEmail  String?   @map("pending_email")
-  
-  phone  String?   @unique @map("phone")
-  phoneVerifiedAt       DateTime? @map("phone_verified_at")
-  pendingPhone  String?   @map("pending_phone")
+  candidateEmail  String?   @map("candidate_email")
   
   passwordHash String?  @map("password_hash")
+  termsAcceptedAt DateTime? @map("terms_accepted_at")
+  termsVersionAccepted String? @map("terms_version_accepted")
   contactId    String   @unique @map("contact_id") // soft link only (No @relation)
   
   createdAt    DateTime @default(now()) @map("created_at") 
   updatedAt    DateTime @updatedAt @map("updated_at")
   last2FAAt          DateTime? @map("last_2fa_at")
 
+  phone  String?   @unique @map("phone")
+  phoneVerifiedAt       DateTime? @map("phone_verified_at")
+  pendingPhone  String?   @map("pending_phone")
+
   twoFactorCode     TwoFactorCode?
-  emailVerifications  EmailVerification[]
+  authTokens          AuthToken[]
   phoneVerification  PhoneVerification?
   paymentCards      PaymentCard[]
 
   @@map("user")
 }
 
-model EmailVerification {
+model AuthToken {
   id        String   @id @default(cuid())
   token     String   @unique
   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -59,7 +61,7 @@ model EmailVerification {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("email_verification")
+  @@map("auth_token")
   @@index([userId, type]) // Helps performance when looking up codes for a specific user
 }
 

@@ -1,3 +1,4 @@
+// components/dashboard/dashboard-tiles.tsx
 "use client";
 
 import Link from "next/link";
@@ -14,6 +15,7 @@ import {
   UserRoundX,
   SlidersHorizontal,
 } from "lucide-react";
+import { contactProfileStyles } from "@/constants/styles";
 import { useTenant } from "@/app/tenants/context/TenantContext";
 import PaymentMethodDetails from "@/components/payments/payment-method-details";
 import { deleteTenant, setTenantActiveState } from "@/lib/actions/tenant";
@@ -88,11 +90,13 @@ export default function DashboardTiles({
   userGivenName,
   userFamilyName,
   userPrimaryPostalCode,
+  userContactId,
 }: {
   tiles: DashboardTile[];
   userGivenName?: string | null;
   userFamilyName?: string | null;
   userPrimaryPostalCode?: string | null;
+  userContactId: string;
 }) {
   const router = useRouter();
   const defaultId = tiles[0]?.id ?? null;
@@ -122,6 +126,7 @@ export default function DashboardTiles({
     () => tiles.find((tile) => tile.id === openId) || null,
     [openId, tiles],
   );
+  const hasOpenTile = openId !== null;
 
   useEffect(() => {
     if (activeTile?.id !== "organizations") {
@@ -280,12 +285,18 @@ export default function DashboardTiles({
               type="button"
               onClick={handleClick}
               aria-pressed={isOpen}
-              className={`group rounded-xl border border-slate-200 bg-white p-2 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
-                isOpen ? "ring-2 ring-emerald-200" : ""
+              className={`group rounded-xl border border-slate-200 bg-white p-2 shadow-sm transition-all duration-300 ease-out transform-gpu hover:-translate-y-0.5 hover:shadow-md ${
+                isOpen
+                  ? "scale-110 ring-2 ring-emerald-200 shadow-md"
+                  : hasOpenTile
+                    ? "scale-90 opacity-85"
+                    : ""
               }`}
             >
               <div
-                className={`aspect-[4/3] w-full rounded-lg border flex flex-col items-center justify-center gap-2 text-center transition ${toneClass}`}
+                className={`aspect-[4/3] w-full rounded-lg border flex flex-col items-center justify-center gap-2 text-center transition-all duration-300 ${toneClass} ${
+                  isOpen ? "scale-100" : hasOpenTile ? "scale-95" : ""
+                }`}
               >
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/70">
                   <Icon className="h-4 w-4" />
@@ -325,6 +336,18 @@ export default function DashboardTiles({
                   {activeTile.title}
                 </span>
               </div>
+              {activeTile.id === "profile" && (
+                <Link
+                  href={`/contacts/${userContactId}/edit`}
+                  className={contactProfileStyles.editButton}
+                >
+                  <UserCircle
+                    className={contactProfileStyles.editIcon}
+                    size={16}
+                  />
+                  Edit Profile
+                </Link>
+              )}
               {activeTile.id === "organizations" && (
                 <div className="relative">
                   <button

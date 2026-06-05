@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { resetPasswordAction } from "@/lib/actions/auth-actions";
+import {
+  resetPasswordAction,
+  validateResetTokenAction,
+} from "@/lib/actions/auth-actions";
 import { toast } from "sonner";
 import { ShieldCheck, Mail } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
@@ -25,6 +29,39 @@ export default function ResetPasswordPage() {
   const email = searchParams.get("email") || "";
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingToken, setIsCheckingToken] = useState(Boolean(token));
+  const [tokenError, setTokenError] = useState<string | null>(
+    token ? null : "Invalid link. Please request a new reset.",
+  );
+
+  useEffect(() => {
+    if (!token) return;
+
+    let active = true;
+
+    validateResetTokenAction(token)
+      .then((result) => {
+        if (!active) return;
+        if (result.success) {
+          setTokenError(null);
+        } else {
+          setTokenError(
+            result.error || "Invalid link. Please request a new reset.",
+          );
+        }
+      })
+      .catch(() => {
+        if (!active) return;
+        setTokenError("Invalid link. Please request a new reset.");
+      })
+      .finally(() => {
+        if (active) setIsCheckingToken(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [token]);
 
   // Setup React Hook Form
   const formMethods = useForm<ResetPasswordInput>({
@@ -44,6 +81,11 @@ export default function ResetPasswordPage() {
       return;
     }
 
+    if (tokenError) {
+      toast.error(tokenError);
+      return;
+    }
+
     setIsLoading(true);
     const result = await resetPasswordAction(token, data.password);
 
@@ -56,11 +98,21 @@ export default function ResetPasswordPage() {
     }
   }
 
-  if (!token) {
+  if (!token || tokenError) {
     return (
       <div className={authStyles.resetInvalidContainer}>
         <p className={authStyles.resetInvalidMessage}>
-          Invalid link. Please request a new reset.
+          {tokenError || "Invalid link. Please request a new reset."}
+        </p>
+      </div>
+    );
+  }
+
+  if (isCheckingToken) {
+    return (
+      <div className={authStyles.resetInvalidContainer}>
+        <p className={authStyles.resetInvalidMessage}>
+          Validating reset link...
         </p>
       </div>
     );
@@ -103,7 +155,9 @@ export default function ResetPasswordPage() {
           ))}
 
           <button
-            disabled={isLoading || !isValid}
+            disabled={
+              isLoading || !isValid || isCheckingToken || Boolean(tokenError)
+            }
             type="submit"
             className={cn(BUTTON_VARIANTS.primary, "relative w-full")}
           >

@@ -36,7 +36,7 @@ export async function POST(req: Request) {
       );
     }
     // Check for existing pending verification
-    const existing = await prisma.pendingEmailVerification.findFirst({
+    const existing = await prisma.verificationEmailToken.findFirst({
       where: { email: email.toLowerCase().trim() },
     }); // If error: Property does not exist, run `npx prisma generate` and check schema
     if (existing && existing.expiresAt > new Date()) {
@@ -51,12 +51,12 @@ export async function POST(req: Request) {
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiry
     // Store pending verification (since email is not unique, upsert by findFirst+update/create)
     if (existing) {
-      await prisma.pendingEmailVerification.update({
+      await prisma.verificationEmailToken.update({
         where: { id: existing.id },
         data: { token, expiresAt },
       });
     } else {
-      await prisma.pendingEmailVerification.create({
+      await prisma.verificationEmailToken.create({
         data: {
           email: email.toLowerCase().trim(),
           token,

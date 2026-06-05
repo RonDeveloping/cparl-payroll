@@ -1,3 +1,4 @@
+// app/dashboard/page.tsx
 import { getCurrentUser } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
@@ -94,6 +95,7 @@ export default async function DashboardPage() {
         userGivenName={givenName}
         userFamilyName={familyName}
         userPrimaryPostalCode={primaryPostalCode}
+        userContactId={user.contactId}
       />
     </div>
   );

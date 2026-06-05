@@ -9,6 +9,7 @@ import { upsertContactPEAInternal } from "@/db/internal/contactHelper";
 import { RegisterInput } from "../validations/register-schema";
 import { sendVerificationEmail } from "../mail";
 import crypto from "node:crypto";
+import { ERRORS } from "@/constants/errors";
 
 export async function isEmailTaken(email: string) {
   const normalizedEmail = email.toLowerCase().trim();
@@ -80,18 +81,18 @@ export async function upSertUserSendEmailVeriRequest(
           passwordHash: hashedPassword || null,
           contactId: contact.id,
           emailVerifiedAt: null,
-          pendingEmail: null,
+          candidateEmail: null,
         },
       });
 
       // Cleanup old tokens
-      await tx.emailVerification.deleteMany({
+      await tx.authToken.deleteMany({
         where: { userId: user.id },
       });
 
       // Create new token
       const token = crypto.randomBytes(32).toString("hex");
-      await tx.emailVerification.create({
+      await tx.authToken.create({
         data: {
           token,
           userId: user.id,
