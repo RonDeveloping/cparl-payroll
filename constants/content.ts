@@ -1,9 +1,8 @@
+// constants/content.ts
 export const setupPasswordContent = {
   heading:
     "This email address is now verified; please set up a password for the account with this email address:",
 };
-// constants/content.ts
-
 export const authContent = {
   verifyEmail: {
     title: "Check your email",
@@ -11,7 +10,9 @@ export const authContent = {
       `Please click the Verify Email button in the email we sent to <strong>${email}</strong>.`,
     secondaryNote:
       "If the email doesn’t arrive soon, 1) check your spam folder, 2) use Resend... button below, or 3) try logging in to see if it's already been used with a registered account.",
-    keepOpenReminder: "",
+    alreadyVerified: "Invalid or Used Link",
+    alreadyVerifiedByEmail: (email: string) =>
+      `The email "${email}" has already been verified.`,
   },
   security: {
     deactivationWarning:

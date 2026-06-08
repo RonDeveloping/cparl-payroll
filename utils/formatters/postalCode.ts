@@ -1,6 +1,8 @@
 // lib\formatters\postalCode.ts
 
-function formatPostalCode(value: string) {
+function formatPostalCode(value: string | undefined | null) {
+  if (!value) return "";
+
   const cleaned = value.replace(/\s+/g, "").toUpperCase();
 
   if (cleaned.length !== 6) return value;

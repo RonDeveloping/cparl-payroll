@@ -1,3 +1,4 @@
+// constants/payment-fields.ts
 // Clarification descriptions for payment form fields
 export const PAYMENT_FORM_DESCRIPTIONS = {
   cardDetails:

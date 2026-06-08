@@ -1,4 +1,6 @@
-function formatPhone(value: string) {
+function formatPhone(value: string | undefined | null) {
+  if (!value) return "";
+
   const digits = value.replace(/\D/g, "");
 
   // strip leading country code
