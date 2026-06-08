@@ -1,3 +1,4 @@
+// drizzle.config.ts
 import "dotenv/config"; // Required to read your DATABASE_URL
 import { Config } from "drizzle-kit";
 // import { defineConfig } from "drizzle-kit";

@@ -8,19 +8,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "ts-node-esm prisma/seed.ts",
+    "seed": "ts-node-esm db/prisma/seed.ts",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "db:sync": "prisma migrate dev && prisma generate",
     "db:ui": "prisma studio",
     "db:push": "prisma db push && prisma generate",
-    "db:reset": "prisma migrate reset && prisma generate",
+    "db:reset": "prisma generate && prisma migrate reset --force",
     "db:watch": "prisma migrate dev --watch",
     "postinstall": "prisma generate",
     "db:pull": "drizzle-kit pull"
   },
   "prisma": {
-    "schema": "db/prisma/schema.prisma"
+    "schema": "db/prisma/schema.prisma",
+    "seed": "ts-node-esm db/prisma/seed.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

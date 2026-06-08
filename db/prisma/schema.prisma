@@ -1,3 +1,5 @@
+// db/prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -18,7 +20,7 @@ model verificationEmailToken {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("pending_email_verification")
+  @@map("verification_email_token")
   @@index([email])
   @@index([token])
 }
