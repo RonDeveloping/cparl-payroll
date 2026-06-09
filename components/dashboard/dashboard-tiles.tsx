@@ -10,6 +10,10 @@ import {
   Package,
   CreditCard,
   MessageSquare,
+  Pencil,
+  Eye,
+  EyeOff,
+  Save,
   MoreHorizontal,
   Trash2,
   UserRoundX,
@@ -19,9 +23,9 @@ import { contactProfileStyles } from "@/constants/styles";
 import { useTenant } from "@/app/tenants/context/TenantContext";
 import PaymentMethodDetails from "@/components/payments/payment-method-details";
 import { deleteTenant, setTenantActiveState } from "@/lib/actions/tenant";
-import formatBusinessNumber, {
-  composeBusinessNumberFromParts,
-} from "@/utils/formatters/businessNumber";
+import type { TenantSummaryDto } from "@/lib/dto/tenant";
+import type { ContactFormInput } from "@/lib/validations/contact-schema";
+import ProfileInlineEditor from "@/components/dashboard/profile-inline-editor";
 
 export type DashboardTileItem = {
   label: string;
@@ -37,18 +41,7 @@ export type DashboardTile = {
   icon: "profile" | "security" | "products" | "payments" | "communications";
 };
 
-type OrganizationTenant = {
-  id: string;
-  nameCached: {
-    coreName: string;
-    kindName?: string | null;
-    aliasName?: string | null;
-  };
-  businessBn9: string | null;
-  businessProgramId: string | null;
-  businessAccountRef: string | null;
-  isActive: boolean;
-};
+type OrganizationTenant = TenantSummaryDto;
 
 type OrganizationFilter = "all" | "active" | "inactive";
 type OrganizationSort =
@@ -73,32 +66,25 @@ const iconMap: Record<DashboardTile["icon"], typeof UserCircle> = {
   communications: MessageSquare,
 };
 
-function getOrganizationDisplayName(tenant: OrganizationTenant) {
-  return `${tenant.nameCached?.coreName ?? "Employer"}${
-    tenant.nameCached?.kindName ? ` ${tenant.nameCached.kindName}` : ""
-  }${tenant.nameCached?.aliasName ? ` (o/a ${tenant.nameCached.aliasName})` : ""}`;
-}
-
-function getOrganizationOperatingAsName(tenant: OrganizationTenant) {
-  return (
-    tenant.nameCached?.aliasName?.trim() || tenant.nameCached?.coreName || ""
-  );
-}
-
 export default function DashboardTiles({
   tiles,
   userGivenName,
   userFamilyName,
+  userEmail,
   userPrimaryPostalCode,
   userContactId,
+  profileInitialData,
 }: {
   tiles: DashboardTile[];
   userGivenName?: string | null;
   userFamilyName?: string | null;
+  userEmail: string;
   userPrimaryPostalCode?: string | null;
   userContactId: string;
+  profileInitialData: ContactFormInput;
 }) {
   const router = useRouter();
+  const profileFormId = "profile-inline-editor-form";
   const defaultId = tiles[0]?.id ?? null;
   const [openId, setOpenId] = useState<string | null>(defaultId);
   const { tenants, tenantsLoading } = useTenant();
@@ -117,6 +103,9 @@ export default function DashboardTiles({
     useState<OrganizationSort>("name-asc");
   const [isOrganizationListMenuOpen, setIsOrganizationListMenuOpen] =
     useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [showProfileChanges, setShowProfileChanges] = useState(false);
+  const [profileChangeCount, setProfileChangeCount] = useState(0);
 
   useEffect(() => {
     setOrganizationTenants(tenants);
@@ -126,11 +115,23 @@ export default function DashboardTiles({
     () => tiles.find((tile) => tile.id === openId) || null,
     [openId, tiles],
   );
+  const profileDisplayName = [userGivenName?.trim(), userFamilyName?.trim()]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  const profileHeading = profileDisplayName
+    ? `${profileDisplayName} (${userEmail})`
+    : userEmail;
   const hasOpenTile = openId !== null;
 
   useEffect(() => {
     if (activeTile?.id !== "organizations") {
       setIsOrganizationListMenuOpen(false);
+    }
+    if (activeTile?.id !== "profile") {
+      setIsEditingProfile(false);
+      setShowProfileChanges(false);
+      setProfileChangeCount(0);
     }
   }, [activeTile?.id]);
 
@@ -220,11 +221,11 @@ export default function DashboardTiles({
           organizationSort === "operating-as-asc" ||
           organizationSort === "operating-as-desc";
         const leftName = sortByOperatingAs
-          ? getOrganizationOperatingAsName(leftTenant).toLowerCase()
-          : getOrganizationDisplayName(leftTenant).toLowerCase();
+          ? leftTenant.operatingAsName.toLowerCase()
+          : leftTenant.displayName.toLowerCase();
         const rightName = sortByOperatingAs
-          ? getOrganizationOperatingAsName(rightTenant).toLowerCase()
-          : getOrganizationDisplayName(rightTenant).toLowerCase();
+          ? rightTenant.operatingAsName.toLowerCase()
+          : rightTenant.displayName.toLowerCase();
         if (leftName === rightName) {
           return 0;
         }
@@ -252,14 +253,8 @@ export default function DashboardTiles({
     return filteredTenants.map((tenant) => ({
       ...tenant,
       businessNumber:
-        formatBusinessNumber(
-          composeBusinessNumberFromParts({
-            bn9: tenant.businessBn9,
-            programId: tenant.businessProgramId,
-            accountRef: tenant.businessAccountRef,
-          }) ?? "",
-        ) || "Valid business no. is required in remitting and reporting.",
-      displayName: getOrganizationDisplayName(tenant),
+        tenant.displayBusinessNumber ||
+        "Valid business no. is required in remitting and reporting.",
     }));
   }, [
     organizationFilter,
@@ -333,20 +328,77 @@ export default function DashboardTiles({
                   })()}
                 </div>
                 <span className="text-sm font-semibold text-slate-900">
-                  {activeTile.title}
+                  {activeTile.id === "profile"
+                    ? profileHeading
+                    : activeTile.title}
                 </span>
               </div>
               {activeTile.id === "profile" && (
-                <Link
-                  href={`/contacts/${userContactId}/edit`}
-                  className={contactProfileStyles.editButton}
-                >
-                  <UserCircle
-                    className={contactProfileStyles.editIcon}
-                    size={16}
-                  />
-                  Edit Profile
-                </Link>
+                <div className="flex items-center gap-3">
+                  {isEditingProfile && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowProfileChanges((showChanges) => !showChanges)
+                        }
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-emerald-700 transition hover:bg-emerald-50 hover:text-emerald-800"
+                        aria-pressed={showProfileChanges}
+                        aria-label={
+                          showProfileChanges ? "Hide changes" : "Show changes"
+                        }
+                        title={
+                          showProfileChanges ? "Hide changes" : "Show changes"
+                        }
+                      >
+                        {showProfileChanges ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                      <span className="text-xs text-slate-600">
+                        {profileChangeCount} change
+                        {profileChangeCount === 1 ? "" : "s"}
+                      </span>
+                    </>
+                  )}
+                  {isEditingProfile ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const profileForm = document.getElementById(
+                          profileFormId,
+                        ) as HTMLFormElement | null;
+                        profileForm?.requestSubmit();
+                      }}
+                      className={`${contactProfileStyles.editButton} gap-2 border-emerald-200 bg-emerald-100 text-emerald-800 shadow-sm`}
+                      aria-label="Save changes"
+                      title="Save changes"
+                    >
+                      <Save className="text-emerald-700" size={16} />
+                      <span className="text-xs font-semibold text-emerald-800">
+                        Save
+                      </span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingProfile(true);
+                        setShowProfileChanges(false);
+                      }}
+                      className={contactProfileStyles.editButton}
+                      aria-label="Edit profile"
+                      title="Edit profile"
+                    >
+                      <Pencil
+                        className={contactProfileStyles.editIcon}
+                        size={16}
+                      />
+                    </button>
+                  )}
+                </div>
               )}
               {activeTile.id === "organizations" && (
                 <div className="relative">
@@ -476,6 +528,23 @@ export default function DashboardTiles({
                   userGivenName={userGivenName}
                   userFamilyName={userFamilyName}
                   userPrimaryPostalCode={userPrimaryPostalCode}
+                />
+              ) : activeTile.id === "profile" && isEditingProfile ? (
+                <ProfileInlineEditor
+                  contactId={userContactId}
+                  formId={profileFormId}
+                  initialData={profileInitialData}
+                  showChanges={showProfileChanges}
+                  onEyeToggle={() =>
+                    setShowProfileChanges((showChanges) => !showChanges)
+                  }
+                  onChangeCount={setProfileChangeCount}
+                  onCancel={() => setIsEditingProfile(false)}
+                  onSaved={() => {
+                    setIsEditingProfile(false);
+                    setShowProfileChanges(false);
+                    router.refresh();
+                  }}
                 />
               ) : (
                 <div className="space-y-3 text-sm">

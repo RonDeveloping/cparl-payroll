@@ -4,18 +4,18 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react";
+import { Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { loginAction } from "@/lib/actions/auth-actions";
 import { ROUTES } from "@/constants/routes";
 import { authStyles } from "@/constants/styles";
 import { Clarification } from "@/components/clarification";
+import { PasswordInput } from "@/components/form/password-input";
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   // Prefill email from query param if present
   const initialEmail = searchParams.get("email") || "";
@@ -92,23 +92,12 @@ export default function LoginPage() {
               Forgot password?
             </Link>
           </div>
-          <div className={authStyles.loginInputWrapper}>
-            <Lock className={authStyles.loginPasswordIcon} />
-            <input
-              name="password"
-              type={showPassword ? "text" : "password"}
-              required
-              placeholder="••••••••"
-              className={authStyles.loginPasswordInput}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className={authStyles.loginPasswordToggle}
-            >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-            </button>
-          </div>
+          <PasswordInput
+            label=""
+            name="password"
+            required
+            placeholder="••••••••"
+          />
         </div>
 
         <button

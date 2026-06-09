@@ -19,6 +19,7 @@ import formatPostalCode from "@/utils/formatters/postalCode";
 import { registerWithOnBlurFormat } from "@/utils/formRegister";
 import formatPhone from "@/utils/formatters/phone";
 import { ContactForm } from "@/components/contact/contact-form";
+import { getPostalLocationSuggestion } from "@/utils/validators/postalCodeLookup";
 
 interface EditContactFormProps {
   paramsPromise: Promise<{ id: string }>;
@@ -37,6 +38,7 @@ export default function EditContactForm({
     handleSubmit,
     formState: { errors, isSubmitting, isDirty, dirtyFields },
     getValues,
+    setValue,
   } = useForm<ContactFormInput>({
     resolver: zodResolver(contactSchema),
     values: initialData,
@@ -63,21 +65,46 @@ export default function EditContactForm({
   const changeCount = changes.length;
   const [showB4Change, setShowB4Change] = useState(false);
 
-  const [showOptionalIdentity, setShowOptionalIdentity] = useState(
-    Boolean(
-      initialData.middleName || initialData.nickName || initialData.displayName,
-    ),
-  );
+  const [showOptionalIdentity, setShowOptionalIdentity] = useState(false);
 
-  const [showOptionalContact, setShowOptionalContact] = useState(
-    Boolean(
-      initialData.phone ||
-      initialData.street ||
-      initialData.city ||
-      initialData.province ||
-      initialData.country,
-    ),
-  );
+  const [showOptionalContact, setShowOptionalContact] = useState(false);
+
+  const applyPostalCodeSuggestion = () => {
+    const suggestion = getPostalLocationSuggestion(getValues("postalCode"));
+    if (!suggestion) return;
+
+    if (suggestion.provinceCode) {
+      const currentProvince = (getValues("province") || "")
+        .trim()
+        .toUpperCase();
+      if (currentProvince !== suggestion.provinceCode) {
+        setValue("province", suggestion.provinceCode, {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true,
+        });
+      }
+    }
+
+    if (suggestion.city) {
+      const currentCity = (getValues("city") || "").trim();
+      if (currentCity.toLowerCase() !== suggestion.city.toLowerCase()) {
+        setValue("city", suggestion.city, {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true,
+        });
+      }
+    }
+  };
+
+  const handlePostalCodeChange = () => {
+    applyPostalCodeSuggestion();
+  };
+
+  const handlePostalCodeBlur = () => {
+    applyPostalCodeSuggestion();
+  };
   // Form submission handler where this data is coming from RHF's handleSubmit of RHF state, not DOM
   const onCreateOrConfirm = async (data: ContactFormInput) => {
     try {
@@ -124,6 +151,9 @@ export default function EditContactForm({
             setShowOptionalIdentity={setShowOptionalIdentity}
             showOptionalContact={showOptionalContact}
             setShowOptionalContact={setShowOptionalContact}
+            onPostalCodeChange={handlePostalCodeChange}
+            onPostalCodeBlur={handlePostalCodeBlur}
+            hideCountryField
           />
         </form>
       </SmartFormProvider>

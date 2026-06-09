@@ -12,6 +12,7 @@ export const ROUTES = {
     CHECK_EMAIL: "/auth/check-email",
     CHECK_PHONE: "/auth/check-phone",
     RESET_PASSWORD: "/auth/reset-password",
+    CONFIRM_EMAIL_CHANGE: "/auth/confirm-email-change",
   },
 
   DASHBOARD: {
@@ -24,7 +25,6 @@ export const ROUTES = {
     REGISTER: "/api/register",
     LOGIN: "/api/login",
     RESEND_VERIFICATION: "/api/resend-verification",
-    COMPLETE_PROFILE: "/api/complete-profile",
     SETUP_PASSWORD: "/api/activate-account",
   },
 } as const;

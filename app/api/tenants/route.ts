@@ -2,6 +2,7 @@
 import prisma from "@/db/prismaDrizzle";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
+import { toTenantSummaryDto } from "@/lib/dto/tenant";
 
 export async function GET() {
   try {
@@ -16,10 +17,20 @@ export async function GET() {
           some: { userId: session.userId },
         },
       },
+      select: {
+        id: true,
+        nameCached: true,
+        slug: true,
+        businessBn9: true,
+        businessProgramId: true,
+        businessAccountRef: true,
+        isActive: true,
+        createdAt: true,
+      },
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json(tenants);
+    return NextResponse.json(tenants.map(toTenantSummaryDto));
   } catch (error) {
     console.error("Error fetching tenants:", error);
     return NextResponse.json(

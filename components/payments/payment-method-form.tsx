@@ -8,7 +8,7 @@ import { FormGrid } from "@/components/form/form-grid";
 import InputGroup from "@/components/form/input-group";
 import { Clarification } from "@/components/clarification";
 import { BUTTON_VARIANTS, LABEL_STYLE } from "@/constants/styles";
-import { PAYMENT_FORM_DESCRIPTIONS } from "@/constants/payment-fields";
+import { paymentFieldContent } from "@/constants/content";
 import formatPostalCode from "@/utils/formatters/postalCode";
 import { isValidCanadianPostalCode } from "@/utils/validators/postalCode";
 import CardTypeIcon from "@/components/payments/card-type-icon";
@@ -1132,8 +1132,8 @@ export default function PaymentMethodForm({
           <div className="space-y-1 md:col-span-5 lg:col-span-6">
             <label className={LABEL_STYLE}>
               <Clarification
-                term="Card Details"
-                description={PAYMENT_FORM_DESCRIPTIONS.cardDetails}
+                term={paymentFieldContent.cardDetails.term}
+                description={paymentFieldContent.cardDetails.description}
               />
             </label>
             <input

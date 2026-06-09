@@ -1,7 +1,7 @@
 // constants/content.ts
 export const setupPasswordContent = {
-  heading:
-    "This email address is now verified; please set up a password for the account with this email address:",
+  verifiedMessage: (email: string) =>
+    `${email} is verified and please set up a password:`,
 };
 export const authContent = {
   verifyEmail: {
@@ -45,3 +45,28 @@ export const registerPageContent = {
   description:
     "Please enter your email address. Once verified, it will be used as your login username and for account-related updates.",
 };
+
+export const contactFieldContent = {
+  middleName: {
+    term: "Middle Name",
+    description: "Beneficial for more complete identification...",
+  },
+  displayName: {
+    term: "Customized Display Name",
+    description:
+      "This one allows you to override the default 'Prefix + Given + Middle + Family' format.",
+  },
+  postalCode: {
+    term: "Postal Code",
+    description:
+      "This info helps our communication be tailored based on your rough location.",
+  },
+} as const;
+
+export const paymentFieldContent = {
+  cardDetails: {
+    term: "Card Details",
+    description:
+      "MM/YY stands for the card's expiration month/year, and CVV is the 3-4 digit security code on your card.",
+  },
+} as const;

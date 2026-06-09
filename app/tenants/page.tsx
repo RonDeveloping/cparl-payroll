@@ -3,29 +3,12 @@
 
 import { useEffect, useState } from "react";
 import { getTenants } from "@/lib/api";
+import type { TenantSummaryDto } from "@/lib/dto/tenant";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
-import formatBusinessNumber, {
-  composeBusinessNumberFromParts,
-} from "@/utils/formatters/businessNumber";
-
-interface Tenant {
-  id: string;
-  nameCached: {
-    coreName: string;
-    kindName?: string | null;
-    aliasName?: string | null;
-  };
-  slug: string;
-  businessBn9: string | null;
-  businessProgramId: string | null;
-  businessAccountRef: string | null;
-  isActive: boolean;
-  createdAt: Date;
-}
 
 export default function TenantsPage() {
-  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [tenants, setTenants] = useState<TenantSummaryDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -63,15 +46,6 @@ export default function TenantsPage() {
       ) : (
         <div className="grid gap-4">
           {tenants.map((tenant) => {
-            const displayBusinessNumber =
-              formatBusinessNumber(
-                composeBusinessNumberFromParts({
-                  bn9: tenant.businessBn9,
-                  programId: tenant.businessProgramId,
-                  accountRef: tenant.businessAccountRef,
-                }) ?? "",
-              ) || null;
-
             return (
               <div
                 key={tenant.id}
@@ -83,18 +57,10 @@ export default function TenantsPage() {
                       href={`/payroll?tenantId=${tenant.id}`}
                       className="text-xl font-semibold text-slate-900 hover:text-emerald-700 transition-colors"
                     >
-                      {tenant.nameCached.coreName}
-                      {tenant.nameCached.kindName && (
-                        <span>{` ${tenant.nameCached.kindName}`}</span>
-                      )}
-                      {tenant.nameCached.aliasName && (
-                        <span className="text-slate-500 font-medium">
-                          {` (o/a ${tenant.nameCached.aliasName})`}
-                        </span>
-                      )}
+                      {tenant.displayName}
                     </Link>
                     <p className="text-xs text-slate-500 mt-1">
-                      {displayBusinessNumber ||
+                      {tenant.displayBusinessNumber ||
                         "Valid business no. is required in remitting and reporting."}
                     </p>
                   </div>

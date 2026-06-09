@@ -6,6 +6,10 @@ import { dashboardStyles } from "@/constants/styles";
 import DashboardTiles, {
   type DashboardTile,
 } from "@/components/dashboard/dashboard-tiles";
+import prisma from "@/db/prismaDrizzle";
+import type { ContactFormInput } from "@/lib/validations/contact-schema";
+import formatPhone from "@/utils/formatters/phone";
+import formatPostalCode from "@/utils/formatters/postalCode";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -24,6 +28,33 @@ export default async function DashboardPage() {
     .filter(Boolean)
     .join(" ")
     .trim();
+
+  const contact = await prisma.contact.findUnique({
+    where: { id: user.contactId },
+    include: {
+      emails: { where: { isPrimary: true }, take: 1 },
+      addresses: { where: { isPrimary: true }, take: 1 },
+      phones: { where: { isPrimary: true }, take: 1 },
+    },
+  });
+
+  const profileInitialData: ContactFormInput = {
+    givenName: contact?.coreName || givenName || "",
+    familyName: contact?.kindName || familyName || "",
+    email: contact?.emails[0]?.emailAddress || user.email,
+    street: contact?.addresses[0]?.street || "",
+    city: contact?.addresses[0]?.city || "Ottawa",
+    province: contact?.addresses[0]?.province || "ON",
+    country: contact?.addresses[0]?.country || "Canada",
+    nickName: contact?.aliasName || "",
+    displayName: contact?.displayName || "",
+    phone: formatPhone(contact?.phones[0]?.number) || "",
+    postalCode: formatPostalCode(contact?.addresses[0]?.postalCode) || "",
+    middleName: contact?.middleName || "",
+    prefix: contact?.prefix || "",
+    suffix: contact?.suffix || "",
+    bankAccounts: [],
+  };
 
   const tiles: DashboardTile[] = [
     {
@@ -94,8 +125,10 @@ export default async function DashboardPage() {
         tiles={tiles}
         userGivenName={givenName}
         userFamilyName={familyName}
+        userEmail={user.email}
         userPrimaryPostalCode={primaryPostalCode}
         userContactId={user.contactId}
+        profileInitialData={profileInitialData}
       />
     </div>
   );

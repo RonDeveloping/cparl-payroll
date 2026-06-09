@@ -2,6 +2,7 @@
 import { redirect } from "next/navigation";
 import React from "react";
 import prisma from "@/db/prismaDrizzle";
+import Image from "next/image";
 import {
   User,
   Building,
@@ -55,7 +56,7 @@ export default async function ProfilePage({
       user: {
         name: "Jordan Smith",
         email: "jordan.s@example.com",
-        avatar: "/api/placeholder/150/150",
+        avatar: "/next.svg",
         role: "Administrator",
       },
       tenant: {
@@ -75,11 +76,11 @@ export default async function ProfilePage({
       const primaryAddress = getPrimary(dbContact.addresses);
 
       initialData = {
-        givenName: dbContact.givenName,
-        familyName: dbContact.familyName,
+        givenName: dbContact.coreName,
+        familyName: dbContact.kindName,
         email: getPrimary(dbContact.emails),
         phone: getPrimary(dbContact.phones),
-        nickName: dbContact.nickName || "",
+        nickName: dbContact.aliasName || "",
         displayName: dbContact.displayName || "",
         street: primaryAddress?.street || "",
         city: primaryAddress?.city || "Ottawa",
@@ -92,9 +93,11 @@ export default async function ProfilePage({
         <div className={contactProfileStyles.pageContainer}>
           {/* Header Section */}
           <div className={contactProfileStyles.headerCard}>
-            <img
+            <Image
               src={profileData.user.avatar}
               alt="Profile"
+              width={150}
+              height={150}
               className={contactProfileStyles.avatar}
             />
             <div>

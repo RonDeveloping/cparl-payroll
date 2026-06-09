@@ -1,17 +1,8 @@
 // next.config.ts
 import type { NextConfig } from "next";
 
-const nextConfig = {
-  // reactStrictMode: true,
-  // experimental: {
-  //   appDir: true, // App Router
-  //   turbo: false, // optional
-  //   nextScriptWorkers: false,
-  // },
-  // // disable dev overlay icons
-  // devIndicators: {
-  //   buildActivity: false, // hides the small icon in dev
-  // },
+const nextConfig: NextConfig = {
+  allowedDevOrigins: ["http://192.168.2.76:3000"],
 };
 
 export default nextConfig;

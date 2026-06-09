@@ -47,6 +47,7 @@ interface InputGroupProps<TFormValues extends FieldValues> {
   iconPosition?: "left" | "right";
   inputRef?: React.Ref<HTMLInputElement>;
   errorClassName?: string;
+  readOnly?: boolean;
 }
 
 export default function InputGroup<TFormValues extends FieldValues>({
@@ -76,6 +77,7 @@ export default function InputGroup<TFormValues extends FieldValues>({
   iconPosition = "right",
   inputRef,
   errorClassName,
+  readOnly = false,
 }: InputGroupProps<TFormValues> & {
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
 }) {
@@ -162,6 +164,7 @@ export default function InputGroup<TFormValues extends FieldValues>({
           onClick={onClick}
           inputMode={inputMode}
           autoComplete={autoComplete}
+          readOnly={readOnly}
           min={min}
           max={max}
           maxLength={maxLength}

@@ -2,27 +2,12 @@
 // context/TenantContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { getTenants } from "@/lib/api";
-import { Tenant } from "@prisma/client"; //schema generated types from Prisma
-
-type TenantSummary = {
-  id: string;
-  nameCached: {
-    coreName: string;
-    kindName?: string | null;
-    aliasName?: string | null;
-  };
-  slug: string;
-  businessBn9: string | null;
-  businessProgramId: string | null;
-  businessAccountRef: string | null;
-  isActive: boolean;
-  createdAt: string;
-};
+import type { TenantSummaryDto } from "@/lib/dto/tenant";
 
 interface TenantContextType {
-  tenant: Tenant | null;
-  setTenant: (tenant: Tenant | null) => void;
-  tenants: TenantSummary[];
+  tenant: TenantSummaryDto | null;
+  setTenant: (tenant: TenantSummaryDto | null) => void;
+  tenants: TenantSummaryDto[];
   tenantsLoading: boolean;
   tenantsError: string | null;
 }
@@ -32,8 +17,8 @@ const TenantContext = createContext<TenantContextType | undefined>(undefined);
 export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [tenants, setTenants] = useState<TenantSummary[]>([]);
+  const [tenant, setTenant] = useState<TenantSummaryDto | null>(null);
+  const [tenants, setTenants] = useState<TenantSummaryDto[]>([]);
   const [tenantsLoading, setTenantsLoading] = useState(true);
   const [tenantsError, setTenantsError] = useState<string | null>(null);
 

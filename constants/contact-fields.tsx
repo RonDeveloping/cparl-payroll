@@ -2,6 +2,7 @@
 import { ContactFormInput } from "@/lib/validations/contact-schema";
 import { Clarification } from "@/components/clarification";
 import { ReactNode } from "react";
+import { contactFieldContent } from "@/constants/content";
 
 export type FieldDef = {
   label: ReactNode;
@@ -17,8 +18,8 @@ export const IDENTITY_FIELDS = {
     {
       label: (
         <Clarification
-          term="Middle Name"
-          description="Beneficial for more complete identification..."
+          term={contactFieldContent.middleName.term}
+          description={contactFieldContent.middleName.description}
         />
       ),
       name: "middleName",
@@ -29,8 +30,8 @@ export const IDENTITY_FIELDS = {
     {
       label: (
         <Clarification
-          term="Customized Display Name"
-          description="Override the default 'Prefix + Given + Middle + Family' format here."
+          term={contactFieldContent.displayName.term}
+          description={contactFieldContent.displayName.description}
         />
       ),
       name: "displayName",
@@ -44,8 +45,8 @@ export const CONTACT_FIELDS = {
     {
       label: (
         <Clarification
-          term="Postal Code"
-          description="Communication may be tailored based on your region."
+          term={contactFieldContent.postalCode.term}
+          description={contactFieldContent.postalCode.description}
         />
       ),
       name: "postalCode",

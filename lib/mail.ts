@@ -22,8 +22,9 @@ export const sendVerificationEmail = async (
   email: string,
   token: string,
   createdAt: Date = new Date(),
+  routeOverride: string = ROUTES.AUTH.EMAIL_VERIFIED,
 ) => {
-  const confirmLink = `${process.env.NEXT_PUBLIC_APP_URL}${ROUTES.AUTH.EMAIL_VERIFIED}?token=${token}&email=${encodeURIComponent(email)}`;
+  const confirmLink = `${process.env.NEXT_PUBLIC_APP_URL}${routeOverride}?token=${token}&email=${encodeURIComponent(email)}`;
   const formattedTime = createdAt.toLocaleString("en-US", {
     year: "numeric",
     month: "short",

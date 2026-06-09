@@ -19,6 +19,9 @@ export interface InputWithChangesProps<TFormValues extends FieldValues> {
   rules?: RegisterOptions<TFormValues, Path<TFormValues>>;
   formatOnChange?: (value: string) => string;
   maxLength?: number;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  readOnly?: boolean;
 }
 
 export default function InputWithChanges<TFormValues extends FieldValues>({
@@ -32,6 +35,9 @@ export default function InputWithChanges<TFormValues extends FieldValues>({
   rules,
   formatOnChange,
   maxLength,
+  onBlur,
+  onChange,
+  readOnly = false,
 }: InputWithChangesProps<TFormValues>) {
   const [showPassword, setShowPassword] = useState(false);
   const { changes, showChanges, register } =
@@ -42,10 +48,11 @@ export default function InputWithChanges<TFormValues extends FieldValues>({
   const inputType = type === "password" && showPassword ? "text" : type;
 
   // Handler to auto-hide password on blur
-  const handleBlur = () => {
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     if (type === "password" && showPassword) {
       setShowPassword(false);
     }
+    onBlur?.(e);
   };
 
   return (
@@ -74,7 +81,9 @@ export default function InputWithChanges<TFormValues extends FieldValues>({
           rules={rules} // Pass rules down to InputGroup (like async validation)
           formatOnChange={formatOnChange}
           maxLength={maxLength}
+          onChange={onChange}
           onBlur={handleBlur}
+          readOnly={readOnly}
         />
 
         {type === "password" && (
