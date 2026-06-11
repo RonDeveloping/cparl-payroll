@@ -1,3 +1,4 @@
+// utils/formatters/slugify.ts
 /**
  * Slugify utility function
  * Converts a string into a URL-friendly slug format

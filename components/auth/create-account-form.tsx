@@ -1,5 +1,5 @@
-// components/auth/create-account-form.tsx
 "use client";
+// components/auth/create-account-form.tsx
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";

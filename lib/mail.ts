@@ -1,6 +1,6 @@
+// lib/mail.ts
 //how to send email in nextjs 13 app router with resend and upstash redis for email verification and password reset tokens
 
-// lib/mail.ts
 import "server-only"; // This will crash if a Client Component imports this file
 import { Resend } from "resend";
 import { ROUTES } from "@/constants/routes";
@@ -99,6 +99,27 @@ export async function sendResetEmail(email: string, token: string) {
         <p style="${s.expiry}">Link expires: ${formattedExpiry}</p>
         <hr />
         <p style="${s.footer}">If you didn't request this, you can safely ignore this email.</p>
+      </div>
+    `,
+  });
+}
+
+export async function sendLoginEmailChangeNotice(
+  currentEmail: string,
+  candidateEmail: string,
+) {
+  await resend.emails.send({
+    from: mailContent.verification.from,
+    to: currentEmail,
+    subject: mailContent.security.loginEmailChangeNoticeSubject,
+    replyTo: mailContent.verification.replyTo,
+    html: `
+      <div style="${s.container}">
+        <h2 style="${s.heading}">${mailContent.security.loginEmailChangeNoticeHeading}</h2>
+        <p style="${s.text}">${mailContent.security.loginEmailChangeNoticeBody}</p>
+        <p style="${s.text}"><strong>Requested new login email:</strong> ${candidateEmail}</p>
+        <hr />
+        <p style="${s.footer}">If you did not request this change, reset your password and contact support.</p>
       </div>
     `,
   });

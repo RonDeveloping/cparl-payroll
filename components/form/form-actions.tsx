@@ -1,5 +1,6 @@
-//@components\FormActions.tsx
 "use client";
+// components/form/form-actions.tsx
+
 
 import { Save, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";

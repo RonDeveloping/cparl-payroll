@@ -1,4 +1,5 @@
-//constants/styles.ts
+// constants/styles.ts
+
 import { cn } from "@/lib/utils";
 
 export const FORM_GRID_STYLE = "grid grid-cols-1 md:grid-cols-2 px-1 gap-6";

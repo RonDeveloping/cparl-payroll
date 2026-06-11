@@ -1,3 +1,4 @@
+// app/contacts/[id]/page.tsx
 //app\contacts\[id]\page.tsx
 import { redirect } from "next/navigation";
 import React from "react";

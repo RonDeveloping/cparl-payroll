@@ -1,5 +1,5 @@
-// components/navbar.tsx
 "use client";
+// components/navbar.tsx
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";

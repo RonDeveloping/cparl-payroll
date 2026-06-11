@@ -1,3 +1,4 @@
+// db/prismaDrizzle.ts
 import "dotenv/config"; //  <-  before accessing process.env.DATABASE_URL
 
 import { Pool } from "pg";

@@ -1,5 +1,5 @@
-// app/tenants/[id]/edit/edit-tenant.tsx
 "use client";
+// app/tenants/[id]/edit/edit-tenant.tsx
 
 import { use } from "react";
 import { useForm } from "react-hook-form";

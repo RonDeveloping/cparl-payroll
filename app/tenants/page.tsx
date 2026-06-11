@@ -1,5 +1,5 @@
-// app/tenants/page.tsx
 "use client";
+// app/tenants/page.tsx
 
 import { useEffect, useState } from "react";
 import { getTenants } from "@/lib/api";

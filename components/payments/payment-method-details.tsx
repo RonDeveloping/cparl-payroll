@@ -1,5 +1,5 @@
-// components/payments/payment-method-details.tsx
 "use client";
+// components/payments/payment-method-details.tsx
 
 import PaymentMethodForm from "@/components/payments/payment-method-form";
 

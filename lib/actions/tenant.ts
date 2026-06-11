@@ -1,4 +1,5 @@
 "use server";
+// lib/actions/tenant.ts
 
 import { TenantFormInput } from "@/lib/validations/tenant-schema";
 import prisma from "@/db/prismaDrizzle";
@@ -10,6 +11,7 @@ import {
 } from "@/utils/formatters/slugify";
 import { upsertAddress } from "@/lib/utils/address-hash";
 import { splitBusinessNumber } from "@/utils/formatters/businessNumber";
+import { ERRORS } from "@/constants/errors";
 
 /**
  * Updates an existing tenant or creates a new one.

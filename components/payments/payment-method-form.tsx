@@ -1,5 +1,5 @@
-// components/payments/payment-method-form.tsx
 "use client";
+// components/payments/payment-method-form.tsx
 
 import { useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";

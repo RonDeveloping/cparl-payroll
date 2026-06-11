@@ -1,4 +1,4 @@
-// utils\formRegister.ts
+// utils/formRegister.ts
 import { FieldValues, UseFormRegister, Path } from "react-hook-form";
 
 export function registerWithOnBlurFormat<T extends FieldValues>(

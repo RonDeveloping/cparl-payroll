@@ -1,4 +1,5 @@
 "use client";
+// app/employees/[id]/edit/edit-employee.tsx
 
 import { use } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -11,7 +12,7 @@ import {
   ContactFormInput,
 } from "@/lib/validations/contact-schema";
 import { upsertContactPEA } from "@/lib/actions/contact";
-import { getFieldChanges, ChangeEntry } from "@/utils/formChanges";
+import { getFieldChanges, ChangeEntry, DirtyField } from "@/utils/formChanges";
 import { registerWithOnBlurFormat } from "@/utils/formRegister";
 import formatPostalCode from "@/utils/formatters/postalCode";
 import formatPhone from "@/utils/formatters/phone";
@@ -37,7 +38,7 @@ export default function EditEmployeeForm({
   const router = useRouter();
 
   const form = useForm<ContactFormInput>({
-    resolver: zodResolver(contactSchema),
+    resolver: zodResolver(contactSchema) as never,
     values: initialData,
     shouldFocusError: false,
     mode: "onChange",
@@ -62,7 +63,12 @@ export default function EditEmployeeForm({
   );
 
   const changes: ChangeEntry<unknown>[] = useMemo(
-    () => getFieldChanges(initialData, currentValues, dirtyFields),
+    () =>
+      getFieldChanges(
+        initialData,
+        currentValues,
+        dirtyFields as unknown as Record<string, DirtyField>,
+      ),
     [initialData, currentValues, dirtyFields],
   );
 

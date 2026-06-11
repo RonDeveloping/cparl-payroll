@@ -1,5 +1,6 @@
-//
 "use client";
+// app/auth/resend/page.tsx
+//
 
 import { useState } from "react";
 import { resendVerificationEmail } from "@/lib/actions/veri-email";

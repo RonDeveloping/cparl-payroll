@@ -1,4 +1,5 @@
 "use client";
+// components/tenant/tenant-form.tsx
 
 import { FieldErrors } from "react-hook-form";
 import { TenantFormInput } from "@/lib/validations/tenant-schema";

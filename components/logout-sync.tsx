@@ -1,4 +1,5 @@
 "use client";
+// components/logout-sync.tsx
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";

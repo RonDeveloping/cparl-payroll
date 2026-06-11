@@ -1,4 +1,4 @@
-// components/PostalCodeInput.tsx
+// components/postal-code-input.tsx
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {

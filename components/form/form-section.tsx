@@ -1,5 +1,5 @@
-// components/form/FormSection.tsx
 "use client";
+// components/form/form-section.tsx
 import { formSectionStyles } from "@/constants/styles";
 
 interface FormSectionProps {

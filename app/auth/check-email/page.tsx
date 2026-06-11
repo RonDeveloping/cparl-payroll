@@ -1,6 +1,6 @@
+"use client";
 // app/auth/check-email/page.tsx
 
-"use client";
 
 import { Suspense } from "react";
 import CheckEmailNotice from "@/components/auth/check-email-notice";

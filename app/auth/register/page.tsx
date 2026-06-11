@@ -1,3 +1,4 @@
+// app/auth/register/page.tsx
 
 import RegisterEmailForm from "@/components/auth/register-email-form";
 import { ROUTES } from "@/constants/routes";

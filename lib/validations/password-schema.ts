@@ -1,3 +1,4 @@
+// lib/validations/password-schema.ts
 import * as z from "zod";
 
 export const passwordRules = z

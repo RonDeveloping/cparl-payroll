@@ -1,4 +1,4 @@
-// pages/TenantSettings.tsx
+// app/tenants/pages/TenantSettings.tsx
 import React from "react";
 import { useTenant } from "../context/TenantContext";
 

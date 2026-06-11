@@ -1,4 +1,4 @@
-// app/components/Clarification.tsx
+// components/clarification.tsx
 import Tooltip from "./tool-tip";
 
 interface ClarificationProps {

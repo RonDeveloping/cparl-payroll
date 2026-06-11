@@ -1,4 +1,4 @@
-// utils/formatters/id.ts
+// utils/formatters/idSlug.ts
 export const normalizeId = (input: string): string => {
   return input
     .trim()

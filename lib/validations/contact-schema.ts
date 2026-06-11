@@ -359,5 +359,5 @@ export const contactSchema = z
     }
   });
 
-// Export the type so both frontend and backend can use it
+// Export the validated contact form shape.
 export type ContactFormInput = z.infer<typeof contactSchema>;

@@ -1,10 +1,8 @@
-// components/dashboard/layout.tsx
+// app/dashboard/layout.tsx
 
 import { Suspense } from "react";
 import PhoneBannerServer from "@/components/dashboard/phone_banner_server";
 import BannerSkeleton from "@/components/dashboard/banner_skeleton";
-import Navbar from "@/components/navbar";
-import { getCurrentUser } from "@/lib/auth-utils";
 import { TenantProvider } from "../tenants/context/TenantContext";
 
 export default async function DashboardLayout({
@@ -12,17 +10,6 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getCurrentUser();
-  const navUser = user
-    ? {
-        email: user.email,
-        givenName: user.givenName,
-        familyName: user.familyName,
-        displayName: user.displayName,
-        nickName: user.nickName,
-      }
-    : null;
-
   return (
     <TenantProvider>
       <div className="min-h-screen flex flex-col">
@@ -31,7 +18,6 @@ export default async function DashboardLayout({
           <PhoneBannerServer />
         </Suspense>
         <div className="flex-1 flex flex-col">
-          <Navbar user={navUser} />
           <main className="p-8">{children}</main>
         </div>
       </div>

@@ -1,4 +1,5 @@
-// import CPARLogo from "@/components/logo";
+// app/auth/layout.tsx
+
 export default function AuthLayout({
   children,
 }: {

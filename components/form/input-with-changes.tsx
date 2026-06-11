@@ -1,5 +1,5 @@
-// components/form/InputWithChanges.tsx
 "use client";
+// components/form/input-with-changes.tsx
 import { FieldValues, Path, RegisterOptions } from "react-hook-form";
 import InputGroup from "./input-group";
 import { useFormChangeContext } from "./form-change-context";
@@ -22,6 +22,8 @@ export interface InputWithChangesProps<TFormValues extends FieldValues> {
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   readOnly?: boolean;
+  inputClassName?: string;
+  fieldAction?: React.ReactNode;
 }
 
 export default function InputWithChanges<TFormValues extends FieldValues>({
@@ -38,6 +40,8 @@ export default function InputWithChanges<TFormValues extends FieldValues>({
   onBlur,
   onChange,
   readOnly = false,
+  inputClassName,
+  fieldAction,
 }: InputWithChangesProps<TFormValues>) {
   const [showPassword, setShowPassword] = useState(false);
   const { changes, showChanges, register } =
@@ -84,7 +88,14 @@ export default function InputWithChanges<TFormValues extends FieldValues>({
           onChange={onChange}
           onBlur={handleBlur}
           readOnly={readOnly}
+          inputClassName={inputClassName}
         />
+
+        {fieldAction && type !== "password" && (
+          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+            {fieldAction}
+          </div>
+        )}
 
         {type === "password" && (
           <button

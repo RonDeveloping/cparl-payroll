@@ -1,5 +1,5 @@
-// lib/actions/veri-actions.ts
 "use server";
+// lib/actions/veri-email.ts
 
 import prisma from "@/db/prismaDrizzle";
 import { safe } from "@/utils/validators/safe";

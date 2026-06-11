@@ -1,5 +1,5 @@
-// app/auth/forgot-password/page.tsx
 "use client";
+// app/auth/forgot-password/page.tsx
 
 import { useState } from "react";
 import { askForResetLinkAction } from "@/lib/actions/auth-actions";

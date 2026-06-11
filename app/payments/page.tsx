@@ -1,3 +1,4 @@
+// app/payments/page.tsx
 import PaymentMethodDetails from "@/components/payments/payment-method-details";
 import { getCurrentUser } from "@/lib/auth-utils";
 

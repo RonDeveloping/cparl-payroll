@@ -1,3 +1,4 @@
+// app/employees/[id]/page.tsx
 import { redirect } from "next/navigation";
 
 export default async function EmployeePage({

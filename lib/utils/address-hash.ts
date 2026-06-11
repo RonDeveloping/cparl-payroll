@@ -1,3 +1,4 @@
+// lib/utils/address-hash.ts
 import crypto from "crypto";
 import type { PrismaClient } from "@prisma/client";
 

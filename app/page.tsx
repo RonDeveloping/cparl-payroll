@@ -1,6 +1,6 @@
-//app/page.tsx
-
 "use client";
+// app/page.tsx
+
 
 import CPARLogo, { FileLogoMark, GlobeLogoMark } from "../components/logo";
 import Tooltip from "../components/tool-tip";

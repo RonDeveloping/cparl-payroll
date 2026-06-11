@@ -1,5 +1,6 @@
-//app/contacts/[id]/edit/EditContactForm.tsx
 "use client";
+// app/contacts/[id]/edit/edit-contact.tsx
+
 import { use } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,7 +12,7 @@ import {
   ContactFormInput,
 } from "@/lib/validations/contact-schema";
 import { upsertContactPEA } from "@/lib/actions/contact";
-import { getFieldChanges, ChangeEntry } from "@/utils/formChanges";
+import { getFieldChanges, ChangeEntry, DirtyField } from "@/utils/formChanges";
 
 import FormLayout from "@/components/form/form-layout";
 import { SmartFormProvider } from "@/components/form/form-change-context";
@@ -40,7 +41,7 @@ export default function EditContactForm({
     getValues,
     setValue,
   } = useForm<ContactFormInput>({
-    resolver: zodResolver(contactSchema),
+    resolver: zodResolver(contactSchema) as never,
     values: initialData,
     shouldFocusError: false, // Prevents auto-focus on first error field upon submission
     mode: "onBlur", // Validation triggers when a field loses focus
@@ -58,7 +59,12 @@ export default function EditContactForm({
   );
 
   const changes: ChangeEntry<unknown>[] = useMemo(
-    () => getFieldChanges(initialData, currentValues, dirtyFields),
+    () =>
+      getFieldChanges(
+        initialData,
+        currentValues,
+        dirtyFields as unknown as Record<string, DirtyField>,
+      ),
     [initialData, currentValues, dirtyFields],
   );
 

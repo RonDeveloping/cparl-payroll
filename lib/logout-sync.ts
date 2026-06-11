@@ -1,3 +1,4 @@
+// lib/logout-sync.ts
 export const LOGOUT_SIGNAL_KEY = "cparl:logout";
 export const LOGOUT_CHANNEL = "cparl-auth";
 

@@ -1,3 +1,4 @@
+// db/drizzle/migrations/relations.ts
 import { relations } from "drizzle-orm/relations";
 import { contact, legalNameHistory, conversationalNameHistory, address, email, phone, employee, employment, jobAssignment, timeEntry, payrollRun, payrollRunEmployee, payrollLine, deduction, bankAccount, payrollDisbursement, tenant, tenantSettings, payrollCycle, department, chartOfAccount, glMapping } from "./schema";
 

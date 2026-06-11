@@ -1,4 +1,5 @@
-//app\contacts\[id]\edit\page.tsx
+// app/contacts/[id]/edit/page.tsx
+
 /*runs on the server, talks to db via prisma and prepares a flat object that the form can understand*/
 import prisma from "@/db/prismaDrizzle";
 import EditContactForm from "./edit-contact"; // client component to handle the form state
@@ -27,6 +28,7 @@ export default async function EditContactPage({
       province: "ON",
       postalCode: "",
       country: "Canada",
+      bankAccounts: [],
     };
     return <EditContactForm paramsPromise={params} initialData={emptyData} />;
   }
@@ -44,7 +46,7 @@ export default async function EditContactPage({
   if (!contact) return <div>Contact not found</div>;
 
   // FLATTEN the data for the form
-  const initialData = {
+  const initialData: ContactFormInput = {
     givenName: contact.coreName,
     familyName: contact.kindName,
     email: contact.emails[0]?.emailAddress || "",
@@ -56,6 +58,7 @@ export default async function EditContactPage({
     displayName: contact.displayName || "",
     phone: formatPhone(contact.phones[0]?.number) || "",
     postalCode: formatPostalCode(contact.addresses[0]?.postalCode) || "",
+    bankAccounts: [],
   };
 
   return <EditContactForm paramsPromise={params} initialData={initialData} />;

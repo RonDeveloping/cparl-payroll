@@ -38,6 +38,12 @@ export const mailContent = {
       "Please click the button below to verify your email address and set up a password for your account.",
     heading: "Verification is required to start your registration",
   },
+  security: {
+    loginEmailChangeNoticeSubject: "Login email change requested",
+    loginEmailChangeNoticeHeading: "A login email change was requested",
+    loginEmailChangeNoticeBody:
+      "A request was made to change the login email on your account. If this was you, no further action is needed here. If this was not you, secure your account immediately.",
+  },
 };
 
 export const registerPageContent = {
@@ -68,5 +74,24 @@ export const paymentFieldContent = {
     term: "Card Details",
     description:
       "MM/YY stands for the card's expiration month/year, and CVV is the 3-4 digit security code on your card.",
+  },
+} as const;
+
+export const dashboardContent = {
+  profileInlineEditor: {
+    loginEmailToggleButton: "Change",
+    loginEmailSubmittingLabel: "Sending...",
+    loginEmailNewFieldLabel: "New login email",
+    loginEmailNewFieldPlaceholder: "name@example.com",
+    loginEmailPasswordFieldLabel: "Current password",
+    loginEmailPasswordFieldPlaceholder: "Enter current password",
+    loginEmailSubmitButton: "Send verification",
+    loginEmailCancelButton: "Cancel",
+    loginEmailChangeNote:
+      "Login email changes require verification.  Enter a new email in the prompt and confirm it from that inbox.",
+    loginEmailRequestAcknowledgement:
+      "If the new email can be used, a verification link will be sent.",
+    unsavedChangesSaveHint:
+      "Please save your other change(s) on this page before changing login email.",
   },
 } as const;

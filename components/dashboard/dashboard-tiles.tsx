@@ -1,5 +1,5 @@
-// components/dashboard/dashboard-tiles.tsx
 "use client";
+// components/dashboard/dashboard-tiles.tsx
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -83,6 +83,7 @@ export default function DashboardTiles({
   userContactId: string;
   profileInitialData: ContactFormInput;
 }) {
+  const PROFILE_EDIT_STATE_KEY = "dashboard:profile-editing";
   const router = useRouter();
   const profileFormId = "profile-inline-editor-form";
   const defaultId = tiles[0]?.id ?? null;
@@ -108,6 +109,30 @@ export default function DashboardTiles({
   const [profileChangeCount, setProfileChangeCount] = useState(0);
 
   useEffect(() => {
+    try {
+      const persisted = window.sessionStorage.getItem(PROFILE_EDIT_STATE_KEY);
+      if (persisted === "1") {
+        setOpenId("profile");
+        setIsEditingProfile(true);
+      }
+    } catch {
+      // Ignore storage access errors.
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (isEditingProfile && openId === "profile") {
+        window.sessionStorage.setItem(PROFILE_EDIT_STATE_KEY, "1");
+      } else {
+        window.sessionStorage.removeItem(PROFILE_EDIT_STATE_KEY);
+      }
+    } catch {
+      // Ignore storage access errors.
+    }
+  }, [isEditingProfile, openId]);
+
+  useEffect(() => {
     setOrganizationTenants(tenants);
   }, [tenants]);
 
@@ -127,11 +152,6 @@ export default function DashboardTiles({
   useEffect(() => {
     if (activeTile?.id !== "organizations") {
       setIsOrganizationListMenuOpen(false);
-    }
-    if (activeTile?.id !== "profile") {
-      setIsEditingProfile(false);
-      setShowProfileChanges(false);
-      setProfileChangeCount(0);
     }
   }, [activeTile?.id]);
 
@@ -271,6 +291,12 @@ export default function DashboardTiles({
           const Icon = iconMap[tile.icon];
           const toneClass = toneStyles[tile.tone];
           const handleClick = () => {
+            // Reset profile edit state only on explicit user tile toggles.
+            if (tile.id !== "profile" || isOpen) {
+              setIsEditingProfile(false);
+              setShowProfileChanges(false);
+              setProfileChangeCount(0);
+            }
             setOpenId(isOpen ? null : tile.id);
           };
 
@@ -318,86 +344,117 @@ export default function DashboardTiles({
         {activeTile ? (
           <div>
             <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-5 py-3 bg-slate-50">
-              <div className="flex items-center gap-2">
-                <div
-                  className={`flex h-6 w-6 items-center justify-center rounded-full ${toneStyles[activeTile.tone].split(" ")[2]}`}
-                >
-                  {(() => {
-                    const Icon = iconMap[activeTile.icon];
-                    return <Icon className="h-3 w-3" />;
-                  })()}
-                </div>
-                <span className="text-sm font-semibold text-slate-900">
-                  {activeTile.id === "profile"
-                    ? profileHeading
-                    : activeTile.title}
-                </span>
-              </div>
-              {activeTile.id === "profile" && (
-                <div className="flex items-center gap-3">
-                  {isEditingProfile && (
-                    <>
+              {activeTile.id === "profile" ? (
+                <div className="grid w-full grid-cols-3 items-center gap-2">
+                  <div className="flex items-center justify-start">
+                    {isEditingProfile ? (
                       <button
                         type="button"
-                        onClick={() =>
-                          setShowProfileChanges((showChanges) => !showChanges)
-                        }
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-emerald-700 transition hover:bg-emerald-50 hover:text-emerald-800"
-                        aria-pressed={showProfileChanges}
-                        aria-label={
-                          showProfileChanges ? "Hide changes" : "Show changes"
-                        }
-                        title={
-                          showProfileChanges ? "Hide changes" : "Show changes"
-                        }
+                        onClick={() => {
+                          setIsEditingProfile(false);
+                          setShowProfileChanges(false);
+                          setProfileChangeCount(0);
+                        }}
+                        className="inline-flex h-8 min-w-[88px] items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                       >
-                        {showProfileChanges ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
+                        Cancel
                       </button>
-                      <span className="text-xs text-slate-600">
-                        {profileChangeCount} change
-                        {profileChangeCount === 1 ? "" : "s"}
-                      </span>
-                    </>
-                  )}
-                  {isEditingProfile ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const profileForm = document.getElementById(
-                          profileFormId,
-                        ) as HTMLFormElement | null;
-                        profileForm?.requestSubmit();
-                      }}
-                      className={`${contactProfileStyles.editButton} gap-2 border-emerald-200 bg-emerald-100 text-emerald-800 shadow-sm`}
-                      aria-label="Save changes"
-                      title="Save changes"
+                    ) : (
+                      <div className="h-8 min-w-[88px]" aria-hidden="true" />
+                    )}
+                  </div>
+                  <div className="flex items-center justify-center gap-2 text-center">
+                    <div
+                      className={`flex h-6 w-6 items-center justify-center rounded-full ${toneStyles[activeTile.tone].split(" ")[2]}`}
                     >
-                      <Save className="text-emerald-700" size={16} />
-                      <span className="text-xs font-semibold text-emerald-800">
-                        Save
-                      </span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsEditingProfile(true);
-                        setShowProfileChanges(false);
-                      }}
-                      className={contactProfileStyles.editButton}
-                      aria-label="Edit profile"
-                      title="Edit profile"
-                    >
-                      <Pencil
-                        className={contactProfileStyles.editIcon}
-                        size={16}
-                      />
-                    </button>
-                  )}
+                      {(() => {
+                        const Icon = iconMap[activeTile.icon];
+                        return <Icon className="h-3 w-3" />;
+                      })()}
+                    </div>
+                    <span className="text-sm font-semibold text-slate-900">
+                      {profileHeading}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-end gap-3">
+                    {isEditingProfile && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowProfileChanges((showChanges) => !showChanges)
+                          }
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-emerald-700 transition hover:bg-emerald-50 hover:text-emerald-800"
+                          aria-pressed={showProfileChanges}
+                          aria-label={
+                            showProfileChanges ? "Hide changes" : "Show changes"
+                          }
+                          title={
+                            showProfileChanges ? "Hide changes" : "Show changes"
+                          }
+                        >
+                          {showProfileChanges ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                        <span className="text-xs text-slate-600">
+                          {profileChangeCount} change
+                          {profileChangeCount === 1 ? "" : "s"}
+                        </span>
+                      </>
+                    )}
+                    {isEditingProfile ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const profileForm = document.getElementById(
+                            profileFormId,
+                          ) as HTMLFormElement | null;
+                          profileForm?.requestSubmit();
+                        }}
+                        className={`${contactProfileStyles.editButton} gap-2 border-emerald-200 bg-emerald-100 text-emerald-800 shadow-sm`}
+                        aria-label="Save changes"
+                        title="Save changes"
+                      >
+                        <Save className="text-emerald-700" size={16} />
+                        <span className="text-xs font-semibold text-emerald-800">
+                          Save
+                        </span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditingProfile(true);
+                          setShowProfileChanges(false);
+                        }}
+                        className={contactProfileStyles.editButton}
+                        aria-label="Edit profile"
+                        title="Edit profile"
+                      >
+                        <Pencil
+                          className={contactProfileStyles.editIcon}
+                          size={16}
+                        />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`flex h-6 w-6 items-center justify-center rounded-full ${toneStyles[activeTile.tone].split(" ")[2]}`}
+                  >
+                    {(() => {
+                      const Icon = iconMap[activeTile.icon];
+                      return <Icon className="h-3 w-3" />;
+                    })()}
+                  </div>
+                  <span className="text-sm font-semibold text-slate-900">
+                    {activeTile.title}
+                  </span>
                 </div>
               )}
               {activeTile.id === "organizations" && (
@@ -541,7 +598,6 @@ export default function DashboardTiles({
                   onChangeCount={setProfileChangeCount}
                   onCancel={() => setIsEditingProfile(false)}
                   onSaved={() => {
-                    setIsEditingProfile(false);
                     setShowProfileChanges(false);
                     router.refresh();
                   }}

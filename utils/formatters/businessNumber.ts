@@ -1,3 +1,4 @@
+// utils/formatters/businessNumber.ts
 function formatBusinessNumber(value: string) {
   const digits = value.replace(/\D/g, "");
 

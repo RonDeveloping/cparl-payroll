@@ -1,3 +1,4 @@
+// components/shared/cap-label.tsx
 import { LABEL_STYLE } from "@/constants/styles";
 
 export function CapLabel({

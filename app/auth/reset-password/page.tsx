@@ -1,4 +1,5 @@
 "use client";
+// app/auth/reset-password/page.tsx
 
 import { useState } from "react";
 import { useEffect } from "react";

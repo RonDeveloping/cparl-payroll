@@ -1,5 +1,5 @@
 "use client";
-// context/TenantContext.tsx
+// app/tenants/context/TenantContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { getTenants } from "@/lib/api";
 import type { TenantSummaryDto } from "@/lib/dto/tenant";

@@ -1,4 +1,4 @@
-// lib\formatters\postalCode.ts
+// utils/formatters/postalCode.ts
 
 function formatPostalCode(value: string | undefined | null) {
   if (!value) return "";

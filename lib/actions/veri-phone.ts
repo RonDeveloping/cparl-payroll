@@ -1,5 +1,5 @@
-//lib/actions/phone-actions.ts
 "use server";
+// lib/actions/veri-phone.ts
 
 import prisma from "@/db/prismaDrizzle"; // Adjust based on your actual prisma export
 import { phoneCheckLimit, phoneSendLimit } from "@/lib/ratelimit"; //assuming upstash/redis
@@ -85,7 +85,11 @@ export async function verifyPhoneCode(userId: string, inputCode: string) {
   );
 }
 
-export async function resendVerificationPhone(phone: string) {
+export async function resendVerificationPhone(_phone: string) {
+  if (!_phone.trim()) {
+    return { success: false, error: ERRORS.INVALID_INPUT };
+  }
+
   // 1. RATE LIMIT CHECK
   const headerList = await headers();
   const ip = headerList.get("x-forwarded-for") ?? "127.0.0.1";
@@ -93,7 +97,7 @@ export async function resendVerificationPhone(phone: string) {
   const { success: limitOK } = await phoneSendLimit.limit(`resend_${ip}`);
 
   if (!limitOK) {
-    return { success: false, error: ERRORS.PHONE_TOO_MANY_REQUESTS };
+    return { success: false, error: ERRORS.PHONE_TOO_MANY_ATTEMPTS };
   }
 
   return { success: true, message: ERRORS.PHONE_SENT };

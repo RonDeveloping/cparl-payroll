@@ -1,5 +1,6 @@
-//components/form/password-input.tsx
 "use client";
+// components/form/password-input.tsx
+
 
 import { useState } from "react";
 import { Eye, EyeOff, Lock } from "lucide-react";

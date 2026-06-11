@@ -1,6 +1,6 @@
+"use client";
 // app/auth/check-phone/page.tsx
 
-"use client";
 
 import { Suspense } from "react";
 import CheckPhoneNotice from "@/components/auth/check-phone-notice";

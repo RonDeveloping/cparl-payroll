@@ -1,4 +1,5 @@
 "use client";
+// components/smart-edit-link.tsx
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";

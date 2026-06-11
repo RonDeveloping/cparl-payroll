@@ -1,3 +1,4 @@
+// app/layout.tsx
 /* An app/layout.tsx is required by Next.js(App Router) acting as default wrapper for every page.tsx in root folder and its subfolders. A layout.tsx in a subfolder where a page.tsx exists will sit inside its parent layout(recursive nesting); This app/layout.tsx includes a navibar hidable on scroll down and show up on scroll up*/
 
 import type { Metadata } from "next";

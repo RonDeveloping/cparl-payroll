@@ -1,5 +1,5 @@
-// components/dashboard/verify_phone_button.tsx
 "use client";
+// components/dashboard/verify_phone_button.tsx
 
 import { useTransition } from "react";
 import { sendPhoneVerification } from "@/lib/actions/veri-phone";

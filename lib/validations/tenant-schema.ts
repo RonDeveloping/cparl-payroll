@@ -1,3 +1,4 @@
+// lib/validations/tenant-schema.ts
 import { z } from "zod";
 
 /**

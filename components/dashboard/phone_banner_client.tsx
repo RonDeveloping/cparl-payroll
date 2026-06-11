@@ -1,5 +1,5 @@
-// components/dashboard/phone_veri_banner.tsx
 "use client";
+// components/dashboard/phone_banner_client.tsx
 import { ShieldCheck } from "lucide-react";
 import { VerifyPhoneButton } from "./verify_phone_button";
 import formatPhone from "@/utils/formatters/phone";

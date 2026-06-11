@@ -1,4 +1,4 @@
-// components/shared/AuthButton.tsx
+// components/shared/auth-button.tsx
 import { Loader2 } from "lucide-react";
 import { authStyles as s } from "@/constants/styles";
 

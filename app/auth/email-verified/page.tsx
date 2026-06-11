@@ -1,5 +1,5 @@
-// app/auth/email-verified/page.tsx
 "use client";
+// app/auth/email-verified/page.tsx
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authStyles } from "@/constants/styles";

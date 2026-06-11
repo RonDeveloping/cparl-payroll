@@ -12,6 +12,13 @@ export const emailSendLimit = new Ratelimit({
   analytics: true,
 });
 
+// Dedicated limiter for login email change requests.
+export const loginEmailChangeLimit = new Ratelimit({
+  redis: redis,
+  limiter: Ratelimit.slidingWindow(3, "10 m"),
+  analytics: true,
+});
+
 // Example config for phone-specific limits; cost concerns
 export const phoneSendLimit = new Ratelimit({
   redis: redis,

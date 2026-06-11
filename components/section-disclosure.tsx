@@ -1,5 +1,5 @@
 "use client";
-//@/components/SectionDisclosure
+// components/section-disclosure.tsx
 
 import { ChevronRight, Ellipsis } from "lucide-react";
 

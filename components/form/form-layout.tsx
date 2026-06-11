@@ -1,5 +1,6 @@
-//@components/FormLayout.tsx
 "use client";
+// components/form/form-layout.tsx
+
 import { useSearchParams, useRouter } from "next/navigation";
 import { FormActions } from "./form-actions";
 import { formLayoutStyles } from "@/constants/styles";

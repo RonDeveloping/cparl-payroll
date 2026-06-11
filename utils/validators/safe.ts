@@ -1,4 +1,4 @@
-// src/db/safe.ts
+// utils/validators/safe.ts
 
 /**
  * Wraps a promise, catches any errors, logs them, and re-throws a generic error.

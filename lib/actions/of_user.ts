@@ -1,5 +1,5 @@
-// lib/actions/of_user.ts
 "use server";
+// lib/actions/of_user.ts
 
 import bcrypt from "bcrypt";
 import prisma from "@/db/prismaDrizzle";

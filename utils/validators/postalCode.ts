@@ -1,4 +1,4 @@
-// lib/validators/postalCode.ts
+// utils/validators/postalCode.ts
 
 // Letters not allowed anywhere: D, F, I, O, Q, U
 // First letter: ABCEGHJ-NPRSTVXY

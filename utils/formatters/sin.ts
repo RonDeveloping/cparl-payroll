@@ -1,3 +1,4 @@
+// utils/formatters/sin.ts
 /**
  * Format a Social Insurance Number (SIN) as XXX-XXX-XXX
  * Strips non-digits and formats to max 9 digits with hyphens

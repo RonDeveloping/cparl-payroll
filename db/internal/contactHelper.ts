@@ -1,5 +1,5 @@
-// db/internal/contactHelper.ts
 "use server";
+// db/internal/contactHelper.ts
 
 import { ContactFormInput } from "@/lib/validations/contact-schema";
 import { PrismaClient } from "@prisma/client";
