@@ -35,10 +35,19 @@ export default function LoginPage() {
     const result = await loginAction({ email, password });
 
     if (result.success) {
-      toast.success("Verification code sent to your login email.");
-      router.push(
-        `${ROUTES.AUTH.LOGIN_2FA}?email=${encodeURIComponent(result.data.email)}`,
-      );
+      if (result.data.requiresTwoFactor) {
+        const destinationEmail = result.data.email ?? email;
+        toast.success("Verification code sent to your login email.");
+        router.push(
+          `${ROUTES.AUTH.LOGIN_2FA}?email=${encodeURIComponent(destinationEmail)}`,
+        );
+        return;
+      }
+
+      toast.success("Welcome back!");
+      router.prefetch(ROUTES.DASHBOARD.HOME);
+      router.refresh();
+      router.push(ROUTES.DASHBOARD.HOME);
     } else {
       toast.error(result.error || "Login failed");
       setLoading(false);
