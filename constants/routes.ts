@@ -4,6 +4,7 @@ export const ROUTES = {
   // Page Routes (Front-end showing things, not doing sthing with the data)
   AUTH: {
     LOGIN: "/auth/login",
+    LOGIN_2FA: "/auth/login-2fa",
     REGISTER: "/auth/register",
     FORGOT_PASSWORD: "/auth/forgot-password",
     SETUP_PASSWORD: "/auth/setup-password",

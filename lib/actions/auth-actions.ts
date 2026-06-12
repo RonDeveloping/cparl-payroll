@@ -5,10 +5,10 @@ import bcrypt from "bcrypt";
 import prisma from "@/db/prismaDrizzle";
 import { safe } from "@/utils/validators/safe";
 import { cookies } from "next/headers";
-import { SignJWT } from "jose";
+import { SignJWT, jwtVerify } from "jose";
 import { redirect } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
-import { sendResetEmail } from "@/lib/mail";
+import { sendLoginTwoFactorCodeEmail, sendResetEmail } from "@/lib/mail";
 import { normalizeId } from "@/utils/formatters/idSlug";
 import crypto from "node:crypto";
 import { Prisma } from "@prisma/client";
@@ -23,8 +23,83 @@ interface LoginData {
   password: string;
 }
 
+const LOGIN_2FA_COOKIE = "login_2fa";
+const LOGIN_2FA_CODE_TTL_MS = 10 * 60 * 1000;
+
+async function issueSessionCookie(userId: string, slug: string) {
+  const token = await new SignJWT({ userId, slug })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("2h")
+    .sign(JWT_SECRET);
+
+  const cookieStore = await cookies();
+  cookieStore.set("session", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 2,
+    path: "/",
+  });
+}
+
+async function issueLogin2FAChallengeCookie(userId: string) {
+  const challengeToken = await new SignJWT({
+    userId,
+    purpose: "login-2fa",
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("10m")
+    .sign(JWT_SECRET);
+
+  const cookieStore = await cookies();
+  cookieStore.set(LOGIN_2FA_COOKIE, challengeToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 10,
+    path: "/",
+  });
+}
+
+async function getLogin2FAUserIdFromCookie() {
+  const cookieStore = await cookies();
+  const challengeToken = cookieStore.get(LOGIN_2FA_COOKIE)?.value;
+
+  if (!challengeToken) {
+    throw new Error("Your login session expired. Please sign in again.");
+  }
+
+  try {
+    const { payload } = await jwtVerify(challengeToken, JWT_SECRET);
+    const purpose = payload.purpose;
+    const userId = payload.userId;
+
+    if (purpose !== "login-2fa" || typeof userId !== "string") {
+      throw new Error("Invalid login challenge.");
+    }
+
+    return userId;
+  } catch {
+    throw new Error("Your login session expired. Please sign in again.");
+  }
+}
+
+async function createAndSendLogin2FACode(userId: string, email: string) {
+  const code = crypto.randomInt(0, 100_000).toString().padStart(5, "0");
+  const expiresAt = new Date(Date.now() + LOGIN_2FA_CODE_TTL_MS);
+
+  await prisma.twoFactorCode.upsert({
+    where: { userId },
+    update: { code, expiresAt },
+    create: { userId, code, expiresAt },
+  });
+
+  await sendLoginTwoFactorCodeEmail(email, code, expiresAt);
+}
+
 export async function loginAction(data: LoginData) {
-  // 1. Pass the promise directly to safe(somePromise) rather than safe(() => somePromise)
   const result = await safe(
     (async () => {
       const { email, password } = data;
@@ -46,39 +121,99 @@ export async function loginAction(data: LoginData) {
         throw new Error("Invalid email or password");
       }
 
-      const token = await new SignJWT({ userId: user.id, slug: user.slug })
-        .setProtectedHeader({ alg: "HS256" })
-        .setIssuedAt()
-        .setExpirationTime("2h")
-        .sign(JWT_SECRET);
+      await createAndSendLogin2FACode(user.id, user.email);
+      await issueLogin2FAChallengeCookie(user.id);
 
-      const cookiesStore = await cookies();
-      cookiesStore.set("session", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 2,
-        path: "/",
-      });
-
-      // Just return a plain object
-      return { authenticated: true };
-    })(), // Execute the IIFE to pass the Promise
+      return {
+        requiresTwoFactor: true,
+        email: user.email,
+      };
+    })(),
   );
 
-  // 2. LOGIC CHECK:
-  // 'safe' returns { success: true, data: { authenticated: true }, error: null }
-  if (result.success) {
-    redirect(ROUTES.DASHBOARD.HOME);
-  }
-
-  // 3. Return the failure result to the frontend
   return result;
+}
+
+export async function verifyLogin2FAAction(code: string) {
+  return await safe(
+    (async () => {
+      const normalizedCode = code.trim();
+      if (!/^\d{5}$/.test(normalizedCode)) {
+        throw new Error("Enter the 5-digit code from your email.");
+      }
+
+      const userId = await getLogin2FAUserIdFromCookie();
+
+      const entry = await prisma.twoFactorCode.findUnique({
+        where: { userId },
+        select: {
+          id: true,
+          code: true,
+          expiresAt: true,
+        },
+      });
+
+      if (!entry || entry.expiresAt < new Date()) {
+        await prisma.twoFactorCode.deleteMany({ where: { userId } });
+        throw new Error("Code expired. Request a new one.");
+      }
+
+      if (entry.code !== normalizedCode) {
+        throw new Error("Invalid code.");
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, slug: true },
+      });
+
+      if (!user) {
+        throw new Error("User not found.");
+      }
+
+      await prisma.$transaction([
+        prisma.twoFactorCode.delete({ where: { id: entry.id } }),
+        prisma.user.update({
+          where: { id: user.id },
+          data: { last2FAAt: new Date() },
+        }),
+      ]);
+
+      const cookieStore = await cookies();
+      cookieStore.delete(LOGIN_2FA_COOKIE);
+
+      await issueSessionCookie(user.id, user.slug);
+
+      return { authenticated: true };
+    })(),
+  );
+}
+
+export async function resendLogin2FAAction() {
+  return await safe(
+    (async () => {
+      const userId = await getLogin2FAUserIdFromCookie();
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true },
+      });
+
+      if (!user) {
+        throw new Error("User not found.");
+      }
+
+      await createAndSendLogin2FACode(userId, user.email);
+
+      return { resent: true };
+    })(),
+  );
 }
 
 export async function logoutAction() {
   const cookieStore = await cookies();
   cookieStore.delete("session");
+  cookieStore.delete(LOGIN_2FA_COOKIE);
   redirect(ROUTES.AUTH.LOGIN);
 }
 

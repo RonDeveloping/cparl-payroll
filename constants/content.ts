@@ -43,6 +43,10 @@ export const mailContent = {
     loginEmailChangeNoticeHeading: "A login email change was requested",
     loginEmailChangeNoticeBody:
       "A request was made to change the login email on your account. If this was you, no further action is needed here. If this was not you, secure your account immediately.",
+    loginTwoFactorSubject: "Your login verification code",
+    loginTwoFactorHeading: "Complete your sign in",
+    loginTwoFactorBody:
+      "Use the verification code below to complete your login. This code expires shortly for your security.",
   },
 };
 

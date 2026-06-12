@@ -35,13 +35,10 @@ export default function LoginPage() {
     const result = await loginAction({ email, password });
 
     if (result.success) {
-      toast.success("Welcome back!");
-      // 1. Tell the router to prefetch the dashboard (makes it faster)
-      router.prefetch(ROUTES.DASHBOARD.HOME);
-      // 2. Refresh to clear server-side cache
-      router.refresh();
-
-      router.push(ROUTES.DASHBOARD.HOME);
+      toast.success("Verification code sent to your login email.");
+      router.push(
+        `${ROUTES.AUTH.LOGIN_2FA}?email=${encodeURIComponent(result.data.email)}`,
+      );
     } else {
       toast.error(result.error || "Login failed");
       setLoading(false);

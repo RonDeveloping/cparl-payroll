@@ -124,3 +124,35 @@ export async function sendLoginEmailChangeNotice(
     `,
   });
 }
+
+export async function sendLoginTwoFactorCodeEmail(
+  email: string,
+  code: string,
+  expiresAt: Date,
+) {
+  const formattedExpiry = expiresAt.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+
+  await resend.emails.send({
+    from: mailContent.verification.from,
+    to: email,
+    subject: mailContent.security.loginTwoFactorSubject,
+    replyTo: mailContent.verification.replyTo,
+    html: `
+      <div style="${s.container}">
+        <h2 style="${s.heading}">${mailContent.security.loginTwoFactorHeading}</h2>
+        <p style="${s.text}">${mailContent.security.loginTwoFactorBody}</p>
+        <p style="font-size: 28px; letter-spacing: 8px; font-weight: 700; color: #0f172a; margin: 20px 0;">${code}</p>
+        <p style="${s.expiry}">Code expires: ${formattedExpiry}</p>
+        <hr />
+        <p style="${s.footer}">If you did not attempt to sign in, reset your password immediately.</p>
+      </div>
+    `,
+  });
+}

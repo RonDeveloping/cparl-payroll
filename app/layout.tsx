@@ -6,6 +6,7 @@ import Navbar from "@/components/navbar";
 import { Toaster } from "sonner";
 import { getCurrentUser } from "@/lib/auth-utils";
 import LogoutSync from "@/components/logout-sync";
+import AutoLogout from "@/components/auto-logout";
 import "./globals.css";
 
 // This Metadata applies to every page by default; individual pages can override this.
@@ -40,6 +41,7 @@ export default async function RootLayout({
         {/*by placing Navbar here, it will appear on every page without rendered*/}
         <Navbar user={navUser} />
         <LogoutSync />
+        {user ? <AutoLogout /> : null}
         <Toaster richColors position="top-right" />
         {/* Padding-top ensures content isn't hidden under the fixed navbar */}
         <main className="pt-16 min-h-[150vh]" style={{ paddingTop: "70px" }}>
