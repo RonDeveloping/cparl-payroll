@@ -1,90 +1,96 @@
 "use client";
 // components/tenant/tenant-form.tsx
 
+import { useState } from "react";
 import { FieldErrors } from "react-hook-form";
 import { TenantFormInput } from "@/lib/validations/tenant-schema";
 import FormSection from "@/components/form/form-section";
 import InputWithChanges from "@/components/form/input-with-changes";
+import SelectWithChanges from "@/components/form/select-with-changes";
 import { FormGrid } from "@/components/form/form-grid";
 import formatBusinessNumber from "@/utils/formatters/businessNumber";
+import formatPostalCode from "@/utils/formatters/postalCode";
 import { Clarification } from "@/components/clarification";
+import { CANADA_PROVINCE_TERRITORY_OPTIONS } from "@/constants/canada-provinces";
+import {
+  getPostalCodeProgress,
+  type PostalCodeProgressTone,
+} from "@/utils/validators/postalCodeProgress";
 
 interface TenantFormProps {
   errors: FieldErrors<TenantFormInput>;
   showMembership?: boolean;
+  onPostalCodeChange?: () => void;
+  onPostalCodeBlur?: () => void;
 }
 
-const TENANT_FIELDS = {
-  general: [
-    {
-      label: "Legal Name",
-      name: "coreName" as const,
-      rules: { required: "Legal name is required" },
-      placeholder: "1234567 Cananda Inc.",
-      formatOnChange: undefined,
-    },
-    {
-      label: "Operating Name",
-      name: "operatingName" as const,
-      rules: {},
-      placeholder: "All Stuff Depot",
-      formatOnChange: undefined,
-    },
-    {
-      label: "Business Number",
-      name: "businessNumber" as const,
-      rules: {},
-      placeholder: "999-999-999 RP 0001",
-      formatOnChange: formatBusinessNumber,
-      maxLength: 19, // "999-999-999 RP 0001" is 19 characters
-    },
-  ],
-  contact: [
-    {
-      label: "Email",
-      name: "email" as const,
-      rules: {},
-      type: "email",
-    },
-    {
-      label: "Phone",
-      name: "phone" as const,
-      rules: {},
-      type: "tel",
-    },
-  ],
+type TenantAddressField = {
+  label: string;
+  name:
+    | "address.street"
+    | "address.postalCode"
+    | "address.city"
+    | "address.province";
+  rules: Record<string, never>;
+  formatOnChange?: (value: string) => string;
+};
+
+const TENANT_FIELDS: { address: TenantAddressField[] } = {
   address: [
     {
       label: "Street",
-      name: "address.street" as const,
+      name: "address.street",
       rules: {},
     },
     {
+      label: "Postal code",
+      name: "address.postalCode",
+      rules: {},
+      formatOnChange: formatPostalCode,
+    },
+    {
       label: "City",
-      name: "address.city" as const,
+      name: "address.city",
       rules: {},
     },
     {
       label: "Province",
-      name: "address.province" as const,
-      rules: {},
-    },
-    {
-      label: "Postal Code",
-      name: "address.postalCode" as const,
+      name: "address.province",
       rules: {},
     },
   ],
 };
 
-export function TenantForm({ errors, showMembership }: TenantFormProps) {
+export function TenantForm({
+  errors,
+  showMembership,
+  onPostalCodeChange,
+  onPostalCodeBlur,
+}: TenantFormProps) {
+  const [postalProgress, setPostalProgress] = useState<{
+    text: string;
+    tone: PostalCodeProgressTone;
+  }>({
+    text: "",
+    tone: "neutral",
+  });
+
+  const handlePostalCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPostalProgress(getPostalCodeProgress(e.target.value || ""));
+    onPostalCodeChange?.();
+  };
+
+  const handlePostalCodeBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    setPostalProgress(getPostalCodeProgress(e.target.value || ""));
+    onPostalCodeBlur?.();
+  };
+
   return (
     <>
-      {/* Identification Section */}
       <FormSection title="Identification">
         <FormGrid>
           <InputWithChanges<TenantFormInput>
-            label="Legal Name"
+            label="Legal name"
             name="coreName"
             placeholder="e.g. 1234567 Canada Inc."
             rules={{ required: "Legal name is required" }}
@@ -93,7 +99,7 @@ export function TenantForm({ errors, showMembership }: TenantFormProps) {
           <InputWithChanges<TenantFormInput>
             label={
               <Clarification
-                term="Operating As (O/A)"
+                term="Operating as (O/A)"
                 description={
                   'This helps employees recognize the employer on documents such as T4 slips, normally registered as a "Trade/Business Name".'
                 }
@@ -107,7 +113,7 @@ export function TenantForm({ errors, showMembership }: TenantFormProps) {
           <InputWithChanges<TenantFormInput>
             label={
               <Clarification
-                term="Business Number"
+                term="Business number"
                 description="A CRA-issued, unique identifier for the employer or branch, enterable later if no remittance or reporting is due"
               />
             }
@@ -121,7 +127,6 @@ export function TenantForm({ errors, showMembership }: TenantFormProps) {
         </FormGrid>
       </FormSection>
 
-      {/* Contact Section */}
       <FormSection title="Contact">
         <FormGrid>
           <InputWithChanges<TenantFormInput>
@@ -163,18 +168,53 @@ export function TenantForm({ errors, showMembership }: TenantFormProps) {
         </FormGrid>
       </FormSection>
 
-      {/* Address Section */}
       <FormSection title="Address">
         <FormGrid>
-          {TENANT_FIELDS.address.map((field) => (
-            <InputWithChanges<TenantFormInput>
-              key={field.name}
-              label={field.label}
-              name={field.name}
-              rules={field.rules}
-              error={errors[field.name as keyof TenantFormInput]?.message}
-            />
-          ))}
+          {TENANT_FIELDS.address.map((field) => {
+            const isPostalCodeField = field.name === "address.postalCode";
+
+            return (
+              <div key={field.name} className="space-y-1">
+                {field.name === "address.province" ? (
+                  <SelectWithChanges<TenantFormInput>
+                    label={field.label}
+                    name={field.name}
+                    options={[...CANADA_PROVINCE_TERRITORY_OPTIONS]}
+                    error={errors.address?.province?.message}
+                  />
+                ) : (
+                  <InputWithChanges<TenantFormInput>
+                    label={field.label}
+                    name={field.name}
+                    rules={field.rules}
+                    formatOnChange={field.formatOnChange}
+                    onChange={
+                      isPostalCodeField ? handlePostalCodeChange : undefined
+                    }
+                    onBlur={
+                      isPostalCodeField ? handlePostalCodeBlur : undefined
+                    }
+                    error={errors[field.name as keyof TenantFormInput]?.message}
+                  />
+                )}
+                {isPostalCodeField && postalProgress.text && (
+                  <p
+                    className={`text-xs ${
+                      postalProgress.tone === "error"
+                        ? "text-red-600"
+                        : postalProgress.tone === "warning"
+                          ? "text-amber-600"
+                          : postalProgress.tone === "success"
+                            ? "text-emerald-700"
+                            : "text-slate-500"
+                    }`}
+                  >
+                    {postalProgress.text}
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </FormGrid>
       </FormSection>
 
@@ -182,7 +222,7 @@ export function TenantForm({ errors, showMembership }: TenantFormProps) {
         <FormSection title="Membership">
           <FormGrid>
             <InputWithChanges<TenantFormInput>
-              label="Invite Members (emails)"
+              label="Invite members (emails)"
               name="memberEmails"
               error={errors.memberEmails?.message}
             />

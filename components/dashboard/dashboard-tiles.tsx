@@ -84,6 +84,7 @@ export default function DashboardTiles({
   profileInitialData: ContactFormInput;
 }) {
   const PROFILE_EDIT_STATE_KEY = "dashboard:profile-editing";
+  const OPEN_TILE_STATE_KEY = "dashboard:open-tile";
   const router = useRouter();
   const profileFormId = "profile-inline-editor-form";
   const defaultId = tiles[0]?.id ?? null;
@@ -110,15 +111,50 @@ export default function DashboardTiles({
 
   useEffect(() => {
     try {
-      const persisted = window.sessionStorage.getItem(PROFILE_EDIT_STATE_KEY);
-      if (persisted === "1") {
-        setOpenId("profile");
-        setIsEditingProfile(true);
+      const persistedOpenId =
+        window.sessionStorage.getItem(OPEN_TILE_STATE_KEY);
+      const isValidTile = tiles.some((tile) => tile.id === persistedOpenId);
+      if (isValidTile) {
+        setOpenId(persistedOpenId);
       }
     } catch {
       // Ignore storage access errors.
     }
-  }, []);
+  }, [tiles]);
+
+  useEffect(() => {
+    try {
+      const persistedProfileEdit =
+        window.sessionStorage.getItem(PROFILE_EDIT_STATE_KEY) === "1";
+      const persistedOpenId =
+        window.sessionStorage.getItem(OPEN_TILE_STATE_KEY);
+      const hasValidPersistedOpenId = tiles.some(
+        (tile) => tile.id === persistedOpenId,
+      );
+
+      // Only restore profile editing if profile itself is the active persisted tile
+      // (or if no valid tile was persisted). This prevents stale profile flags
+      // from hijacking Payments/other tiles after remount.
+      if (
+        persistedProfileEdit &&
+        (!hasValidPersistedOpenId || persistedOpenId === "profile")
+      ) {
+        setOpenId("profile");
+        setIsEditingProfile(true);
+        return;
+      }
+
+      if (
+        persistedProfileEdit &&
+        hasValidPersistedOpenId &&
+        persistedOpenId !== "profile"
+      ) {
+        window.sessionStorage.removeItem(PROFILE_EDIT_STATE_KEY);
+      }
+    } catch {
+      // Ignore storage access errors.
+    }
+  }, [tiles]);
 
   useEffect(() => {
     try {
@@ -131,6 +167,18 @@ export default function DashboardTiles({
       // Ignore storage access errors.
     }
   }, [isEditingProfile, openId]);
+
+  useEffect(() => {
+    try {
+      if (openId) {
+        window.sessionStorage.setItem(OPEN_TILE_STATE_KEY, openId);
+      } else {
+        window.sessionStorage.removeItem(OPEN_TILE_STATE_KEY);
+      }
+    } catch {
+      // Ignore storage access errors.
+    }
+  }, [openId]);
 
   useEffect(() => {
     setOrganizationTenants(tenants);
@@ -291,13 +339,33 @@ export default function DashboardTiles({
           const Icon = iconMap[tile.icon];
           const toneClass = toneStyles[tile.tone];
           const handleClick = () => {
-            // Reset profile edit state only on explicit user tile toggles.
+            const nextOpenId = isOpen ? null : tile.id;
+
+            // Reset profile edit state immediately when leaving profile so remounts
+            // do not restore it from stale session storage.
             if (tile.id !== "profile" || isOpen) {
               setIsEditingProfile(false);
               setShowProfileChanges(false);
               setProfileChangeCount(0);
+
+              try {
+                window.sessionStorage.removeItem(PROFILE_EDIT_STATE_KEY);
+              } catch {
+                // Ignore storage access errors.
+              }
             }
-            setOpenId(isOpen ? null : tile.id);
+
+            try {
+              if (nextOpenId) {
+                window.sessionStorage.setItem(OPEN_TILE_STATE_KEY, nextOpenId);
+              } else {
+                window.sessionStorage.removeItem(OPEN_TILE_STATE_KEY);
+              }
+            } catch {
+              // Ignore storage access errors.
+            }
+
+            setOpenId(nextOpenId);
           };
 
           return (

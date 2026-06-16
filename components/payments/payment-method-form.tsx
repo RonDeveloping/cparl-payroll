@@ -3,17 +3,22 @@
 
 import { useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
 import FormSection from "@/components/form/form-section";
 import { FormGrid } from "@/components/form/form-grid";
 import InputGroup from "@/components/form/input-group";
 import { Clarification } from "@/components/clarification";
-import { BUTTON_VARIANTS, LABEL_STYLE } from "@/constants/styles";
+import { formActionsStyles } from "@/constants/styles";
 import { paymentFieldContent } from "@/constants/content";
 import formatPostalCode from "@/utils/formatters/postalCode";
 import { isValidCanadianPostalCode } from "@/utils/validators/postalCode";
 import CardTypeIcon from "@/components/payments/card-type-icon";
 import { cn } from "@/lib/utils";
-import { createPaymentMethod } from "@/lib/api";
+import {
+  createPaymentMethod,
+  type CreatePaymentMethodPayload,
+  type SavedPaymentCard,
+} from "@/lib/api";
 
 export type PaymentMethodFormValues = {
   cardholderName: string;
@@ -919,11 +924,13 @@ export default function PaymentMethodForm({
   userGivenName,
   userFamilyName,
   userPrimaryPostalCode,
+  onSaved,
 }: {
   compact?: boolean;
   userGivenName?: string | null;
   userFamilyName?: string | null;
   userPrimaryPostalCode?: string | null;
+  onSaved?: (card: SavedPaymentCard) => void;
 }) {
   const cardNumberFieldRef = useRef<HTMLInputElement | null>(null);
   const expiryFieldRef = useRef<HTMLInputElement | null>(null);
@@ -952,11 +959,14 @@ export default function PaymentMethodForm({
     : "Full name as shown on card";
 
   const postalCodePlaceholder = "A1A 1A1";
+  const paymentFieldLabelClass =
+    "text-[11px] font-semibold text-slate-500 tracking-normal ml-1";
 
   const {
     register,
     handleSubmit,
     setValue,
+    reset,
     trigger,
     control,
     formState: { errors, isSubmitting, isSubmitted },
@@ -1111,26 +1121,67 @@ export default function PaymentMethodForm({
       if (!parsedCardDetails) {
         return;
       }
-      const payload: PaymentMethodFormValues = {
+      const payload: CreatePaymentMethodPayload = {
         cardholderName: data.cardholderName,
-        cardDetails: data.cardDetails,
+        cardNumber: parsedCardDetails.cardNumber,
+        expiryMonth: parsedCardDetails.expiryMonth,
+        expiryYear: parsedCardDetails.expiryYear,
+        cvc: parsedCardDetails.cvc,
         billingPostalCode: data.billingPostalCode
           .replace(/\s+/g, "")
           .toUpperCase(),
       };
       const result = await createPaymentMethod(payload);
-      console.log("Card saved successfully:", result);
+      reset({
+        cardholderName: "",
+        cardDetails: "",
+        billingPostalCode: "",
+      });
+      setCardNumberInput("");
+      setExpiryInput("");
+      setCvcInput("");
+      setActiveSegment(null);
+      onSaved?.(result.card);
+      toast.success(
+        result.card.isDefault
+          ? "Card saved and set as your default payment method."
+          : "Card saved successfully.",
+      );
     } catch (error) {
       console.error("Error saving card:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Unable to save card.",
+      );
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <FormSection title="Payment Card (Credit/Debit)">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className={cn("space-y-6", compact ? "space-y-5" : "")}
+    >
+      <FormSection
+        title="Payment card (credit/debit)"
+        titleTag="p"
+        titleClassName="text-xs font-semibold normal-case tracking-normal border-none pb-0 mb-0 text-slate-600"
+        headerAction={
+          <button
+            type="submit"
+            className={cn(
+              formActionsStyles.saveButtonBase,
+              isSubmitting
+                ? formActionsStyles.saveLocked
+                : formActionsStyles.saveActive,
+            )}
+            disabled={isSubmitting}
+          >
+            Save
+          </button>
+        }
+      >
         <FormGrid className="md:grid-cols-12">
           <div className="space-y-1 md:col-span-5 lg:col-span-6">
-            <label className={LABEL_STYLE}>
+            <label className={paymentFieldLabelClass}>
               <Clarification
                 term={paymentFieldContent.cardDetails.term}
                 description={paymentFieldContent.cardDetails.description}
@@ -1247,7 +1298,7 @@ export default function PaymentMethodForm({
             </div>
           </div>
           <div className="space-y-1 md:col-span-5 lg:col-span-4 pr-[9px]">
-            <label className={LABEL_STYLE}>Cardholder Name</label>
+            <label className={paymentFieldLabelClass}>Cardholder name</label>
             <InputGroup
               name="cardholderName"
               register={register}
@@ -1263,8 +1314,8 @@ export default function PaymentMethodForm({
             />
           </div>
           <div className="space-y-1 md:col-span-2 lg:col-span-2 w-fit -ml-[13px] pr-[5px]">
-            <label className={cn(LABEL_STYLE, "whitespace-nowrap")}>
-              Billing Postal Code
+            <label className={cn(paymentFieldLabelClass, "whitespace-nowrap")}>
+              Billing postal code
             </label>
             <InputGroup
               name="billingPostalCode"
@@ -1316,16 +1367,6 @@ export default function PaymentMethodForm({
           </div>
         </FormGrid>
       </FormSection>
-
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          className={BUTTON_VARIANTS.primary}
-          disabled={isSubmitting}
-        >
-          {compact ? "Save card" : "Save payment method"}
-        </button>
-      </div>
     </form>
   );
 }

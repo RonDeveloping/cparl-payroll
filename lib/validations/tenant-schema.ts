@@ -1,5 +1,6 @@
 // lib/validations/tenant-schema.ts
 import { z } from "zod";
+import { isValidCanadianPostalCode } from "@/utils/validators/postalCode";
 
 /**
  * CRA Business Number check digit validation using the Luhn algorithm.
@@ -58,7 +59,14 @@ export const tenantSchema = z.object({
       street: z.string().optional().nullable(),
       city: z.string().optional().nullable(),
       province: z.string().optional().nullable(),
-      postalCode: z.string().optional().nullable(),
+      postalCode: z
+        .string()
+        .transform((val) => val.trim().toUpperCase())
+        .refine((val) => val === "" || isValidCanadianPostalCode(val), {
+          message: "Enter a valid Canadian postal code (e.g., K1A 0B1)",
+        })
+        .optional()
+        .nullable(),
       country: z.string().optional().nullable(),
     })
     .optional()

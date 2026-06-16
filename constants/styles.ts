@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 export const FORM_GRID_STYLE = "grid grid-cols-1 md:grid-cols-2 px-1 gap-6";
 
 export const LABEL_STYLE =
-  "text-[11px] font-semibold text-slate-500 uppercase tracking-wide ml-1";
+  "text-[11px] font-semibold text-slate-500 tracking-wide ml-1";
 
 export const BUTTON_VARIANTS = {
   // Bold, clear, and high-priority
@@ -487,7 +487,7 @@ export const formLayoutStyles: FormLayoutStyleSchema = {
 export const formSectionStyles: FormSectionStyleSchema = {
   section: sharedStyles.sectionCard,
   title: cn(
-    "text-sm font-bold text-slate-900 uppercase tracking-wider pb-2 border-b",
+    "text-sm font-bold text-slate-900 tracking-wider pb-2 border-b",
     sharedStyles.mb4,
   ),
 };

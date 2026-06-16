@@ -2,10 +2,10 @@
 // app/employees/[id]/edit/edit-employee.tsx
 
 import { use } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 import {
   contactSchema,
@@ -36,6 +36,7 @@ export default function EditEmployeeForm({
 }: EditEmployeeFormProps) {
   const params = use(paramsPromise);
   const router = useRouter();
+  const draftStorageKey = `employee-form-draft:${params.id}:${tenantId ?? "none"}`;
 
   const form = useForm<ContactFormInput>({
     resolver: zodResolver(contactSchema) as never,
@@ -49,9 +50,43 @@ export default function EditEmployeeForm({
     handleSubmit,
     formState: { errors, isSubmitting, isDirty, dirtyFields },
     getValues,
+    reset,
+    control,
   } = form;
 
+  useEffect(() => {
+    try {
+      const rawDraft = window.sessionStorage.getItem(draftStorageKey);
+      if (!rawDraft) {
+        return;
+      }
+
+      const parsedDraft = JSON.parse(rawDraft) as Partial<ContactFormInput>;
+      reset(
+        {
+          ...initialData,
+          ...parsedDraft,
+        },
+        { keepDefaultValues: true },
+      );
+    } catch {
+      // Ignore storage access or parsing errors.
+    }
+  }, [draftStorageKey, initialData, reset]);
+
   const currentValues = getValues();
+  const watchedValues = useWatch({ control });
+
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(
+        draftStorageKey,
+        JSON.stringify(watchedValues),
+      );
+    } catch {
+      // Ignore storage access errors.
+    }
+  }, [draftStorageKey, watchedValues]);
 
   const registerFormatted = useMemo(
     () =>
@@ -79,6 +114,11 @@ export default function EditEmployeeForm({
     try {
       const result = await upsertContactPEA(data, params.id, tenantId);
       if (result.success && result.data?.id) {
+        try {
+          window.sessionStorage.removeItem(draftStorageKey);
+        } catch {
+          // Ignore storage access errors.
+        }
         router.refresh();
         router.push(`/employees`);
       } else if (!result.success) {

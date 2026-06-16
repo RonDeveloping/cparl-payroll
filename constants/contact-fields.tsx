@@ -11,8 +11,8 @@ export type FieldDef = {
 
 export const IDENTITY_FIELDS = {
   mandatory: [
-    { label: "Given Name", name: "givenName" },
-    { label: "Family Name", name: "familyName" },
+    { label: "Given name", name: "givenName" },
+    { label: "Family name", name: "familyName" },
   ] as FieldDef[],
   optional: [
     {
@@ -55,7 +55,7 @@ export const CONTACT_FIELDS = {
 
   optional: [
     { label: "Phone", name: "phone" },
-    { label: "Street Address", name: "street" },
+    { label: "Street address", name: "street" },
     { label: "City", name: "city" },
     { label: "Province", name: "province" },
     { label: "Country", name: "country" },

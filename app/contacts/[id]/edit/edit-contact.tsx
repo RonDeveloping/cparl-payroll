@@ -2,10 +2,10 @@
 // app/contacts/[id]/edit/edit-contact.tsx
 
 import { use } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 import {
   contactSchema,
@@ -33,6 +33,7 @@ export default function EditContactForm({
 }: EditContactFormProps) {
   const params = use(paramsPromise);
   const router = useRouter();
+  const draftStorageKey = `contact-form-draft:${params.id}`;
 
   const {
     register,
@@ -40,6 +41,8 @@ export default function EditContactForm({
     formState: { errors, isSubmitting, isDirty, dirtyFields },
     getValues,
     setValue,
+    reset,
+    control,
   } = useForm<ContactFormInput>({
     resolver: zodResolver(contactSchema) as never,
     values: initialData,
@@ -47,7 +50,39 @@ export default function EditContactForm({
     mode: "onBlur", // Validation triggers when a field loses focus
   });
 
+  useEffect(() => {
+    try {
+      const rawDraft = window.sessionStorage.getItem(draftStorageKey);
+      if (!rawDraft) {
+        return;
+      }
+
+      const parsedDraft = JSON.parse(rawDraft) as Partial<ContactFormInput>;
+      reset(
+        {
+          ...initialData,
+          ...parsedDraft,
+        },
+        { keepDefaultValues: true },
+      );
+    } catch {
+      // Ignore storage access or parsing errors.
+    }
+  }, [draftStorageKey, initialData, reset]);
+
   const currentValues = getValues(); // always up-to-date to help comparison in InputWithChanges to id change and show "before" value.
+  const watchedValues = useWatch({ control });
+
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(
+        draftStorageKey,
+        JSON.stringify(watchedValues),
+      );
+    } catch {
+      // Ignore storage access errors.
+    }
+  }, [draftStorageKey, watchedValues]);
 
   const registerFormatted = useMemo(
     () =>
@@ -116,6 +151,11 @@ export default function EditContactForm({
     try {
       const result = await upsertContactPEA(data, params.id);
       if (result.success && result.data?.id) {
+        try {
+          window.sessionStorage.removeItem(draftStorageKey);
+        } catch {
+          // Ignore storage access errors.
+        }
         router.refresh();
         router.push(`/contacts/${result.data.id}`);
       } else if (!result.success) {
@@ -134,7 +174,7 @@ export default function EditContactForm({
       formId="contact-form"
       isSubmitting={isSubmitting}
       isDirty={isDirty}
-      changeLabel=" Change(s) on the Contact Form"
+      changeLabel="Contact Changes"
       changeCount={changeCount}
       showChanges={showB4Change}
       onEyeToggle={() => setShowB4Change((v) => !v)}

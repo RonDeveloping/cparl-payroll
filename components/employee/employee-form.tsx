@@ -18,6 +18,7 @@ import { FormGrid } from "@/components/form/form-grid";
 import { Clarification } from "@/components/clarification";
 import formatSIN from "@/utils/formatters/sin";
 import { cn } from "@/lib/utils";
+import { CANADA_PROVINCE_TERRITORY_OPTIONS } from "@/constants/canada-provinces";
 
 interface EmployeeFormProps {
   errors: FieldErrors<ContactFormInput>;
@@ -340,13 +341,13 @@ export function EmployeeForm({
       <FormSection title="Identification">
         <FormGrid>
           <InputWithChanges<ContactFormInput>
-            label="Given Name"
+            label="Given name"
             name="givenName"
             rules={{ required: "Given name is required" }}
             error={errors.givenName?.message}
           />
           <InputWithChanges<ContactFormInput>
-            label="Family Name"
+            label="Family name"
             name="familyName"
             rules={{ required: "Family name is required" }}
             error={errors.familyName?.message}
@@ -368,7 +369,7 @@ export function EmployeeForm({
           />
           <CustomDatePickerWithChanges<ContactFormInput>
             label={
-              <Clarification term="Date of Birth" description="YYYY-MM-DD" />
+              <Clarification term="Date of birth" description="YYYY-MM-DD" />
             }
             name="dob"
             minDate={minDob}
@@ -381,23 +382,23 @@ export function EmployeeForm({
       <FormSection title="Employment">
         <FormGrid>
           <InputWithChanges<ContactFormInput>
-            label="Employee Number"
+            label="Employee number"
             name="employeeNumber"
             rules={{}}
             error={errors.employeeNumber?.message}
           />
           <SelectWithChanges<ContactFormInput>
-            label="Employment Status"
+            label="Employment status"
             name="status"
             error={errors.status?.message}
             options={[
               { label: "Active", value: "ACTIVE" },
-              { label: "On Leave", value: "ON_LEAVE" },
+              { label: "On leave", value: "ON_LEAVE" },
               { label: "Terminated", value: "TERMINATED" },
             ]}
           />
           <CustomDatePickerWithChanges<ContactFormInput>
-            label={<Clarification term="Hire Date" description="YYYY-MM-DD" />}
+            label={<Clarification term="Hire date" description="YYYY-MM-DD" />}
             name="hireDate"
             maxDate={maxDob}
             yearJumps={[6, 4, 2]}
@@ -408,7 +409,7 @@ export function EmployeeForm({
           <CustomDatePickerWithChanges<ContactFormInput>
             label={
               <Clarification
-                term="Employment End Date"
+                term="Employment end date"
                 description="YYYY-MM-DD"
               />
             }
@@ -420,63 +421,61 @@ export function EmployeeForm({
             error={errors.employmentEndDate?.message}
           />
           <SelectWithChanges<ContactFormInput>
-            label="Termination Reason (ROE)"
+            label="Termination reason (ROE)"
             name="terminationReason"
             error={errors.terminationReason?.message}
             options={[
               { label: "Not set", value: "" },
               {
-                label: "A - Shortage of Work (Layoff)",
+                label: "A - Shortage of work (layoff)",
                 value: "ROE_A_SHORTAGE_OF_WORK",
               },
               {
-                label: "B - Strike or Lockout",
+                label: "B - Strike or lockout",
                 value: "ROE_B_STRIKE_OR_LOCKOUT",
               },
               {
-                label: "C - Return to School",
+                label: "C - Return to school",
                 value: "ROE_C_RETURN_TO_SCHOOL",
               },
               {
-                label: "D - Illness or Injury",
+                label: "D - Illness or injury",
                 value: "ROE_D_ILLNESS_OR_INJURY",
               },
               { label: "E - Quit", value: "ROE_E_QUIT" },
               { label: "F - Maternity", value: "ROE_F_MATERNITY" },
               { label: "G - Retirement", value: "ROE_G_RETIREMENT" },
-              { label: "H - Work Sharing", value: "ROE_H_WORK_SHARING" },
+              { label: "H - Work sharing", value: "ROE_H_WORK_SHARING" },
               {
-                label: "J - Apprentice Training",
+                label: "J - Apprentice training",
                 value: "ROE_J_APPRENTICE_TRAINING",
               },
               { label: "K - Other", value: "ROE_K_OTHER" },
               { label: "M - Dismissal", value: "ROE_M_DISMISSAL" },
               {
-                label: "N - Leave of Absence",
+                label: "N - Leave of absence",
                 value: "ROE_N_LEAVE_OF_ABSENCE",
               },
               { label: "P - Parental", value: "ROE_P_PARENTAL" },
               {
-                label: "Z - Compassionate Care / Family Caregiver",
+                label: "Z - Compassionate care / family caregiver",
                 value: "ROE_Z_COMPASSIONATE_CARE_OR_FAMILY_CAREGIVER",
               },
             ]}
           />
-          <InputWithChanges<ContactFormInput>
+          <SelectWithChanges<ContactFormInput>
             label={
               <Clarification
-                term="Employment Province Code"
+                term="Employment province code"
                 description="use the province of the employer establishment where the employee reports for work, or where they are paid from."
               />
             }
             name="employmentProvinceCode"
-            placeholder="ON"
-            maxLength={2}
-            rules={{}}
+            options={[...CANADA_PROVINCE_TERRITORY_OPTIONS]}
             error={errors.employmentProvinceCode?.message}
           />
           <InputWithChanges<ContactFormInput>
-            label="Job Title"
+            label="Job title"
             name="employmentTitle"
             rules={{}}
             error={errors.employmentTitle?.message}
@@ -489,7 +488,7 @@ export function EmployeeForm({
           />
           <CustomDatePickerWithChanges<ContactFormInput>
             label={
-              <Clarification term="Job Start Date" description="YYYY-MM-DD" />
+              <Clarification term="Job start date" description="YYYY-MM-DD" />
             }
             name="jobStartDate"
             maxDate={maxDob}
@@ -499,7 +498,7 @@ export function EmployeeForm({
             error={errors.jobStartDate?.message}
           />
           <SelectWithChanges<ContactFormInput>
-            label="Pay Type"
+            label="Pay type"
             name="jobPayType"
             error={errors.jobPayType?.message}
             options={[
@@ -509,7 +508,7 @@ export function EmployeeForm({
             ]}
           />
           <InputWithChanges<ContactFormInput>
-            label="Pay Rate"
+            label="Pay rate"
             name="jobPayRate"
             placeholder="25.00"
             rules={{}}
@@ -518,7 +517,7 @@ export function EmployeeForm({
           <CustomDatePickerWithChanges<ContactFormInput>
             label={
               <Clarification
-                term="Job End Date"
+                term="Job end date"
                 description="YYYY-MM-DD (leave empty if ongoing)"
               />
             }
@@ -566,7 +565,7 @@ export function EmployeeForm({
               disabled={bankAccounts.length >= MAX_BANK_ACCOUNTS}
               className="inline-flex items-center rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              + Add Account
+              + Add account
             </button>
           </div>
         </div>
@@ -605,14 +604,14 @@ export function EmployeeForm({
             rules={{}}
             error={errors.city?.message}
           />
-          <InputWithChanges<ContactFormInput>
+          <SelectWithChanges<ContactFormInput>
             label="Province"
             name="province"
-            rules={{}}
+            options={[...CANADA_PROVINCE_TERRITORY_OPTIONS]}
             error={errors.province?.message}
           />
           <InputWithChanges<ContactFormInput>
-            label="Postal Code"
+            label="Postal code"
             name="postalCode"
             rules={{}}
             error={errors.postalCode?.message}

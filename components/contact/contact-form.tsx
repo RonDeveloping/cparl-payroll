@@ -6,11 +6,13 @@ import { FieldErrors } from "react-hook-form";
 import { ContactFormInput } from "@/lib/validations/contact-schema";
 import FormSection from "@/components/form/form-section";
 import InputWithChanges from "@/components/form/input-with-changes";
+import SelectWithChanges from "@/components/form/select-with-changes";
 import SectionDisclosure from "@/components/section-disclosure";
 import { Clarification } from "@/components/clarification";
 import { dashboardContent } from "@/constants/content";
 import { IDENTITY_FIELDS, CONTACT_FIELDS } from "@/constants/contact-fields";
 import { FormGrid } from "../form/form-grid";
+import { CANADA_PROVINCE_TERRITORY_OPTIONS } from "@/constants/canada-provinces";
 import {
   getPostalCodeProgress,
   type PostalCodeProgressTone,
@@ -314,13 +316,30 @@ export function ContactForm({
               .filter(
                 (field) => !(hideCountryField && field.name === "country"),
               )
-              .map((field) => (
-                <InputWithChanges<ContactFormInput>
-                  key={field.name}
-                  {...field}
-                  error={errors[field.name]?.message}
-                />
-              ))}
+              .map((field) =>
+                field.name === "province" ? (
+                  <SelectWithChanges<ContactFormInput>
+                    key={field.name}
+                    label={field.label}
+                    name="province"
+                    options={[...CANADA_PROVINCE_TERRITORY_OPTIONS]}
+                    error={errors.province?.message}
+                  />
+                ) : (
+                  <InputWithChanges<ContactFormInput>
+                    key={field.name}
+                    {...field}
+                    label={
+                      field.name === "street" || field.name === "city" ? (
+                        <span className="normal-case">{field.label}</span>
+                      ) : (
+                        field.label
+                      )
+                    }
+                    error={errors[field.name]?.message}
+                  />
+                ),
+              )}
           </FormGrid>
         </div>
       </FormSection>

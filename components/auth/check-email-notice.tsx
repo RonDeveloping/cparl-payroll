@@ -95,7 +95,7 @@ export default function CheckEmailNotice() {
           </Link>
           <div className="flex-1 flex flex-col gap-2">
             <AuthButton
-              label="Resend Verification Email"
+              label="Resend verification email"
               isPending={isPending}
               countdown={countdown}
               onClick={handleResend}

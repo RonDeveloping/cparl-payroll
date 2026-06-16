@@ -1,6 +1,21 @@
 // components/payments/card-type-icon.tsx
 type CardBrand = "visa" | "mastercard" | "amex" | "discover" | null;
 
+function normalizeCardBrand(brandName?: string): CardBrand {
+  const normalized = (brandName ?? "").trim().toLowerCase();
+
+  if (normalized === "visa") return "visa";
+  if (normalized === "mastercard" || normalized === "master card") {
+    return "mastercard";
+  }
+  if (normalized === "amex" || normalized === "american express") {
+    return "amex";
+  }
+  if (normalized === "discover") return "discover";
+
+  return null;
+}
+
 function detectCardBrand(cardNumber: string): CardBrand {
   const digits = cardNumber.replace(/\D/g, "");
 
@@ -27,8 +42,15 @@ function detectCardBrand(cardNumber: string): CardBrand {
   return null;
 }
 
-export default function CardTypeIcon({ cardNumber }: { cardNumber?: string }) {
-  const brand = detectCardBrand(cardNumber || "");
+export default function CardTypeIcon({
+  cardNumber,
+  brandName,
+}: {
+  cardNumber?: string;
+  brandName?: string;
+}) {
+  const brand =
+    normalizeCardBrand(brandName) || detectCardBrand(cardNumber || "");
 
   if (!brand) {
     return (

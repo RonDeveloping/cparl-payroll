@@ -58,16 +58,16 @@ export const registerPageContent = {
 
 export const contactFieldContent = {
   middleName: {
-    term: "Middle Name",
+    term: "Middle name",
     description: "Beneficial for more complete identification...",
   },
   displayName: {
-    term: "Customized Display Name",
+    term: "Customized display name",
     description:
       "This one allows you to override the default 'Prefix + Given + Middle + Family' format.",
   },
   postalCode: {
-    term: "Postal Code",
+    term: "Postal code",
     description:
       "This info helps our communication be tailored based on your rough location.",
   },
@@ -75,9 +75,36 @@ export const contactFieldContent = {
 
 export const paymentFieldContent = {
   cardDetails: {
-    term: "Card Details",
+    term: "Card details",
     description:
       "MM/YY stands for the card's expiration month/year, and CVV is the 3-4 digit security code on your card.",
+  },
+  savedCards: {
+    storageNote:
+      "Full card number and CVV are stored with our payment processor only.",
+    showFormLabel: "Add card",
+    hideFormLabel: "Hide form",
+  },
+  savedAccounts: {
+    term: "Saved accounts",
+    storageNote:
+      "These are bank accounts for PAP withdrawals. Full account details are masked here, and payments made via PAP receive a 5% credit.",
+    showFormLabel: "Add account",
+    hideFormLabel: "Hide form",
+    emptyState:
+      "No saved bank accounts yet. Add one in profile/employee banking details to enable PAP withdrawal.",
+  },
+  accumulatedCredits: {
+    term: "Accumulated Credits",
+    storageNote:
+      "Credits from eligible PAP payments are tracked here and can be applied to future charges.",
+    balanceLabel: "Available credit",
+    incentiveNote: "Eligible PAP payments earn 5% credit.",
+  },
+  primaryMethod: {
+    badgeLabel: "Primary",
+    setPrimaryLabel: "Set as primary",
+    accountsNeedVerificationLabel: "Requires verified account",
   },
 } as const;
 

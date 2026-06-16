@@ -49,6 +49,7 @@ model User {
   authTokens          AuthToken[]
   phoneVerification  PhoneVerification?
   paymentCards      PaymentCard[]
+  paymentAccounts   PaymentAccount[]
 
   @@map("user")
 }
@@ -78,7 +79,6 @@ model PhoneVerification {
   @@index([userId]) // Helps performance when looking up codes for a specific user
 }
 
-// Used every time they log in (2FA)
 model TwoFactorCode {
   id        String   @id @default(cuid())
   code      String   // 6-digit numeric
@@ -109,6 +109,25 @@ model PaymentCard {
 
   @@index([userId])
   @@map("payment_card")
+}
+
+model PaymentAccount {
+  id                 String      @id @default(cuid())
+  userId             String      @map("user_id")
+  label              String?     @map("label")
+  institutionNumber  Int         @map("institution_number")
+  branchNumber       Int         @map("branch_number")
+  accountNumber      String      @map("account_number") // full account number — encrypt at rest in production
+  accountLast4       String      @map("account_last4")  // display only
+  currency           String      @default("CAD") @map("currency")
+  isDefault          Boolean     @default(false) @map("is_default")
+  verificationStatus String      @default("unverified") @map("verification_status")
+  createdAt          DateTime    @default(now()) @map("created_at")
+
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("payment_accounts")
 }
 
 // ==========================================

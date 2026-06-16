@@ -37,9 +37,9 @@ export default function FormLayout({
   // Detect if we came from a filtered list
   const fromList = searchParams.get("fromList") === "true";
   const isNew = id === "new";
-  // Constants defined once for the whole app
-  const saveLabel = isNew ? "Create" : "Confirm Changes";
-  const backLabel = isNew ? "Cancel" : "Discard Changes";
+  // Shared button labels for this form shell.
+  const saveLabel = isNew ? "Create" : "Confirm changes";
+  const backLabel = isNew ? "Cancel" : "Discard changes";
   // If it's a brand new record, ALWAYS go back to the main list (not filtered one). Only if it's an edit AND we have the 'fromList' flag, use browser history.
   const useHistoryBack = !isNew && fromList;
   //Centralized path logic Returns e.g. "/contacts" if new, or "/contacts/clx123..." if existing
