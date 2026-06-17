@@ -1,0 +1,16 @@
+export const CANADA_PROVINCE_TERRITORY_OPTIONS = [
+  { label: "Select province or territory", value: "" },
+  { label: "AB - Alberta", value: "AB" },
+  { label: "BC - British Columbia", value: "BC" },
+  { label: "MB - Manitoba", value: "MB" },
+  { label: "NB - New Brunswick", value: "NB" },
+  { label: "NL - Newfoundland and Labrador", value: "NL" },
+  { label: "NS - Nova Scotia", value: "NS" },
+  { label: "NT - Northwest Territories", value: "NT" },
+  { label: "NU - Nunavut", value: "NU" },
+  { label: "ON - Ontario", value: "ON" },
+  { label: "PE - Prince Edward Island", value: "PE" },
+  { label: "QC - Quebec", value: "QC" },
+  { label: "SK - Saskatchewan", value: "SK" },
+  { label: "YT - Yukon", value: "YT" },
+] as const;
