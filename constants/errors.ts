@@ -26,6 +26,7 @@ export const ERRORS = {
   PHONE_NO_NUMBER: "No phone number found.",
   PHONE_INVALID_CODE: "Invalid verification code.",
   PHONE_CODE_EXPIRED: "Code has expired.",
+  LOGIN_2FA_LOCKED: "Too many failed attempts. Please request new code.",
   PHONE_SENT: "Verification phone sent.",
   SLUG_TAKEN: "This slug is already taken",
   REAUTH_REQUIRED:

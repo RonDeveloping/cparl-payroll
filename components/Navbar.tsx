@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { logoutAction } from "@/lib/actions/auth-actions";
+import { logoutAction } from "@/lib/actions/logout-action";
 import { navbarStyles } from "@/constants/styles";
 import { cn } from "@/lib/utils";
 import { broadcastLogout } from "@/lib/logout-sync";

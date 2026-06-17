@@ -30,3 +30,20 @@ export const phoneCheckLimit = new Ratelimit({
   redis: redis,
   limiter: Ratelimit.slidingWindow(5, "5 m"), // 5 guesses per 5 mins
 });
+
+// Limiter for 2FA code resend requests
+export const login2FAResendLimit = new Ratelimit({
+  redis: redis,
+  limiter: Ratelimit.slidingWindow(3, "10 m"), // 3 resends per 10 min
+});
+
+// Limiter for password setup link resend requests
+export const passwordSetupResendLimit = new Ratelimit({
+  redis: redis,
+  limiter: Ratelimit.slidingWindow(3, "10 m"), // 3 resends per 10 min
+});
+
+// 2FA login configuration
+export const LOGIN_2FA_LOCKOUT = {
+  maxAttempts: 5,
+} as const;

@@ -11,6 +11,9 @@ import { ROUTES } from "@/constants/routes";
 import { sendLoginTwoFactorCodeEmail, sendResetEmail } from "@/lib/mail";
 import crypto from "node:crypto";
 import { Prisma } from "@prisma/client";
+import { ERRORS } from "@/constants/errors";
+import { LOGIN_2FA_LOCKOUT, login2FAResendLimit } from "@/lib/ratelimit";
+import { Redis } from "@upstash/redis";
 import {
   issuePasswordSetupLink,
   generatePasswordSetupToken,
@@ -44,15 +47,14 @@ type LoginResult =
 
 const LOGIN_2FA_COOKIE = "login_2fa";
 const LOGIN_2FA_CODE_TTL_MS = 10 * 60 * 1000;
-const LOGIN_2FA_MAX_ATTEMPTS = 5;
-const LOGIN_2FA_LOCKOUT_MS = 15 * 60 * 1000;
 const TRUSTED_2FA_DEVICE_COOKIE = "trusted_2fa_device";
 const TRUSTED_2FA_DEVICE_MAX_AGE_SECONDS = 60 * 60 * 24 * 40;
+const LOGIN_2FA_ATTEMPTS_KEY_PREFIX = "login_2fa_attempts";
+
+const redis = Redis.fromEnv();
 
 type Login2FAChallenge = {
   userId: string;
-  attempts: number;
-  lockoutUntil: number | null;
 };
 
 type NetworkRiskSignals = {
@@ -224,16 +226,10 @@ async function issueSessionCookie(userId: string, slug: string) {
   });
 }
 
-async function issueLogin2FAChallengeCookie(
-  userId: string,
-  attempts = 0,
-  lockoutUntil: number | null = null,
-) {
+async function issueLogin2FAChallengeCookie(userId: string) {
   const challengeToken = await new SignJWT({
     userId,
     purpose: "login-2fa",
-    attempts,
-    lockoutUntil,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -376,21 +372,55 @@ async function getLogin2FAChallengeFromCookie(): Promise<Login2FAChallenge> {
     const { payload } = await jwtVerify(challengeToken, JWT_SECRET);
     const purpose = payload.purpose;
     const userId = payload.userId;
-    const attempts =
-      typeof payload.attempts === "number" && payload.attempts >= 0
-        ? payload.attempts
-        : 0;
-    const lockoutUntil =
-      typeof payload.lockoutUntil === "number" ? payload.lockoutUntil : null;
 
     if (purpose !== "login-2fa" || typeof userId !== "string") {
       throw new Error("Invalid login challenge.");
     }
 
-    return { userId, attempts, lockoutUntil };
+    return { userId };
   } catch {
     throw new Error("Your login session expired. Please sign in again.");
   }
+}
+
+function getLogin2FAAttemptsKey(userId: string) {
+  return `${LOGIN_2FA_ATTEMPTS_KEY_PREFIX}:${userId}`;
+}
+
+async function getLogin2FAFailedAttempts(userId: string): Promise<number> {
+  const value = await redis.get<string | number>(
+    getLogin2FAAttemptsKey(userId),
+  );
+  if (value === null || value === undefined) return 0;
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+async function incrementLogin2FAFailedAttempts(
+  userId: string,
+): Promise<number> {
+  const attemptsKey = getLogin2FAAttemptsKey(userId);
+  const nextAttempts = await redis.incr(attemptsKey);
+
+  if (nextAttempts === 1) {
+    const ttlSeconds = Math.ceil(LOGIN_2FA_CODE_TTL_MS / 1000);
+    await redis.expire(attemptsKey, ttlSeconds);
+  }
+
+  return nextAttempts;
+}
+
+async function assertLogin2FANotBlocked(userId: string) {
+  const failedAttempts = await getLogin2FAFailedAttempts(userId);
+
+  if (failedAttempts >= LOGIN_2FA_LOCKOUT.maxAttempts) {
+    throw new Error(ERRORS.LOGIN_2FA_LOCKED);
+  }
+}
+
+async function clearLogin2FAAttemptState(userId: string) {
+  await redis.del(getLogin2FAAttemptsKey(userId));
 }
 
 async function createAndSendLogin2FACode(userId: string, email: string) {
@@ -521,16 +551,7 @@ export async function verifyLogin2FAAction(code: string) {
 
       const challenge = await getLogin2FAChallengeFromCookie();
       const userId = challenge.userId;
-
-      if (challenge.lockoutUntil && Date.now() < challenge.lockoutUntil) {
-        const remainingMinutes = Math.max(
-          1,
-          Math.ceil((challenge.lockoutUntil - Date.now()) / (1000 * 60)),
-        );
-        throw new Error(
-          `Too many failed attempts. Try again in ${remainingMinutes} minute(s).`,
-        );
-      }
+      await assertLogin2FANotBlocked(userId);
 
       const entry = await prisma.twoFactorCode.findUnique({
         where: { userId },
@@ -547,22 +568,13 @@ export async function verifyLogin2FAAction(code: string) {
       }
 
       if (entry.code !== normalizedCode) {
-        const nextAttempts = challenge.attempts + 1;
+        const nextAttempts = await incrementLogin2FAFailedAttempts(userId);
 
-        if (nextAttempts >= LOGIN_2FA_MAX_ATTEMPTS) {
-          const lockoutUntil = Date.now() + LOGIN_2FA_LOCKOUT_MS;
-          await issueLogin2FAChallengeCookie(
-            userId,
-            nextAttempts,
-            lockoutUntil,
-          );
-          throw new Error(
-            "Too many failed attempts. Verification is temporarily locked for 15 minutes.",
-          );
+        if (nextAttempts >= LOGIN_2FA_LOCKOUT.maxAttempts) {
+          throw new Error(ERRORS.LOGIN_2FA_LOCKED);
         }
 
-        await issueLogin2FAChallengeCookie(userId, nextAttempts, null);
-        const attemptsRemaining = LOGIN_2FA_MAX_ATTEMPTS - nextAttempts;
+        const attemptsRemaining = LOGIN_2FA_LOCKOUT.maxAttempts - nextAttempts;
         throw new Error(
           `Invalid code. ${attemptsRemaining} attempt(s) remaining before lockout.`,
         );
@@ -587,6 +599,7 @@ export async function verifyLogin2FAAction(code: string) {
 
       const cookieStore = await cookies();
       cookieStore.delete(LOGIN_2FA_COOKIE);
+      await clearLogin2FAAttemptState(userId);
 
       await issueTrusted2FADeviceCookie(user.id);
       await issueSessionCookie(user.id, user.slug);
@@ -602,15 +615,22 @@ export async function resendLogin2FAAction() {
       const challenge = await getLogin2FAChallengeFromCookie();
       const userId = challenge.userId;
 
-      if (challenge.lockoutUntil && Date.now() < challenge.lockoutUntil) {
-        const remainingMinutes = Math.max(
-          1,
-          Math.ceil((challenge.lockoutUntil - Date.now()) / (1000 * 60)),
-        );
-        throw new Error(
-          `Too many failed attempts. Try again in ${remainingMinutes} minute(s).`,
-        );
+      // Rate limit both by user and IP
+      const headerList = await headers();
+      const ip = headerList.get("x-forwarded-for") ?? "127.0.0.1";
+
+      const { success: userLimitOk } = await login2FAResendLimit.limit(
+        `login_2fa_resend_user_${userId}`,
+      );
+      const { success: ipLimitOk } = await login2FAResendLimit.limit(
+        `login_2fa_resend_ip_${ip}`,
+      );
+
+      if (!userLimitOk || !ipLimitOk) {
+        throw new Error(ERRORS.TOO_MANY_REQUESTS);
       }
+
+      await assertLogin2FANotBlocked(userId);
 
       const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -622,7 +642,8 @@ export async function resendLogin2FAAction() {
       }
 
       await createAndSendLogin2FACode(userId, user.email);
-      await issueLogin2FAChallengeCookie(userId, 0, null);
+      await clearLogin2FAAttemptState(userId);
+      await issueLogin2FAChallengeCookie(userId);
 
       return { resent: true };
     })(),
