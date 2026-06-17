@@ -274,10 +274,11 @@ model Tenant {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  members       TenantUser[]
-  settings      TenantSettings?
-  payrollCycles PayrollCycle[]
-  departments   Department[]
+  members        TenantUser[]
+  settings       TenantSettings?
+  payrollCycles  PayrollCycle[]
+  departments    Department[]
+  subscriptions  TenantSubscription[]
 
   @@index([businessBn9, businessProgramId, businessAccountRef])
   @@map("tenant")
@@ -299,13 +300,57 @@ model TenantUser {
 }
 
 model TenantSettings {
-  id       String @id @default(cuid())
-  tenantId String @unique @map("tenant_id")
-  timezone String @default("America/Toronto")
+  id                     String  @id @default(cuid())
+  tenantId               String  @unique @map("tenant_id")
+  timezone               String  @default("America/Toronto")
+  billingEmail           String? @map("billing_email")
+  defaultPaymentCardId   String? @map("default_payment_card_id") // soft link to PaymentCard
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
-  
+
   @@map("tenant_settings")
+}
+
+model ServicePlan {
+  id            String    @id @default(cuid())
+  displayName   String    @map("display_name")
+  description   String?
+  monthlyPrice  Decimal   @db.Decimal(10, 2) @map("monthly_price")
+  yearlyPrice   Decimal   @db.Decimal(10, 2) @map("yearly_price")
+  trialDays     Int       @default(0) @map("trial_days")
+  maxEmployees  Int?      @map("max_employees")         // null = unlimited
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("service_plan")
+}
+
+model TenantSubscription {
+  id                     String             @id @default(cuid())
+  tenantId               String             @map("tenant_id")
+  planId                 String             @map("plan_id") // soft reference to ServicePlan.id (no hard FK)
+  planDisplayName        String             @map("plan_display_name") // cached display name snapshot
+  status                 SubscriptionStatus @default(TRIALING)
+  billingInterval        BillingInterval    @map("billing_interval")
+  currentPeriodStart     DateTime           @map("current_period_start")
+  currentPeriodEnd       DateTime           @map("current_period_end")
+  cancelAtPeriodEnd      Boolean            @default(false) @map("cancel_at_period_end")
+  canceledAt             DateTime?          @map("canceled_at")
+  endedAt                DateTime?          @map("ended_at")
+  externalSubscriptionId String?            @map("external_subscription_id") // Stripe / Paddle ID if used
+  createdAt              DateTime           @default(now()) @map("created_at")
+  updatedAt              DateTime           @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, status])
+  @@index([planId])
+  @@map("tenant_subscription")
+  // Add in migration SQL to enforce one active subscription per tenant:
+  // CREATE UNIQUE INDEX one_active_sub_per_tenant
+  // ON "tenant_subscription" ("tenant_id")
+  // WHERE status IN ('trialing','active','past_due');
 }
 
 model PayrollCycle {
@@ -882,4 +927,20 @@ enum Subject {
   ORGANIZATION @map("organization")
   INDIVIDUAL @map("individual")
 	@@map("subject")
+}
+
+enum BillingInterval {
+  MONTHLY @map("monthly")
+  YEARLY  @map("yearly")
+  @@map("billing_interval")
+}
+
+enum SubscriptionStatus {
+  TRIALING  @map("trialing")
+  ACTIVE    @map("active")
+  PAST_DUE  @map("past_due")
+  PAUSED    @map("paused")
+  CANCELED  @map("canceled")
+  EXPIRED   @map("expired")
+  @@map("subscription_status")
 }
