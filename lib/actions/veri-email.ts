@@ -8,6 +8,7 @@ import crypto from "crypto";
 import { emailSendLimit } from "../ratelimit";
 import { headers } from "next/headers";
 import { ERRORS } from "@/constants/errors";
+import { issuePasswordSetupLink } from "@/lib/password-setup";
 
 export async function verifyEmailAction(token: string) {
   return await safe(
@@ -81,8 +82,29 @@ export async function resendVerificationEmail(email: string) {
         where: { slug: email.toLowerCase().trim() },
       });
 
-      // If no user, return null so we can still show a generic success message
-      if (!user) return null;
+      // If no user exists yet, issue a verification token directly from the pending-email flow.
+      if (!user) {
+        const normalizedEmail = email.toLowerCase().trim();
+        const token = crypto.randomBytes(32).toString("hex");
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+        const existing = await tx.verificationEmailToken.findFirst({
+          where: { email: normalizedEmail },
+        });
+
+        if (existing) {
+          await tx.verificationEmailToken.update({
+            where: { id: existing.id },
+            data: { token, expiresAt },
+          });
+        } else {
+          await tx.verificationEmailToken.create({
+            data: { email: normalizedEmail, token, expiresAt },
+          });
+        }
+
+        return { email: normalizedEmail, token };
+      }
 
       // Enforce "One Active Token"
       await tx.authToken.deleteMany({

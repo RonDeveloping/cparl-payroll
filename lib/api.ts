@@ -47,10 +47,13 @@ export class VerifyEmailError extends Error {
   }
 }
 
-export async function verifyEmail(token: string): Promise<{ email: string }> {
-  const res = await fetch(
-    `/api/verify-email?token=${encodeURIComponent(token)}`,
-  );
+export async function verifyEmail(
+  token: string,
+  email?: string,
+): Promise<{ email: string } | { setupUrl: string }> {
+  const params = new URLSearchParams({ token });
+  if (email) params.set("email", email);
+  const res = await fetch(`/api/verify-email?${params.toString()}`);
   const data = await res.json();
   if (!res.ok) {
     throw new VerifyEmailError(data.error || "Verification failed", data.email);

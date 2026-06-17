@@ -16,25 +16,31 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
+  const [passwordSetupUrl, setPasswordSetupUrl] = useState<string | null>(null);
 
-  // Prefill email from query param if present
   const initialEmail = searchParams.get("email") || "";
   const [emailValue, setEmailValue] = useState(initialEmail);
 
-  // Check if we arrived here after a successful registration
   const justRegistered = searchParams.get("registered") === "true";
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+    setPasswordSetupUrl(null);
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    const password = (formData.get("password") as string) || "";
 
     const result = await loginAction({ email, password });
 
     if (result.success) {
+      if (result.data.requiresPasswordSetup) {
+        setPasswordSetupUrl(result.data.setupUrl);
+        setLoading(false);
+        return;
+      }
+
       if (result.data.requiresTwoFactor) {
         const destinationEmail = result.data.email ?? email;
         toast.success("Verification code sent to your login email.");
@@ -66,6 +72,21 @@ export default function LoginPage() {
         </div>
       )}
 
+      {passwordSetupUrl && (
+        <div className={authStyles.loginBanner}>
+          <p className="mb-2">
+            It looks like you haven&apos;t finished setting up your account
+            password yet.
+          </p>
+          <Link
+            href={passwordSetupUrl}
+            className="font-semibold text-blue-700 underline"
+          >
+            Click here to set up your password.
+          </Link>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className={authStyles.loginForm}>
         <div className={authStyles.loginFieldGroup}>
           <label className={authStyles.loginFieldLabel}>Email Address</label>
@@ -78,7 +99,10 @@ export default function LoginPage() {
               placeholder="name@example.com"
               className={authStyles.loginInput}
               value={emailValue}
-              onChange={(e) => setEmailValue(e.target.value)}
+              onChange={(e) => {
+                setEmailValue(e.target.value);
+                setPasswordSetupUrl(null);
+              }}
             />
           </div>
         </div>
@@ -98,12 +122,7 @@ export default function LoginPage() {
               Forgot password?
             </Link>
           </div>
-          <PasswordInput
-            label=""
-            name="password"
-            required
-            placeholder="••••••••"
-          />
+          <PasswordInput label="" name="password" placeholder="••••••••" />
         </div>
 
         <button

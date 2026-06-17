@@ -757,6 +757,7 @@ enum TokenType {
   EMAIL_VERIFICATION @map("email_verification")
   PASSWORD_RESET @map("password_reset")
   EMAIL_CHANGE @map("email_change")
+	SETUP_PASSWORD @map("setup_password")
 	@@map("token_type")
 }
 

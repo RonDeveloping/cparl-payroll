@@ -29,8 +29,13 @@ export default function VerifyPages() {
     }
 
     // Check token status via API
-    verifyEmail(token)
-      .then(() => {
+    verifyEmail(token, emailFromQuery ?? undefined)
+      .then((data) => {
+        if ("setupUrl" in data) {
+          // Account already verified but no password set — go straight to setup.
+          router.replace(data.setupUrl);
+          return;
+        }
         // Valid token, proceed to setup-password
         router.replace(
           `${ROUTES.AUTH.SETUP_PASSWORD}?token=${encodeURIComponent(token)}`,

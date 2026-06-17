@@ -39,9 +39,15 @@ export default function RegisterEmailForm() {
         setServerError(result.error || "An unexpected error occurred.");
         return;
       }
-      router.push(
-        `${ROUTES.AUTH.CHECK_EMAIL}?email=${encodeURIComponent(data.email)}`,
-      );
+
+      const nextFlow =
+        result.flow === "setup-password" ? "setup-password" : null;
+      const query = new URLSearchParams({ email: data.email });
+      if (nextFlow) {
+        query.set("flow", nextFlow);
+      }
+
+      router.push(`${ROUTES.AUTH.CHECK_EMAIL}?${query.toString()}`);
     } catch {
       setServerError("Failed to connect to the server.");
     }

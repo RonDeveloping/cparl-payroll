@@ -6,6 +6,7 @@ import crypto from "crypto";
 import prisma from "@/db/prismaDrizzle";
 import { ERRORS } from "@/constants/errors";
 import { Redis } from "@upstash/redis";
+import { issuePasswordSetupLink } from "@/lib/password-setup";
 
 // This automatically looks for UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN
 export const ratelimit = new Ratelimit({
@@ -35,6 +36,50 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
+
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { slug: email.toLowerCase().trim() },
+          {
+            email: { equals: email.toLowerCase().trim(), mode: "insensitive" },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        email: true,
+        emailVerifiedAt: true,
+        passwordHash: true,
+      },
+    });
+
+    if (existingUser?.emailVerifiedAt && !existingUser.passwordHash) {
+      const setupLink = await issuePasswordSetupLink(existingUser.email);
+
+      if (!setupLink.success) {
+        return NextResponse.json(
+          { error: setupLink.error },
+          { status: setupLink.reason === "send-failed" ? 500 : 400 },
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        flow: "setup-password",
+        email: setupLink.email,
+        message:
+          "We found your account and sent a link to finish setting up your password.",
+      });
+    }
+
+    if (existingUser?.passwordHash) {
+      return NextResponse.json(
+        { error: ERRORS.ACCOUNT_EXISTS },
+        { status: 409 },
+      );
+    }
+
     // Check for existing pending verification
     const existing = await prisma.verificationEmailToken.findFirst({
       where: { email: email.toLowerCase().trim() },

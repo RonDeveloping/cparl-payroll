@@ -73,6 +73,57 @@ export const sendVerificationEmail = async (
   });
 };
 
+export async function sendSetupPasswordEmail(email: string, token: string) {
+  const createdAt = new Date();
+  const setupLink = `${process.env.NEXT_PUBLIC_APP_URL}${ROUTES.AUTH.SETUP_PASSWORD}?token=${token}&email=${encodeURIComponent(email)}`;
+  const expiresAt = new Date(createdAt.getTime() + 60 * 60 * 1000);
+  const formattedExpiry = expiresAt.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+
+  await resend.emails.send({
+    from: mailContent.verification.from,
+    to: email,
+    subject: mailContent.setupPassword.subject,
+    replyTo: mailContent.verification.replyTo,
+    html: `
+      <div style="${s.container}">
+        <h2 style="${s.heading}">${mailContent.setupPassword.heading}</h2>
+        <p style="${s.text}">${mailContent.setupPassword.instruction}</p>
+        <div style="${s.buttonRow}">
+          <div style="${s.buttonCell}">
+            <a href="${setupLink}" style="${s.button}">
+              ${mailContent.setupPassword.buttonText}
+            </a>
+          </div>
+          <div style="${s.timestampCell}">
+            <span style="${s.timestamp}">Link created: ${createdAt.toLocaleString(
+              "en-US",
+              {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                timeZoneName: "short",
+              },
+            )}</span>
+            <span style="${s.timestamp}">Link expires: ${formattedExpiry}</span>
+          </div>
+        </div>
+        <hr />
+        <p style="${s.footer}">If you didn&apos;t request this, you can safely ignore this email.</p>
+      </div>
+    `,
+  });
+}
+
 export async function sendResetEmail(email: string, token: string) {
   const createdAt = new Date();
   const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}${ROUTES.AUTH.RESET_PASSWORD}?token=${token}&email=${encodeURIComponent(email)}`;

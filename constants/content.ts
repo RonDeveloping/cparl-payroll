@@ -38,6 +38,13 @@ export const mailContent = {
       "Please click the button below to verify your email address and set up a password for your account.",
     heading: "Verification is required to start your registration",
   },
+  setupPassword: {
+    subject: "Complete your account setup",
+    heading: "Finish setting up your account",
+    buttonText: "Set up password",
+    instruction:
+      "Please click the button below to finish setting up your password.",
+  },
   security: {
     loginEmailChangeNoticeSubject: "Login email change requested",
     loginEmailChangeNoticeHeading: "A login email change was requested",

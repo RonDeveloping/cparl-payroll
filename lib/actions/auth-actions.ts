@@ -9,9 +9,12 @@ import { SignJWT, jwtVerify } from "jose";
 import { redirect } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import { sendLoginTwoFactorCodeEmail, sendResetEmail } from "@/lib/mail";
-import { normalizeId } from "@/utils/formatters/idSlug";
 import crypto from "node:crypto";
 import { Prisma } from "@prisma/client";
+import {
+  issuePasswordSetupLink,
+  generatePasswordSetupToken,
+} from "@/lib/password-setup";
 
 //TODO: Move this secret to an environment variable and ensure it's a secure, random value in production
 const JWT_SECRET = new TextEncoder().encode(
@@ -20,8 +23,24 @@ const JWT_SECRET = new TextEncoder().encode(
 
 interface LoginData {
   email: string;
-  password: string;
+  password?: string;
 }
+
+type LoginEmailState = {
+  exists: boolean;
+  email: string;
+  emailVerified: boolean;
+  needsPasswordSetup: boolean;
+};
+
+function normalizeLoginEmail(input: string): string {
+  return input.trim().toLowerCase();
+}
+
+type LoginResult =
+  | { authenticated: true; requiresTwoFactor: false }
+  | { requiresTwoFactor: true; email: string }
+  | { requiresPasswordSetup: true; setupUrl: string };
 
 const LOGIN_2FA_COOKIE = "login_2fa";
 const LOGIN_2FA_CODE_TTL_MS = 10 * 60 * 1000;
@@ -390,18 +409,36 @@ async function createAndSendLogin2FACode(userId: string, email: string) {
 export async function loginAction(data: LoginData) {
   const result = await safe(
     (async () => {
-      const { email, password } = data;
+      const normalizedEmail = normalizeLoginEmail(data.email);
+      const password = data.password?.trim() ?? "";
 
-      const user = await prisma.user.findUnique({
-        where: { slug: normalizeId(email) },
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { slug: normalizedEmail },
+            { email: { equals: normalizedEmail, mode: "insensitive" } },
+          ],
+        },
       });
 
-      if (!user || !user.passwordHash) {
+      if (!user) {
         throw new Error("Invalid email or password");
       }
 
       if (!user.emailVerifiedAt) {
         throw new Error("Please verify your email before logging in.");
+      }
+
+      if (!user.passwordHash) {
+        const setupUrl = await generatePasswordSetupToken(user.id, user.email);
+        return {
+          requiresPasswordSetup: true,
+          setupUrl,
+        } satisfies LoginResult;
+      }
+
+      if (!password) {
+        throw new Error("Please enter your password to continue.");
       }
 
       const passwordMatch = await bcrypt.compare(password, user.passwordHash);
@@ -425,11 +462,53 @@ export async function loginAction(data: LoginData) {
       return {
         requiresTwoFactor: true,
         email: user.email,
-      };
+      } satisfies LoginResult;
     })(),
   );
 
   return result;
+}
+
+export async function getLoginEmailStateAction(email: string) {
+  return await safe(
+    (async (): Promise<LoginEmailState> => {
+      const normalizedEmail = normalizeLoginEmail(email);
+
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { slug: normalizedEmail },
+            { email: { equals: normalizedEmail, mode: "insensitive" } },
+          ],
+        },
+        select: {
+          email: true,
+          emailVerifiedAt: true,
+          passwordHash: true,
+        },
+      });
+
+      if (!user) {
+        return {
+          exists: false,
+          email: normalizedEmail,
+          emailVerified: false,
+          needsPasswordSetup: false,
+        };
+      }
+
+      return {
+        exists: true,
+        email: user.email,
+        emailVerified: Boolean(user.emailVerifiedAt),
+        needsPasswordSetup: !user.passwordHash,
+      };
+    })(),
+  );
+}
+
+export async function requestPasswordSetupLinkAction(email: string) {
+  return await issuePasswordSetupLink(email);
 }
 
 export async function verifyLogin2FAAction(code: string) {
@@ -560,8 +639,15 @@ export async function logoutAction() {
 export async function askForResetLinkAction(email: string) {
   return await safe(
     (async () => {
-      const user = await prisma.user.findUnique({
-        where: { slug: normalizeId(email) },
+      const normalizedEmail = normalizeLoginEmail(email);
+
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { slug: normalizedEmail },
+            { email: { equals: normalizedEmail, mode: "insensitive" } },
+          ],
+        },
       });
 
       // Security: Don't reveal if the email doesn't exist

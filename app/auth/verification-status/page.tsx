@@ -2,9 +2,11 @@
 // app/auth/verification-status/page.tsx
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { authStyles } from "@/constants/styles";
 import { authContent } from "@/constants/content";
+import { requestPasswordSetupLinkAction } from "@/lib/actions/password-setup";
+import { toast } from "sonner";
 
 type StatusCategory = "expired" | "already-verified";
 
@@ -46,6 +48,7 @@ function StatusCard({
 }
 
 export default function VerificationStatusPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const statusCategory = getStatusCategory(searchParams.get("statusCategory"));
   const email = searchParams.get("email");
@@ -55,6 +58,7 @@ export default function VerificationStatusPage() {
   const [sent, setSent] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [isSendingSetupLink, setIsSendingSetupLink] = useState(false);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -80,6 +84,27 @@ export default function VerificationStatusPage() {
     } finally {
       setIsPending(false);
       setCountdown(RESEND_COOLDOWN_SECONDS);
+    }
+  };
+
+  const handleSendSetupLink = async () => {
+    if (!email) return;
+
+    setIsSendingSetupLink(true);
+
+    try {
+      const result = await requestPasswordSetupLinkAction(email);
+      if (!result.success) {
+        toast.error(result.error || "Unable to send setup link.");
+        return;
+      }
+
+      toast.success("A setup link has been sent to your email.");
+      router.push(
+        `/auth/check-email?email=${encodeURIComponent(email)}&flow=setup-password`,
+      );
+    } finally {
+      setIsSendingSetupLink(false);
     }
   };
 
@@ -147,7 +172,22 @@ export default function VerificationStatusPage() {
             {messageWithEmail}
           </p>
         ) : null}
+        <p className={authStyles.verificationMessageText}>
+          If you still need to finish setting up your account, send yourself a
+          setup link instead of logging in right away.
+        </p>
         <div className="flex gap-4 justify-center mt-4">
+          {email ? (
+            <button
+              type="button"
+              onClick={handleSendSetupLink}
+              disabled={isSendingSetupLink}
+              className={authStyles.buttonResend}
+              style={{ minWidth: 220 }}
+            >
+              {isSendingSetupLink ? "Sending..." : "Send setup link"}
+            </button>
+          ) : null}
           <Link href={loginHref} className="text-blue-600 underline">
             Login
           </Link>
