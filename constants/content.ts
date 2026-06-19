@@ -9,8 +9,7 @@ export const authContent = {
     mainInstruction: (email: string) =>
       `Please click the Verify Email button in the email we sent to <strong>${email}</strong>.`,
     secondaryNote:
-      "If the email doesn’t arrive soon, 1) check your spam folder, 2) use Resend... button below, or 3) try logging in to see if it's already been used with a registered account.",
-    alreadyVerified: "Invalid or Used Link",
+      "If the email doesn’t arrive soon, 1) check your spam folder, 2) use Resend... button below, or 3) try logging in to see if it's already been used with a registered account.",    keepOpenReminder: "Keep this window open for a smoother experience.",    alreadyVerified: "Invalid or Used Link",
     alreadyVerifiedByEmail: (email: string) =>
       `The email "${email}" has already been verified.`,
   },
@@ -80,6 +79,14 @@ export const contactFieldContent = {
   },
 } as const;
 
+export const tenantFieldContent = {
+  mailingAddress: {
+    term: "Mailing address",
+    description:
+      "This address will be used on payroll reporting and our paper correspondence to the business.",
+  },
+} as const;
+
 export const paymentFieldContent = {
   cardDetails: {
     term: "Card details",
@@ -93,7 +100,7 @@ export const paymentFieldContent = {
     hideFormLabel: "Hide form",
   },
   savedAccounts: {
-    term: "Saved accounts",
+    term: "Saved Accounts",
     storageNote:
       "These are bank accounts for PAP withdrawals. Full account details are masked here, and payments made via PAP receive a 5% credit.",
     showFormLabel: "Add account",

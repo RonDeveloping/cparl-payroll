@@ -630,8 +630,6 @@ export async function resendLogin2FAAction() {
         throw new Error(ERRORS.TOO_MANY_REQUESTS);
       }
 
-      await assertLogin2FANotBlocked(userId);
-
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: { email: true },

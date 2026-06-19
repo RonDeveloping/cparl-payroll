@@ -5,7 +5,7 @@ import { use } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 
 import { tenantSchema, TenantFormInput } from "@/lib/validations/tenant-schema";
 import { upsertTenant } from "@/lib/actions/tenant";
@@ -29,6 +29,9 @@ export default function EditTenantForm({
   const router = useRouter();
   const isNew = params.id === "new";
   const draftStorageKey = `tenant-form-draft:${params.id}`;
+  const shouldAutoSyncOperatingNameRef = useRef(
+    !String(initialData.operatingName ?? "").trim(),
+  );
 
   const {
     register,
@@ -53,6 +56,11 @@ export default function EditTenantForm({
       }
 
       const parsedDraft = JSON.parse(rawDraft) as Partial<TenantFormInput>;
+      const mergedOperatingName = String(
+        parsedDraft.operatingName ?? initialData.operatingName ?? "",
+      ).trim();
+      shouldAutoSyncOperatingNameRef.current = mergedOperatingName.length === 0;
+
       reset(
         {
           ...initialData,
@@ -71,6 +79,41 @@ export default function EditTenantForm({
 
   const currentValues = getValues();
   const watchedValues = useWatch({ control });
+  const watchedCoreName = useWatch({ control, name: "coreName" });
+  const watchedOperatingName = useWatch({ control, name: "operatingName" });
+
+  useEffect(() => {
+    // Once user edits DBA, stop auto-sync and preserve their explicit value.
+    if (dirtyFields.operatingName) {
+      shouldAutoSyncOperatingNameRef.current = false;
+      return;
+    }
+
+    if (!shouldAutoSyncOperatingNameRef.current) {
+      return;
+    }
+
+    const legalName = (watchedCoreName || "").trim();
+
+    if (!legalName) {
+      return;
+    }
+
+    if ((watchedOperatingName || "") === (watchedCoreName || "")) {
+      return;
+    }
+
+    setValue("operatingName", watchedCoreName, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: false,
+    });
+  }, [
+    dirtyFields.operatingName,
+    setValue,
+    watchedCoreName,
+    watchedOperatingName,
+  ]);
 
   useEffect(() => {
     try {

@@ -7,6 +7,115 @@ datasource db {
   provider = "postgresql"
 }
 
+// ==========================================
+// ===== Billing/Subscription service  =====
+// ==========================================
+model ServicePlan {
+  id            String    @id @default(cuid())
+  displayName   String    @map("display_name")
+  description   String?
+  monthlyPrice  Decimal   @db.Decimal(10, 2) @map("monthly_price")
+  yearlyPrice   Decimal   @db.Decimal(10, 2) @map("yearly_price")
+  trialDays     Int       @default(0) @map("trial_days")
+  maxEmployees  Int?      @map("max_employees")         // null = unlimited
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("service_plan")
+}
+
+
+model BillingCustomer {
+  id                    String   @id @default(cuid())
+  tenantId              String   @unique @map("tenant_id")
+  billingEmail          String?  @map("billing_email")
+  externalCustomerId    String?  @unique @map("external_customer_id")
+  isActive              Boolean  @default(true) @map("is_active")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  invoices              BillingInvoice[]
+  paymentTransactions   PaymentTransaction[]
+
+  @@index([tenantId])
+  @@map("billing_customer")
+}
+
+model BillingInvoice {
+  id                    String            @id @default(cuid())
+  billingCustomerId     String            @map("billing_customer_id")
+  tenantId              String            @map("tenant_id")
+  invoiceNumber         String            @unique @map("invoice_number")
+  status                InvoiceStatus     @default(DRAFT) @map("status")
+  billingInterval       BillingInterval   @map("billing_interval")
+  periodStart           DateTime          @map("period_start")
+  periodEnd             DateTime          @map("period_end")
+  currency              String            @default("CAD") @map("currency")
+  subtotal              Decimal           @db.Decimal(12, 2)
+  taxTotal              Decimal           @db.Decimal(12, 2) @map("tax_total")
+  total                 Decimal           @db.Decimal(12, 2)
+  amountPaid            Decimal           @default(0) @db.Decimal(12, 2) @map("amount_paid")
+  dueDate               DateTime?         @map("due_date")
+  issuedAt              DateTime?         @map("issued_at")
+  paidAt                DateTime?         @map("paid_at")
+  voidedAt              DateTime?         @map("voided_at")
+  externalInvoiceId     String?           @map("external_invoice_id")
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
+
+  billingCustomer       BillingCustomer   @relation(fields: [billingCustomerId], references: [id], onDelete: Cascade)
+  lineItems             BillingInvoiceLine[]
+  paymentTransactions   PaymentTransaction[]
+
+  @@index([tenantId, status])
+  @@index([billingCustomerId, status])
+  @@map("billing_invoice")
+}
+
+model BillingInvoiceLine {
+  id               String   @id @default(cuid())
+  billingInvoiceId  String   @map("billing_invoice_id")
+  planId            String?  @map("plan_id")
+  description       String
+  quantity          Decimal  @default(1) @db.Decimal(10, 2)
+  unitPrice         Decimal  @db.Decimal(12, 2) @map("unit_price")
+  amount            Decimal  @db.Decimal(12, 2)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  billingInvoice    BillingInvoice @relation(fields: [billingInvoiceId], references: [id], onDelete: Cascade)
+
+  @@index([billingInvoiceId])
+  @@index([planId])
+  @@map("billing_invoice_line")
+}
+
+model PaymentTransaction {
+  id                    String              @id @default(cuid())
+  billingCustomerId     String              @map("billing_customer_id")
+  billingInvoiceId      String?             @map("billing_invoice_id")
+  tenantId              String              @map("tenant_id")
+  amount                Decimal             @db.Decimal(12, 2)
+  currency              String              @default("CAD") @map("currency")
+  paymentMethodType     PaymentMethodType @default(CARD) @map("payment_method_type")
+  status                PaymentStatus       @default(PENDING) @map("status")
+  provider              PaymentProvider     @map("provider")
+  cachedPaymentDetails Json?                @map("payment_method_snapshot") // card example: {"providerPaymentMethodId":"pm_xxx","cardBrand":"visa","cardLast4":"4242"}; PAP example: {"providerPaymentMethodId":"ba_xxx","accountLast4":"6789","institutionNumber":1,"branchNumber":23456}
+  providerTransactionId String?             @unique @map("provider_transaction_id")
+  failureReason         String?             @map("failure_reason")
+  processedAt           DateTime?           @map("processed_at")
+  createdAt             DateTime            @default(now()) @map("created_at")
+  updatedAt             DateTime            @updatedAt @map("updated_at")
+
+  billingCustomer       BillingCustomer     @relation(fields: [billingCustomerId], references: [id], onDelete: Cascade)
+  billingInvoice        BillingInvoice?     @relation(fields: [billingInvoiceId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, status])
+  @@index([tenantId, paymentMethodType])
+  @@index([billingCustomerId, status])
+  @@index([billingInvoiceId])
+  @@map("payment_transaction")
+}
 
 // ==========================================
 // ===== USER SERVICE (Authentication)  =====
@@ -172,7 +281,7 @@ model LegalNameHistory {
   source        NameSource?
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
-  contact Contact @relation(fields: [contactId], references: [id]) //so prisma generates the foreign key constraint for us:  ALTER TABLE "LegalNameHistory" ADD CONSTRAINT "LegalNameHistory_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") to ensure referential integrity.
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade) //so prisma generates the foreign key constraint for us:  ALTER TABLE "LegalNameHistory" ADD CONSTRAINT "LegalNameHistory_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") to ensure referential integrity.
 
   @@index([contactId, effectiveFrom]) //composite index for efficient querying of time in history table
   @@map("legal_name_history")
@@ -190,7 +299,7 @@ model ConversationalNameHistory {
   effectiveTo   DateTime?                 @map("effective_to")
   createdAt     DateTime                  @default(now()) @map("created_at")
   updatedAt     DateTime                  @updatedAt @map("updated_at")
-  contact Contact @relation(fields: [contactId], references: [id])
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   @@index([contactId, effectiveFrom])
   @@map("conversational_name_history")
@@ -207,27 +316,13 @@ model Address {
   addressHash String  @map("address_hash") //sha256(`${street}|${city}|${province}|${postalCode}|${country}`)
   isPrimary   Boolean @default(false) @map("is_primary")
 
-  contact Contact @relation(fields: [contactId], references: [id])
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   @@unique([contactId, addressHash])//composite unique constraint to prevent duplicate addresses for same contact
   @@index([contactId])//speed up queries per contactID
   @@map("address")
 }
 
-/*
-Remeber in migration SQL file, add:
-CREATE UNIQUE INDEX one_primary_email_per_contact
-ON "Email"(contactId)
-WHERE isPrimary = true;
-
-CREATE UNIQUE INDEX one_primary_address_per_contact
-ON "Address"(contactId)
-WHERE isPrimary = true;
-
-CREATE UNIQUE INDEX one_primary_phone_per_contact
-ON "Phone"(contactId)
-WHERE isPrimary = true;
-*/
 
 model Email {
   id           String   @id @default(cuid())
@@ -237,7 +332,7 @@ model Email {
   updatedAt    DateTime @updatedAt @map("updated_at")
   emailAddress String   @map("email_address") //it's case-insensitive in practice, but Prisma does not support unique constraints on case-insensitive yet, so we enforce lowercase in application logic
 
-  contact Contact @relation(fields: [contactId], references: [id])
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   @@unique([contactId, emailAddress])
   @@index([contactId])
@@ -251,12 +346,27 @@ model Phone {
   type      PhoneType? @default(MOBILE) @map("type")
   isPrimary Boolean     @default(false) @map("is_primary")
 
-  contact Contact @relation(fields: [contactId], references: [id])
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   @@unique([contactId, number])
   @@index([contactId])
   @@map("phone")
 }
+/*
+Remeber in migration SQL file, add:
+
+CREATE UNIQUE INDEX one_primary_email_per_contact
+ON "Email"(contactId)
+WHERE isPrimary = true;
+
+CREATE UNIQUE INDEX one_primary_address_per_contact
+ON "Address"(contactId)
+WHERE isPrimary = true;
+
+CREATE UNIQUE INDEX one_primary_phone_per_contact
+ON "Phone"(contactId)
+WHERE isPrimary = true;
+*/
 
 // ==========================================
 // ===== TENANT SERVICE (Settings)      =====
@@ -265,11 +375,12 @@ model Phone {
 model Tenant {
   id             String   @id @default(cuid())
   contactId      String   @map("contact_id") //soft link only (No @relation)
+  primaryContactPersonId String? @map("primary_contact_person_id") //FK to Contact for the employer's contact person
   nameCached    Json   @map("name_cached")
   slug           String   @unique
   businessBn9    String?  @map("business_bn9") @db.Char(9)
   businessProgramId String? @map("business_program_id") @db.Char(2)
-  businessAccountRef String? @map("business_account_ref") @db.Char(4)
+  programRefNum  String?  @map("program_ref_num") @db.Char(4)
   isActive       Boolean  @default(true) @map("is_active")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
@@ -280,7 +391,7 @@ model Tenant {
   departments    Department[]
   subscriptions  TenantSubscription[]
 
-  @@index([businessBn9, businessProgramId, businessAccountRef])
+  @@index([businessBn9, businessProgramId, programRefNum])
   @@map("tenant")
 }
 //TODO: use a middleware or a library (like Prisma's $extends) to automatically inject where: { tenantId: activeTenantId } into every query. This ensures you never forget to filter by the tenant.
@@ -304,27 +415,14 @@ model TenantSettings {
   tenantId               String  @unique @map("tenant_id")
   timezone               String  @default("America/Toronto")
   billingEmail           String? @map("billing_email")
-  defaultPaymentCardId   String? @map("default_payment_card_id") // soft link to PaymentCard
+  paymentMethodType      PaymentMethodType? @map("payment_method_type")
+  paymentSrcId           String? @map("payment_src_id")
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@map("tenant_settings")
 }
 
-model ServicePlan {
-  id            String    @id @default(cuid())
-  displayName   String    @map("display_name")
-  description   String?
-  monthlyPrice  Decimal   @db.Decimal(10, 2) @map("monthly_price")
-  yearlyPrice   Decimal   @db.Decimal(10, 2) @map("yearly_price")
-  trialDays     Int       @default(0) @map("trial_days")
-  maxEmployees  Int?      @map("max_employees")         // null = unlimited
-  isActive      Boolean   @default(true) @map("is_active")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-
-  @@map("service_plan")
-}
 
 model TenantSubscription {
   id                     String             @id @default(cuid())
@@ -944,4 +1042,37 @@ enum SubscriptionStatus {
   CANCELED  @map("canceled")
   EXPIRED   @map("expired")
   @@map("subscription_status")
+}
+
+enum InvoiceStatus {
+  DRAFT   @map("draft")
+  OPEN    @map("open")
+  PAID    @map("paid")
+  OVERDUE @map("overdue")
+  VOID    @map("void")
+  UNCOLLECTIBLE @map("uncollectible")
+  @@map("invoice_status")
+}
+
+enum PaymentStatus {
+  PENDING  @map("pending")
+  SUCCEEDED @map("succeeded")
+  FAILED   @map("failed")
+  REFUNDED @map("refunded")
+  REVERSED @map("reversed")
+  @@map("payment_status")
+}
+
+enum PaymentProvider {
+  STRIPE  @map("stripe")
+  PADDLE  @map("paddle")
+  MANUAL  @map("manual")
+  OTHER   @map("other")
+  @@map("payment_provider")
+}
+
+enum PaymentMethodType {
+  CARD @map("card")
+  PAP @map("pap")
+  @@map("payment_method_type")
 }

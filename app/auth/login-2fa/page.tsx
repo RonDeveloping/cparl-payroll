@@ -1,7 +1,7 @@
 "use client";
 // app/auth/login-2fa/page.tsx
 
-import { FormEvent, useState } from "react";
+import { FormEvent, MouseEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, ShieldCheck } from "lucide-react";
@@ -40,7 +40,10 @@ export default function Login2FAPage() {
     setIsSubmitting(false);
   };
 
-  const handleResend = async () => {
+  const handleResend = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     setIsResending(true);
     const result = await resendLogin2FAAction();
 
@@ -85,7 +88,7 @@ export default function Login2FAPage() {
 
         <button
           type="submit"
-          disabled={isSubmitting || code.length !== 5}
+          disabled={isSubmitting || isResending || code.length !== 5}
           className={authStyles.loginButton}
         >
           {isSubmitting ? (
@@ -98,7 +101,7 @@ export default function Login2FAPage() {
         <button
           type="button"
           onClick={handleResend}
-          disabled={isResending}
+          disabled={isResending || isSubmitting}
           className="w-full rounded-md border border-slate-300 py-2 font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-70"
         >
           {isResending ? "Sending..." : "Resend code"}

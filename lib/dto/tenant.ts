@@ -15,7 +15,7 @@ export type TenantSummaryDto = {
   slug: string;
   businessBn9: string | null;
   businessProgramId: string | null;
-  businessAccountRef: string | null;
+  programRefNum: string | null;
   isActive: boolean;
   createdAt: string;
   displayName: string;
@@ -29,7 +29,7 @@ type TenantRow = {
   slug: string;
   businessBn9: string | null;
   businessProgramId: string | null;
-  businessAccountRef: string | null;
+  programRefNum: string | null;
   isActive: boolean;
   createdAt: Date;
 };
@@ -64,7 +64,7 @@ export function toTenantSummaryDto(tenant: TenantRow): TenantSummaryDto {
       composeBusinessNumberFromParts({
         bn9: tenant.businessBn9,
         programId: tenant.businessProgramId,
-        accountRef: tenant.businessAccountRef,
+        accountRef: tenant.programRefNum,
       }) ?? "",
     ) || null;
 
@@ -74,7 +74,7 @@ export function toTenantSummaryDto(tenant: TenantRow): TenantSummaryDto {
     slug: tenant.slug,
     businessBn9: tenant.businessBn9,
     businessProgramId: tenant.businessProgramId,
-    businessAccountRef: tenant.businessAccountRef,
+    programRefNum: tenant.programRefNum,
     isActive: tenant.isActive,
     createdAt: tenant.createdAt.toISOString(),
     displayName,

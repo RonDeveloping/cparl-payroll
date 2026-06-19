@@ -23,7 +23,7 @@ export async function GET() {
         slug: true,
         businessBn9: true,
         businessProgramId: true,
-        businessAccountRef: true,
+        programRefNum: true,
         isActive: true,
         createdAt: true,
       },

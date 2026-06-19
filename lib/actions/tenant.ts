@@ -60,7 +60,7 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
         }
       }
 
-      // Create or update Contact record
+      // Create or update Organization Contact record (for address storage)
       let contactId: string;
       let contactForCache: {
         coreName: string;
@@ -73,15 +73,14 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
       } | null = null;
 
       if (!id || id === "new") {
-        // Create new contact for new tenant
+        // Create new organization contact for new tenant
         const contact = await tx.contact.create({
           data: {
             coreName: trimmedCoreName,
-            kindName: data.legalNameEnding || "", // Empty string if null
+            kindName: data.legalNameEnding || "",
             aliasName: data.operatingName ?? null,
-            displayName: data.contactPerson ?? null,
-            subject: "ORGANIZATION", // Assuming organization type
-            source: "USER", // User-provided input
+            subject: "ORGANIZATION",
+            source: "USER",
           },
         });
         contactId = contact.id;
@@ -95,46 +94,23 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
           displayName: contact.displayName,
         };
 
-        // Save email, phone, and address to contact
-        if (data.email) {
-          await tx.email.create({
-            data: {
-              contactId: contact.id,
-              emailAddress: data.email.toLowerCase(),
-              isPrimary: true,
-            },
-          });
-        }
-
-        if (data.phone) {
-          await tx.phone.create({
-            data: {
-              contactId: contact.id,
-              number: data.phone,
-              type: "MOBILE",
-              isPrimary: true,
-            },
-          });
-        }
-
+        // Save mailing address
         if (data.address && Object.values(data.address).some((v) => v)) {
           await upsertAddress(tx, contact.id, data.address);
         }
       } else {
-        // Fetch existing contact (if any) and update it
+        // Update existing organization contact
         const existingTenant = await tx.tenant.findUnique({
           where: { id },
         });
 
         if (existingTenant && existingTenant.contactId) {
-          // Update existing contact
           const contact = await tx.contact.update({
             where: { id: existingTenant.contactId },
             data: {
               coreName: trimmedCoreName,
               kindName: data.legalNameEnding || "",
               aliasName: data.operatingName ?? null,
-              displayName: data.contactPerson ?? null,
             },
           });
           contactForCache = {
@@ -147,97 +123,22 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
             displayName: contact.displayName,
           };
 
-          // Update or create email
-          if (data.email) {
-            const existingEmail = await tx.email.findFirst({
-              where: {
-                contactId: existingTenant.contactId,
-                isPrimary: true,
-              },
-            });
-
-            if (existingEmail) {
-              await tx.email.update({
-                where: { id: existingEmail.id },
-                data: { emailAddress: data.email.toLowerCase() },
-              });
-            } else {
-              await tx.email.create({
-                data: {
-                  contactId: existingTenant.contactId,
-                  emailAddress: data.email.toLowerCase(),
-                  isPrimary: true,
-                },
-              });
-            }
-          }
-
-          // Update or create phone
-          if (data.phone) {
-            const existingPhone = await tx.phone.findFirst({
-              where: {
-                contactId: existingTenant.contactId,
-                isPrimary: true,
-              },
-            });
-
-            if (existingPhone) {
-              await tx.phone.update({
-                where: { id: existingPhone.id },
-                data: { number: data.phone },
-              });
-            } else {
-              await tx.phone.create({
-                data: {
-                  contactId: existingTenant.contactId,
-                  number: data.phone,
-                  type: "MOBILE",
-                  isPrimary: true,
-                },
-              });
-            }
-          }
-
-          // Update or create address
+          // Update mailing address
           if (data.address && Object.values(data.address).some((v) => v)) {
             await upsertAddress(tx, existingTenant.contactId, data.address);
           }
 
           contactId = existingTenant.contactId;
         } else {
-          // Create new contact if one doesn't exist
           const contact = await tx.contact.create({
             data: {
               coreName: trimmedCoreName,
               kindName: data.legalNameEnding || "",
               aliasName: data.operatingName ?? null,
-              displayName: data.contactPerson ?? null,
               subject: "ORGANIZATION",
-              source: "USER", // User-provided input
+              source: "USER",
             },
           });
-
-          // Save email, phone, and address
-          if (data.email) {
-            await tx.email.create({
-              data: {
-                contactId: contact.id,
-                emailAddress: data.email.toLowerCase(),
-                isPrimary: true,
-              },
-            });
-          }
-
-          if (data.phone) {
-            await tx.phone.create({
-              data: {
-                contactId: contact.id,
-                number: data.phone,
-                type: "MOBILE",
-                isPrimary: true,
-              },
-            });
-          }
 
           if (data.address && Object.values(data.address).some((v) => v)) {
             await upsertAddress(tx, contact.id, data.address);
@@ -253,6 +154,108 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
             aliasName: contact.aliasName,
             displayName: contact.displayName,
           };
+        }
+      }
+
+      // Create or update Contact Person record (separate from organization contact)
+      let primaryContactPersonId: string | null = null;
+      const firstName = (data.contactFirstName ?? "").trim();
+      const lastName = (data.contactLastName ?? "").trim();
+      const hasContactPerson =
+        firstName || lastName || data.email || data.phone;
+
+      if (hasContactPerson) {
+        const existingTenant =
+          !id || id === "new"
+            ? null
+            : await tx.tenant.findUnique({ where: { id } });
+        const existingPersonContactId = existingTenant?.primaryContactPersonId;
+
+        if (existingPersonContactId) {
+          // Update existing person contact
+          const personContact = await tx.contact.update({
+            where: { id: existingPersonContactId },
+            data: {
+              coreName: firstName || "Contact Person",
+              kindName: lastName || "",
+            },
+          });
+          primaryContactPersonId = personContact.id;
+
+          // Update or create email for person contact
+          if (data.email) {
+            const existingEmail = await tx.email.findFirst({
+              where: { contactId: existingPersonContactId, isPrimary: true },
+            });
+            if (existingEmail) {
+              await tx.email.update({
+                where: { id: existingEmail.id },
+                data: { emailAddress: data.email.toLowerCase() },
+              });
+            } else {
+              await tx.email.create({
+                data: {
+                  contactId: existingPersonContactId,
+                  emailAddress: data.email.toLowerCase(),
+                  isPrimary: true,
+                },
+              });
+            }
+          }
+
+          // Update or create phone for person contact
+          if (data.phone) {
+            const existingPhone = await tx.phone.findFirst({
+              where: { contactId: existingPersonContactId, isPrimary: true },
+            });
+            if (existingPhone) {
+              await tx.phone.update({
+                where: { id: existingPhone.id },
+                data: { number: data.phone },
+              });
+            } else {
+              await tx.phone.create({
+                data: {
+                  contactId: existingPersonContactId,
+                  number: data.phone,
+                  type: "MOBILE",
+                  isPrimary: true,
+                },
+              });
+            }
+          }
+        } else {
+          // Create new person contact
+          const personContact = await tx.contact.create({
+            data: {
+              coreName: firstName || "Contact Person",
+              kindName: lastName || "",
+              subject: "INDIVIDUAL",
+              source: "USER",
+            },
+          });
+          primaryContactPersonId = personContact.id;
+
+          if (data.email) {
+            await tx.email.create({
+              data: {
+                contactId: personContact.id,
+                emailAddress: data.email.toLowerCase(),
+                isPrimary: true,
+              },
+            });
+          }
+
+          if (data.phone) {
+            await tx.phone.create({
+              data: {
+                contactId: personContact.id,
+                number: data.phone,
+                type: "MOBILE",
+                isPrimary: true,
+              },
+            });
+          }
         }
       }
 
@@ -286,18 +289,20 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
           nameCached: nameCached,
           slug: generatedSlug,
           contactId: contactId,
+          primaryContactPersonId: primaryContactPersonId,
           businessBn9: splitBusinessParts?.bn9 ?? null,
           businessProgramId: splitBusinessParts?.programId ?? null,
-          businessAccountRef: splitBusinessParts?.accountRef ?? null,
+          programRefNum: splitBusinessParts?.accountRef ?? null,
           isActive: data.isActive,
         },
         create: {
           nameCached: nameCached,
           slug: generatedSlug,
           contactId: contactId,
+          primaryContactPersonId: primaryContactPersonId,
           businessBn9: splitBusinessParts?.bn9 ?? null,
           businessProgramId: splitBusinessParts?.programId ?? null,
-          businessAccountRef: splitBusinessParts?.accountRef ?? null,
+          programRefNum: splitBusinessParts?.accountRef ?? null,
           isActive: data.isActive,
           settings: {
             create: {

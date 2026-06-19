@@ -119,7 +119,7 @@ export default function PaymentMethodDetails({
     } catch {
       // Ignore storage access errors.
     }
-  }, []);
+  }, [isTile]);
 
   useEffect(() => {
     if (primaryMethod === "accounts" && !hasVerifiedPapAccount) {
@@ -142,6 +142,10 @@ export default function PaymentMethodDetails({
           setCards(summary.cards);
           setPapAccounts(summary.papAccounts);
           setAccumulatedCredits(summary.accumulatedCredits);
+
+          if (isTile) {
+            setShowEntryForm(summary.cards.length === 0);
+          }
         }
       } catch {
         if (isMounted) {
@@ -161,7 +165,7 @@ export default function PaymentMethodDetails({
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isTile]);
 
   const handleCardSaved = (card: SavedPaymentCard) => {
     setCards((currentCards) => {

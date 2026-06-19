@@ -1,17 +1,19 @@
 "use client";
 // components/tenant/tenant-form.tsx
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FieldErrors } from "react-hook-form";
 import { TenantFormInput } from "@/lib/validations/tenant-schema";
 import FormSection from "@/components/form/form-section";
 import InputWithChanges from "@/components/form/input-with-changes";
 import SelectWithChanges from "@/components/form/select-with-changes";
+import SectionDisclosure from "@/components/section-disclosure";
 import { FormGrid } from "@/components/form/form-grid";
 import formatBusinessNumber from "@/utils/formatters/businessNumber";
 import formatPostalCode from "@/utils/formatters/postalCode";
 import { Clarification } from "@/components/clarification";
 import { CANADA_PROVINCE_TERRITORY_OPTIONS } from "@/constants/canada-provinces";
+import { tenantFieldContent } from "@/constants/content";
 import {
   getPostalCodeProgress,
   type PostalCodeProgressTone,
@@ -74,6 +76,14 @@ export function TenantForm({
     text: "",
     tone: "neutral",
   });
+  const [showOptionalIdentification, setShowOptionalIdentification] =
+    useState(false);
+
+  useEffect(() => {
+    if (errors.operatingName?.message) {
+      setShowOptionalIdentification(true);
+    }
+  }, [errors.operatingName?.message]);
 
   const handlePostalCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPostalProgress(getPostalCodeProgress(e.target.value || ""));
@@ -99,20 +109,6 @@ export function TenantForm({
           <InputWithChanges<TenantFormInput>
             label={
               <Clarification
-                term="Operating as (O/A)"
-                description={
-                  'This helps employees recognize the employer on documents such as T4 slips, normally registered as a "Trade/Business Name".'
-                }
-              />
-            }
-            name="operatingName"
-            placeholder="e.g. All Stuff Depot"
-            rules={{}}
-            error={errors.operatingName?.message}
-          />
-          <InputWithChanges<TenantFormInput>
-            label={
-              <Clarification
                 term="Business number"
                 description="A CRA-issued, unique identifier for the employer or branch, enterable later if no remittance or reporting is due"
               />
@@ -125,50 +121,49 @@ export function TenantForm({
             error={errors.businessNumber?.message}
           />
         </FormGrid>
+
+        <SectionDisclosure
+          label="Optional"
+          expanded={showOptionalIdentification}
+          onToggle={() => setShowOptionalIdentification((v) => !v)}
+        />
+
+        <div
+          inert={!showOptionalIdentification}
+          aria-hidden={!showOptionalIdentification}
+          className={`transition-[max-height,opacity,padding] duration-300 ease-in-out ${
+            showOptionalIdentification
+              ? "max-h-[260px] overflow-visible p-1 opacity-100"
+              : "max-h-0 overflow-hidden p-0 opacity-0"
+          }`}
+        >
+          <FormGrid>
+            <InputWithChanges<TenantFormInput>
+              label={
+                <Clarification
+                  term="Doing business as (DBA)"
+                  description={
+                    'A DBA, also known as an operating name, "Operating As" (o/a), Trade Name or Business Name. If it differs from the legal name of the business, the DBA will be added on T4 slips to help employees recgonize who issued the slip.'
+                  }
+                />
+              }
+              name="operatingName"
+              placeholder="e.g. All Stuff Depot"
+              rules={{}}
+              error={errors.operatingName?.message}
+            />
+          </FormGrid>
+        </div>
       </FormSection>
 
-      <FormSection title="Contact">
-        <FormGrid>
-          <InputWithChanges<TenantFormInput>
-            label={
-              <Clarification
-                term="Attention"
-                description="Contact person name to address in emails or phone calls."
-              />
-            }
-            name="contactPerson"
-            placeholder="e.g. Jane Doe"
-            rules={{}}
-            error={errors.contactPerson?.message}
+      <FormSection
+        title={
+          <Clarification
+            term={tenantFieldContent.mailingAddress.term}
+            description={tenantFieldContent.mailingAddress.description}
           />
-          <InputWithChanges<TenantFormInput>
-            label={
-              <Clarification
-                term="Email"
-                description="Used to receive notifications such as acknowledgment, processing, and completion updates."
-              />
-            }
-            name="email"
-            type="email"
-            rules={{}}
-            error={errors.email?.message}
-          />
-          <InputWithChanges<TenantFormInput>
-            label={
-              <Clarification
-                term="Phone"
-                description="Used for unusual events such as insufficient funds, deposit failures, or other urgent issues."
-              />
-            }
-            name="phone"
-            type="tel"
-            rules={{}}
-            error={errors.phone?.message}
-          />
-        </FormGrid>
-      </FormSection>
-
-      <FormSection title="Address">
+        }
+      >
         <FormGrid>
           {TENANT_FIELDS.address.map((field) => {
             const isPostalCodeField = field.name === "address.postalCode";
@@ -215,6 +210,59 @@ export function TenantForm({
               </div>
             );
           })}
+        </FormGrid>
+      </FormSection>
+
+      <FormSection title="Contact Person">
+        <FormGrid>
+          <InputWithChanges<TenantFormInput>
+            label={
+              <Clarification
+                term="First name"
+                description="The contact person's first name for payroll-related emails, calls, and correspondence."
+              />
+            }
+            name="contactFirstName"
+            placeholder="e.g. Jane"
+            rules={{}}
+            error={errors.contactFirstName?.message}
+          />
+          <InputWithChanges<TenantFormInput>
+            label={
+              <Clarification
+                term="Last name"
+                description="The contact person's last name for payroll-related emails, calls, and correspondence."
+              />
+            }
+            name="contactLastName"
+            placeholder="e.g. Doe"
+            rules={{}}
+            error={errors.contactLastName?.message}
+          />
+          <InputWithChanges<TenantFormInput>
+            label={
+              <Clarification
+                term="Email"
+                description="Used to receive notifications such as acknowledgment, processing, and completion updates."
+              />
+            }
+            name="email"
+            type="email"
+            rules={{}}
+            error={errors.email?.message}
+          />
+          <InputWithChanges<TenantFormInput>
+            label={
+              <Clarification
+                term="Phone"
+                description="Used for unusual events such as insufficient funds, deposit failures, or other urgent issues."
+              />
+            }
+            name="phone"
+            type="tel"
+            rules={{}}
+            error={errors.phone?.message}
+          />
         </FormGrid>
       </FormSection>
 

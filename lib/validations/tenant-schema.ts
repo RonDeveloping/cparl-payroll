@@ -51,7 +51,8 @@ export const tenantSchema = z.object({
   isActive: z.boolean(),
   memberEmails: z.string().optional(),
   // Contact information fields
-  contactPerson: z.string().optional().nullable(),
+  contactFirstName: z.string().optional().nullable(),
+  contactLastName: z.string().optional().nullable(),
   email: z.string().email().optional().nullable(),
   phone: z.string().optional().nullable(),
   address: z

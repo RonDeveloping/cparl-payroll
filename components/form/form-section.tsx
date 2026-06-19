@@ -3,7 +3,7 @@
 import { formSectionStyles } from "@/constants/styles";
 
 interface FormSectionProps {
-  title: string;
+  title: React.ReactNode;
   children: React.ReactNode;
   headerAction?: React.ReactNode;
   titleClassName?: string;
