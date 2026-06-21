@@ -34,7 +34,7 @@ function parseBankDetails(
   if (!institution || !transitAccount) return null;
 
   const institutionMatch = institution.match(/^(\d{3})$/);
-  const transitAccountMatch = transitAccount.match(/^(\d{5})[-\s]?(\d{5,17})$/);
+  const transitAccountMatch = transitAccount.match(/^(\d{5})[-\s]?(\d{7,12})$/);
   if (!institutionMatch || !transitAccountMatch) return null;
 
   return {

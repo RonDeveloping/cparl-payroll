@@ -1,0 +1,602 @@
+{
+  "177": {
+    "shortName": "BC",
+    "displayName": "Bank of Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "219": {
+    "shortName": "AF",
+    "displayName": "ATB Financial",
+    "badgeClass": "text-slate-600"
+  },
+  "241": {
+    "shortName": "BANA",
+    "displayName": "Bank of America, National Association",
+    "badgeClass": "text-slate-600"
+  },
+  "242": {
+    "shortName": "BNYM",
+    "displayName": "The Bank of New York Mellon",
+    "badgeClass": "text-slate-600"
+  },
+  "245": {
+    "shortName": "MBLC",
+    "displayName": "MUFG Bank, Ltd., Canada Branch",
+    "badgeClass": "text-slate-600"
+  },
+  "250": {
+    "shortName": "BP",
+    "displayName": "BNP Paribas",
+    "badgeClass": "text-slate-600"
+  },
+  "260": {
+    "shortName": "CC",
+    "displayName": "Citibank Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "265": {
+    "shortName": "DBA",
+    "displayName": "Deutsche Bank AG",
+    "badgeClass": "text-slate-600"
+  },
+  "269": {
+    "shortName": "MICB",
+    "displayName": "Mega International Commercial Bank Co., Ltd.",
+    "badgeClass": "text-slate-600"
+  },
+  "270": {
+    "shortName": "JCBN",
+    "displayName": "JPMorgan Chase Bank, National Association",
+    "badgeClass": "text-slate-600"
+  },
+  "275": {
+    "shortName": "KHBC",
+    "displayName": "KEB Hana Bank Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "277": {
+    "shortName": "MBL",
+    "displayName": "Mizuho Bank Ltd.",
+    "badgeClass": "text-slate-600"
+  },
+  "290": {
+    "shortName": "UBC",
+    "displayName": "UBS Bank (Canada)",
+    "badgeClass": "text-slate-600"
+  },
+  "294": {
+    "shortName": "SCB",
+    "displayName": "SBI Canada Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "301": {
+    "shortName": "SMBC",
+    "displayName": "Sumitomo Mitsui Banking Corporation, Canada Branch",
+    "badgeClass": "text-slate-600"
+  },
+  "303": {
+    "shortName": "ABC",
+    "displayName": "Amex Bank of Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "307": {
+    "shortName": "ICBC",
+    "displayName": "Industrial and Commercial Bank of China (Canada)",
+    "badgeClass": "text-slate-600"
+  },
+  "308": {
+    "shortName": "BCC",
+    "displayName": "Bank of China (Canada)",
+    "badgeClass": "text-slate-600"
+  },
+  "309": {
+    "shortName": "VCIB",
+    "displayName": "Vancity Community Investment Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "310": {
+    "shortName": "FNBC",
+    "displayName": "First Nations Bank of Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "314": {
+    "shortName": "JPMB",
+    "displayName": "J.P. Morgan Bank Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "315": {
+    "shortName": "CBCC",
+    "displayName": "CTBC Bank Corp. (Canada)",
+    "badgeClass": "text-slate-600"
+  },
+  "318": {
+    "shortName": "USBN",
+    "displayName": "U.S. Bank National Association",
+    "badgeClass": "text-slate-600"
+  },
+  "320": {
+    "shortName": "P0SC",
+    "displayName": "President&#039;s Choice Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "321": {
+    "shortName": "HCB",
+    "displayName": "Habib Canadian Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "322": {
+    "shortName": "RC",
+    "displayName": "Rabobank Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "323": {
+    "shortName": "COBC",
+    "displayName": "Capital One Bank (Canada Branch)",
+    "badgeClass": "text-slate-600"
+  },
+  "327": {
+    "shortName": "SS",
+    "displayName": "State Street",
+    "badgeClass": "text-slate-600"
+  },
+  "328": {
+    "shortName": "CN",
+    "displayName": "Citibank, N.A",
+    "badgeClass": "text-slate-600"
+  },
+  "330": {
+    "shortName": "CB",
+    "displayName": "Comerica Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "332": {
+    "shortName": "FCB",
+    "displayName": "First Commercial Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "334": {
+    "shortName": "VersaBank",
+    "displayName": "VersaBank",
+    "badgeClass": "text-slate-600"
+  },
+  "335": {
+    "shortName": "UOBL",
+    "displayName": "United Overseas Bank Limited",
+    "badgeClass": "text-slate-600"
+  },
+  "338": {
+    "shortName": "CTB",
+    "displayName": "Canadian Tire Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "340": {
+    "shortName": "IBC",
+    "displayName": "ICICI Bank Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "344": {
+    "shortName": "GBC",
+    "displayName": "General Bank of Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "345": {
+    "shortName": "FTBN",
+    "displayName": "Fifth Third Bank, National Association",
+    "badgeClass": "text-slate-600"
+  },
+  "346": {
+    "shortName": "STGN",
+    "displayName": "Société Générale (Canada Branch)",
+    "badgeClass": "text-slate-600"
+  },
+  "347": {
+    "shortName": "BB",
+    "displayName": "Bridgewater Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "349": {
+    "shortName": "NTCC",
+    "displayName": "The Northern Trust Company, Canada Branch",
+    "badgeClass": "text-slate-600"
+  },
+  "352": {
+    "shortName": "DCB",
+    "displayName": "Digital Commerce Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "355": {
+    "shortName": "SBC",
+    "displayName": "Shinhan Bank Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "356": {
+    "shortName": "CBC",
+    "displayName": "Citco Bank Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "357": {
+    "shortName": "MATB",
+    "displayName": "M &amp; T Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "358": {
+    "shortName": "HB",
+    "displayName": "HomeEquity Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "359": {
+    "shortName": "FBC",
+    "displayName": "Fairstone Bank of Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "360": {
+    "shortName": "BBPC",
+    "displayName": "Barclays Bank PLC, Canada Branch",
+    "badgeClass": "text-slate-600"
+  },
+  "361": {
+    "shortName": "HB",
+    "displayName": "Home Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "362": {
+    "shortName": "WFBN",
+    "displayName": "Wells Fargo Bank, National Association, Canadian Branch",
+    "badgeClass": "text-slate-600"
+  },
+  "365": {
+    "shortName": "PBCB",
+    "displayName": "PNC Bank Canada Branch",
+    "badgeClass": "text-slate-600"
+  },
+  "366": {
+    "shortName": "CCBT",
+    "displayName": "China Construction Bank Toronto Branch",
+    "badgeClass": "text-slate-600"
+  },
+  "368": {
+    "shortName": "RB",
+    "displayName": "Rogers Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "370": {
+    "shortName": "WOBC",
+    "displayName": "Wealth One Bank of Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "372": {
+    "shortName": "BCTB",
+    "displayName": "Bank of China, Toronto Branch",
+    "badgeClass": "text-slate-600"
+  },
+  "374": {
+    "shortName": "MB",
+    "displayName": "Motus Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "376": {
+    "shortName": "EBC",
+    "displayName": "Exchange Bank of Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "377": {
+    "shortName": "RBC",
+    "displayName": "RFA Bank of Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "378": {
+    "shortName": "CBC",
+    "displayName": "Cidel Bank Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "379": {
+    "shortName": "SCB",
+    "displayName": "Santander Consumer Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "381": {
+    "shortName": "HB",
+    "displayName": "Haventree Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "382": {
+    "shortName": "CCSF",
+    "displayName": "Coast Capital Savings Federal Credit Union",
+    "badgeClass": "text-slate-600"
+  },
+  "383": {
+    "shortName": "PBC",
+    "displayName": "Peoples Bank of Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "384": {
+    "shortName": "IFCU",
+    "displayName": "Innovation Federal Credit Union",
+    "badgeClass": "text-slate-600"
+  },
+  "385": {
+    "shortName": "Questbank",
+    "displayName": "Questbank",
+    "badgeClass": "text-slate-600"
+  },
+  "386": {
+    "shortName": "TCB",
+    "displayName": "Tru Cooperative Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "507": {
+    "shortName": "CTC",
+    "displayName": "Community Trust Company",
+    "badgeClass": "text-slate-600"
+  },
+  "509": {
+    "shortName": "CTC",
+    "displayName": "The Canada Trust Company",
+    "badgeClass": "text-slate-600"
+  },
+  "522": {
+    "shortName": "TLLD",
+    "displayName": "Trust La Laurentienne du Canada Inc.",
+    "badgeClass": "text-slate-600"
+  },
+  "532": {
+    "shortName": "ETC",
+    "displayName": "Effort Trust Company",
+    "badgeClass": "text-slate-600"
+  },
+  "536": {
+    "shortName": "IGTC",
+    "displayName": "Investors Group Trust Co. Ltd.",
+    "badgeClass": "text-slate-600"
+  },
+  "540": {
+    "shortName": "MBC",
+    "displayName": "Manulife Bank of Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "548": {
+    "shortName": "CTC",
+    "displayName": "CIBC Trust Corporation",
+    "badgeClass": "text-slate-600"
+  },
+  "550": {
+    "shortName": "MTCC",
+    "displayName": "Montreal Trust Company of Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "551": {
+    "shortName": "SLFT",
+    "displayName": "Sun Life Financial Trust Inc.",
+    "badgeClass": "text-slate-600"
+  },
+  "568": {
+    "shortName": "PHTC",
+    "displayName": "Peace Hills Trust Company",
+    "badgeClass": "text-slate-600"
+  },
+  "570": {
+    "shortName": "RTC",
+    "displayName": "The Royal Trust Company",
+    "badgeClass": "text-slate-600"
+  },
+  "580": {
+    "shortName": "RTCC",
+    "displayName": "Royal Trust Corporation of Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "590": {
+    "shortName": "NTC",
+    "displayName": "National Trust Company",
+    "badgeClass": "text-slate-600"
+  },
+  "597": {
+    "shortName": "TMC",
+    "displayName": "TD Mortgage Corporation",
+    "badgeClass": "text-slate-600"
+  },
+  "603": {
+    "shortName": "TPMC",
+    "displayName": "TD Pacific Mortgage Corporation",
+    "badgeClass": "text-slate-600"
+  },
+  "606": {
+    "shortName": "SMC",
+    "displayName": "Scotia Mortgage Corporation",
+    "badgeClass": "text-slate-600"
+  },
+  "608": {
+    "shortName": "CAB",
+    "displayName": "CS Alterna Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "612": {
+    "shortName": "NTC",
+    "displayName": "Natcan Trust Company",
+    "badgeClass": "text-slate-600"
+  },
+  "614": {
+    "shortName": "TB",
+    "displayName": "Tangerine Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "618": {
+    "shortName": "BB",
+    "displayName": "B2B Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "621": {
+    "shortName": "PTC",
+    "displayName": "Peoples Trust Company",
+    "badgeClass": "text-slate-600"
+  },
+  "623": {
+    "shortName": "EB",
+    "displayName": "Equitable Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "626": {
+    "shortName": "MTC",
+    "displayName": "Manulife Trust Company",
+    "badgeClass": "text-slate-600"
+  },
+  "627": {
+    "shortName": "HTC",
+    "displayName": "Home Trust Company",
+    "badgeClass": "text-slate-600"
+  },
+  "701": {
+    "shortName": "EJ",
+    "displayName": "Edward Jones",
+    "badgeClass": "text-slate-600"
+  },
+  "702": {
+    "shortName": "MLIC",
+    "displayName": "Manufacturers Life Insurance Company",
+    "badgeClass": "text-slate-600"
+  },
+  "703": {
+    "shortName": "WII",
+    "displayName": "Wealthsimple Investments Inc.",
+    "badgeClass": "text-slate-600"
+  },
+  "704": {
+    "shortName": "QI",
+    "displayName": "Questrade, Inc.",
+    "badgeClass": "text-slate-600"
+  },
+  "705": {
+    "shortName": "WPCI",
+    "displayName": "Wise Payments Canada Inc.",
+    "badgeClass": "text-slate-600"
+  },
+  "706": {
+    "shortName": "KFI",
+    "displayName": "KOHO Financial Inc.",
+    "badgeClass": "text-slate-600"
+  },
+  "707": {
+    "shortName": "EFTI",
+    "displayName": "Element Financial Technology Inc. (d.b.a. Paramount Commerce)",
+    "badgeClass": "text-slate-600"
+  },
+  "708": {
+    "shortName": "FFSI",
+    "displayName": "Float Financial Solutions Inc.",
+    "badgeClass": "text-slate-600"
+  },
+  "709": {
+    "shortName": "BFI",
+    "displayName": "Brim Financial Inc.",
+    "badgeClass": "text-slate-600"
+  },
+  "710": {
+    "shortName": "UESI",
+    "displayName": "uSecure Escrow Solutions Inc. (d.b.a. DoBusiness.com)",
+    "badgeClass": "text-slate-600"
+  },
+  "711": {
+    "shortName": "NFTI",
+    "displayName": "Neo Financial Technologies Inc.",
+    "badgeClass": "text-slate-600"
+  },
+  "721": {
+    "shortName": "SI",
+    "displayName": "Shakepay Inc.",
+    "badgeClass": "text-slate-600"
+  },
+  "777": {
+    "shortName": "CISI",
+    "displayName": "CI Investment Services Inc.",
+    "badgeClass": "text-slate-600"
+  },
+  "815": {
+    "shortName": "FDRD",
+    "displayName": "Fédération des caisses Desjardins du Quebec",
+    "badgeClass": "text-slate-600"
+  },
+  "829": {
+    "shortName": "CDOC",
+    "displayName": "Caisse Desjardins Ontario Credit Union Inc.",
+    "badgeClass": "text-slate-600"
+  },
+  "837": {
+    "shortName": "MCUL",
+    "displayName": "Meridian Credit Union Limited",
+    "badgeClass": "text-slate-600"
+  },
+  "839": {
+    "shortName": "AC88",
+    "displayName": "Atlantic Central (839/849)",
+    "badgeClass": "text-slate-600"
+  },
+  "853": {
+    "shortName": "CB",
+    "displayName": "Concentra Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "865": {
+    "shortName": "CPAL",
+    "displayName": "Caisse populaire acadienne ltée",
+    "badgeClass": "text-slate-600"
+  },
+  "869": {
+    "shortName": "C1CU",
+    "displayName": "Central 1 Credit Union (869 /809 / 828)",
+    "badgeClass": "text-slate-600"
+  },
+  "879": {
+    "shortName": "CUCM",
+    "displayName": "Credit Union Central of Manitoba Limited",
+    "badgeClass": "text-slate-600"
+  },
+  "889": {
+    "shortName": "CUCS",
+    "displayName": "Credit Union Central of Saskatchewan",
+    "badgeClass": "text-slate-600"
+  },
+  "890": {
+    "shortName": "CPAL",
+    "displayName": "Caisse populaire Alliance Limitée",
+    "badgeClass": "text-slate-600"
+  },
+  "899": {
+    "shortName": "CUCA",
+    "displayName": "Credit Union Central Alberta Limited",
+    "badgeClass": "text-slate-600"
+  },
+  "001": {
+    "shortName": "BMO",
+    "displayName": "Bank of Montreal",
+    "badgeClass": "text-slate-600"
+  },
+  "002": {
+    "shortName": "Scotia",
+    "displayName": "The Bank of Nova Scotia",
+    "badgeClass": "text-slate-600"
+  },
+  "003": {
+    "shortName": "RBC",
+    "displayName": "Royal Bank of Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "004": {
+    "shortName": "TD",
+    "displayName": "The Toronto-Dominion Bank",
+    "badgeClass": "text-slate-600"
+  },
+  "006": {
+    "shortName": "NBC",
+    "displayName": "National Bank of Canada",
+    "badgeClass": "text-slate-600"
+  },
+  "010": {
+    "shortName": "CIBC",
+    "displayName": "Canadian Imperial Bank of Commerce (010/326)",
+    "badgeClass": "text-slate-600"
+  },
+  "039": {
+    "shortName": "LBC",
+    "displayName": "Laurentian Bank of Canada",
+    "badgeClass": "text-slate-600"
+  }
+}

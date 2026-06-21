@@ -1009,6 +1009,8 @@ export default function PaymentMethodForm({
           : "text-slate-500";
   const billingPostalCodeValue =
     useWatch({ control, name: "billingPostalCode" }) ?? "";
+  const cardholderNameValue =
+    useWatch({ control, name: "cardholderName" }) ?? "";
   const postalCodeProgress = getPostalCodeProgress(billingPostalCodeValue);
   const postalCodeProgressClass =
     postalCodeProgress.tone === "error"
@@ -1018,6 +1020,19 @@ export default function PaymentMethodForm({
         : postalCodeProgress.tone === "success"
           ? "text-green-600"
           : "text-slate-500";
+  const normalizedPostalCode = billingPostalCodeValue
+    .replace(/\s+/g, "")
+    .toUpperCase();
+  const isCardholderNameValid = cardholderNameValue.trim().length >= 2;
+  const isPostalCodeValid =
+    normalizedPostalCode.length === 6 &&
+    isValidCanadianPostalCode(normalizedPostalCode);
+  const isCardDetailsValid =
+    cardNumberStatus === "success" &&
+    expiryStatus === "success" &&
+    cvcStatus === "success";
+  const isCardFormValid =
+    isCardholderNameValid && isPostalCodeValid && isCardDetailsValid;
 
   const syncCardDetails = (
     nextCardNumber: string,
@@ -1161,19 +1176,20 @@ export default function PaymentMethodForm({
       className={cn("space-y-6", compact ? "space-y-5" : "")}
     >
       <FormSection
-        title="Payment card (credit/debit)"
+        title="New payment Card (credit/deibt)"
         titleTag="p"
-        titleClassName="text-xs font-semibold normal-case tracking-normal border-none pb-0 mb-0 text-slate-600"
+        titleClassName="text-base font-semibold normal-case tracking-normal border-none pb-0 mb-0 text-slate-600"
         headerAction={
           <button
             type="submit"
             className={cn(
               formActionsStyles.saveButtonBase,
-              isSubmitting
+              "px-4 py-1.5 text-sm",
+              isSubmitting || !isCardFormValid
                 ? formActionsStyles.saveLocked
                 : formActionsStyles.saveActive,
             )}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isCardFormValid}
           >
             Save
           </button>

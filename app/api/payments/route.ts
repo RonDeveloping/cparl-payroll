@@ -12,6 +12,7 @@ type PaymentAccountRow = {
   currency: string;
   isDefault: boolean;
   verificationStatus: string;
+  createdAt: Date;
 };
 
 type PaymentAccountClientLike = {
@@ -141,6 +142,54 @@ export async function POST(req: Request) {
   }
 }
 
+export async function DELETE(req: Request) {
+  try {
+    const session = await getSession();
+    if (!session?.userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    if (!id) {
+      return NextResponse.json({ error: "Missing card id" }, { status: 400 });
+    }
+
+    const card = await prisma.paymentCard.findFirst({
+      where: { id, userId: session.userId },
+      select: { id: true, isDefault: true },
+    });
+
+    if (!card) {
+      return NextResponse.json({ error: "Card not found" }, { status: 404 });
+    }
+
+    await prisma.paymentCard.delete({ where: { id } });
+
+    if (card.isDefault) {
+      const next = await prisma.paymentCard.findFirst({
+        where: { userId: session.userId },
+        orderBy: { createdAt: "desc" },
+        select: { id: true },
+      });
+      if (next) {
+        await prisma.paymentCard.update({
+          where: { id: next.id },
+          data: { isDefault: true },
+        });
+      }
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting payment card:", error);
+    return NextResponse.json(
+      { error: "Failed to delete payment card" },
+      { status: 500 },
+    );
+  }
+}
+
 export async function GET() {
   try {
     const session = await getSession();
@@ -179,6 +228,7 @@ export async function GET() {
         currency: true,
         isDefault: true,
         verificationStatus: true,
+        createdAt: true,
       },
     });
 
@@ -198,6 +248,7 @@ export async function GET() {
         currency: account.currency,
         isDefault: account.isDefault,
         verificationStatus: account.verificationStatus,
+        createdAt: account.createdAt,
       })),
       accumulatedCredits,
     });

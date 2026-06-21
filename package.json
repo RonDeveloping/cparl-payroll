@@ -19,6 +19,8 @@
     "db:push": "prisma db push && prisma generate",
     "db:reset": "prisma generate && prisma migrate reset --force",
     "db:watch": "prisma migrate dev --watch",
+    "institutions:update": "node scripts/update-financial-institutions.mjs",
+    "institutions:validate": "node scripts/validate-financial-institutions.mjs",
     "postinstall": "prisma generate",
     "db:pull": "drizzle-kit pull"
   },

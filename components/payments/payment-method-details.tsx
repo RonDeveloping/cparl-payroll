@@ -7,8 +7,11 @@ import PapAccountForm from "@/components/payments/pap-account-form";
 import { Clarification } from "@/components/clarification";
 import CardTypeIcon from "@/components/payments/card-type-icon";
 import { paymentFieldContent } from "@/constants/content";
+import { getInstitutionShortName } from "@/constants/financial-institutions";
 import {
   getPaymentMethodsSummary,
+  deletePaymentCard,
+  deletePapAccount,
   type SavedPapAccount,
   type SavedPaymentCard,
 } from "@/lib/api";
@@ -61,6 +64,13 @@ function formatCardShortLabel(brand: string, last4: string) {
             : brand.slice(0, 2).toUpperCase();
 
   return `${abbreviation} •••• ${last4}`;
+}
+
+function formatPapShortLabel(institutionNumber: number, last4: string) {
+  const institution = String(institutionNumber).padStart(3, "0");
+  const shortName =
+    getInstitutionShortName(institution) ?? `Bank ${institution}`;
+  return `${shortName} •••• ${last4}`;
 }
 
 export default function PaymentMethodDetails({
@@ -216,6 +226,42 @@ export default function PaymentMethodDetails({
     });
   };
 
+  const handleDeleteCard = async (id: string) => {
+    try {
+      await deletePaymentCard(id);
+      setCards((current) => {
+        const remaining = current.filter((c) => c.id !== id);
+        const wasDefault = current.find((c) => c.id === id)?.isDefault;
+        if (wasDefault && remaining.length > 0) {
+          return remaining.map((c, i) =>
+            i === 0 ? { ...c, isDefault: true } : c,
+          );
+        }
+        return remaining;
+      });
+    } catch {
+      // silently ignore — server error will be logged
+    }
+  };
+
+  const handleDeletePapAccount = async (id: string) => {
+    try {
+      await deletePapAccount(id);
+      setPapAccounts((current) => {
+        const remaining = current.filter((a) => a.id !== id);
+        const wasDefault = current.find((a) => a.id === id)?.isDefault;
+        if (wasDefault && remaining.length > 0) {
+          return remaining.map((a, i) =>
+            i === 0 ? { ...a, isDefault: true } : a,
+          );
+        }
+        return remaining;
+      });
+    } catch {
+      // silently ignore — server error will be logged
+    }
+  };
+
   return (
     <div className={isTile ? "space-y-4" : "space-y-6"}>
       {!isTile && (
@@ -322,6 +368,15 @@ export default function PaymentMethodDetails({
                             Default
                           </span>
                         ) : null}
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCard(card.id)}
+                          className="ml-auto text-slate-400 hover:text-red-500 transition-colors"
+                          aria-label="Delete card"
+                          title="Delete card"
+                        >
+                          ✕
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -405,59 +460,86 @@ export default function PaymentMethodDetails({
               </div>
             </div>
 
-            {showAccountEntryForm ? (
-              <div className="mt-3">
-                <PapAccountForm
-                  compact={isTile}
-                  onSaved={handlePapAccountSaved}
-                />
-              </div>
-            ) : null}
-
             {isLoadingCards ? (
-              <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                Loading saved accounts...
+              <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                <div className="px-4 py-3 text-sm text-slate-500">
+                  Loading saved accounts...
+                </div>
               </div>
-            ) : papAccounts.length === 0 ? (
-              <div className="mt-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                {paymentFieldContent.savedAccounts.emptyState}
+            ) : papAccounts.length === 0 && !showAccountEntryForm ? (
+              <div className="mt-3 overflow-hidden rounded-xl border border-dashed border-slate-300 bg-slate-50">
+                <div className="px-4 py-3 text-sm text-slate-500">
+                  {paymentFieldContent.savedAccounts.emptyState}
+                </div>
               </div>
             ) : (
-              <div className="mt-3 space-y-3">
-                {papAccounts.map((account) => {
-                  const institution = String(
-                    account.institutionNumber,
-                  ).padStart(3, "0");
-                  const branch = String(account.branchNumber).padStart(5, "0");
-                  return (
-                    <div
-                      key={account.id}
-                      className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
+              <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                <div className="space-y-3 px-4 py-3">
+                  {papAccounts.map((account, index) => {
+                    return (
+                      <div
+                        key={account.id}
+                        className="rounded-xl border border-slate-200 bg-slate-100 px-4 py-3"
+                      >
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                            #{index + 1}
+                          </span>
                           <span className="font-medium text-slate-900">
-                            Bank account ending in {account.accountLast4}
+                            {formatPapShortLabel(
+                              account.institutionNumber,
+                              account.accountLast4,
+                            )}
+                          </span>
+                          <span className="text-slate-500">
+                            {formatAddedDate(account.createdAt)}
+                          </span>
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                            {account.verificationStatus.toLowerCase()}
                           </span>
                           {account.isDefault ? (
-                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                              Primary
+                            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+                              Default
                             </span>
                           ) : null}
-                        </div>
-                        <div className="mt-1 text-sm text-slate-500">
-                          Transit {branch} • Institution {institution} •{" "}
-                          {account.currency}
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePapAccount(account.id)}
+                            className="ml-auto text-slate-400 hover:text-red-500 transition-colors"
+                            aria-label="Delete account"
+                            title="Delete account"
+                          >
+                            ✕
+                          </button>
                         </div>
                       </div>
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
-                        {account.verificationStatus.toLowerCase()}
-                      </span>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+
+                {showAccountEntryForm ? (
+                  <div className="border-t border-slate-200 bg-white px-4 py-4">
+                    <PapAccountForm
+                      compact={isTile}
+                      onSaved={handlePapAccountSaved}
+                    />
+                  </div>
+                ) : null}
               </div>
             )}
+
+            {!isLoadingCards &&
+            papAccounts.length === 0 &&
+            showAccountEntryForm ? (
+              <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                <div className="border-t border-slate-200 bg-white px-4 py-4">
+                  <PapAccountForm
+                    compact={isTile}
+                    onSaved={handlePapAccountSaved}
+                  />
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="pt-2">

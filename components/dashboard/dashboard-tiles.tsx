@@ -200,7 +200,42 @@ export default function DashboardTiles({
   useEffect(() => {
     if (activeTile?.id !== "organizations") {
       setIsOrganizationListMenuOpen(false);
+      setOpenOrganizationActionId(null);
     }
+  }, [activeTile?.id]);
+
+  useEffect(() => {
+    if (activeTile?.id !== "organizations") {
+      return;
+    }
+
+    const handleOutsideMouseDown = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) {
+        return;
+      }
+
+      const clickedSortFilterMenu = Boolean(
+        target.closest("[data-org-list-menu]"),
+      );
+      const clickedActionMenu = Boolean(
+        target.closest("[data-org-actions-menu]"),
+      );
+
+      if (!clickedSortFilterMenu) {
+        setIsOrganizationListMenuOpen(false);
+      }
+
+      if (!clickedActionMenu) {
+        setOpenOrganizationActionId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideMouseDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideMouseDown);
+    };
   }, [activeTile?.id]);
 
   const handleOrganizationAction = async (
@@ -404,7 +439,8 @@ export default function DashboardTiles({
 
       <div
         className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${
-          activeTile?.id === "organizations" && isOrganizationListMenuOpen
+          activeTile?.id === "organizations" &&
+          (isOrganizationListMenuOpen || openOrganizationActionId !== null)
             ? "overflow-visible"
             : "overflow-hidden"
         }`}
@@ -526,12 +562,13 @@ export default function DashboardTiles({
                 </div>
               )}
               {activeTile.id === "organizations" && (
-                <div className="relative">
+                <div className="relative" data-org-list-menu>
                   <button
                     type="button"
-                    onClick={() =>
-                      setIsOrganizationListMenuOpen((isOpen) => !isOpen)
-                    }
+                    onClick={() => {
+                      setOpenOrganizationActionId(null);
+                      setIsOrganizationListMenuOpen((isOpen) => !isOpen);
+                    }}
                     aria-expanded={isOrganizationListMenuOpen}
                     className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
                   >
@@ -704,9 +741,14 @@ export default function DashboardTiles({
                             <div className="flex items-start justify-between gap-4">
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-semibold text-slate-900">
+                                  <Link
+                                    href={`/tenants/${tenant.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-semibold text-slate-900 transition hover:text-violet-700"
+                                  >
                                     {tenant.displayName}
-                                  </span>
+                                  </Link>
                                   {!tenant.isActive && (
                                     <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
                                       Inactive
@@ -717,24 +759,42 @@ export default function DashboardTiles({
                                   {tenant.businessNumber}
                                 </p>
                               </div>
-                              <div className="relative flex shrink-0 justify-end">
+                              <div
+                                className="relative flex shrink-0 justify-end"
+                                data-org-actions-menu
+                              >
                                 <button
                                   type="button"
                                   aria-label={`Manage ${tenant.displayName}`}
                                   aria-expanded={isActionMenuOpen}
-                                  onClick={() =>
+                                  onClick={() => {
+                                    setIsOrganizationListMenuOpen(false);
                                     setOpenOrganizationActionId((currentId) =>
                                       currentId === tenant.id
                                         ? null
                                         : tenant.id,
-                                    )
-                                  }
+                                    );
+                                  }}
                                   className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
                                 </button>
                                 {isActionMenuOpen && (
                                   <div className="absolute right-0 top-11 z-10 min-w-44 rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setOpenOrganizationActionId(null);
+                                        router.push(
+                                          `/tenants/${tenant.id}/edit`,
+                                        );
+                                      }}
+                                      disabled={isToggling || isDeleting}
+                                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                      <span>Edit</span>
+                                    </button>
                                     <button
                                       type="button"
                                       onClick={() =>
@@ -792,14 +852,6 @@ export default function DashboardTiles({
                         </div>
                       ))}
                 </div>
-              )}
-              {activeTile.id === "organizations" && (
-                <Link
-                  href="/tenants"
-                  className="inline-block mt-4 text-sm font-medium text-violet-600 hover:text-violet-700 underline"
-                >
-                  View all employers →
-                </Link>
               )}
             </div>
           </div>

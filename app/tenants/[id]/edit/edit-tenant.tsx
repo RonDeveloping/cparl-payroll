@@ -25,6 +25,8 @@ export default function EditTenantForm({
   paramsPromise,
   initialData,
 }: EditTenantFormProps) {
+  const OPEN_TILE_STATE_KEY = "dashboard:open-tile";
+  const PROFILE_EDIT_STATE_KEY = "dashboard:profile-editing";
   const params = use(paramsPromise);
   const router = useRouter();
   const isNew = params.id === "new";
@@ -179,11 +181,15 @@ export default function EditTenantForm({
       if (result.success && result.data?.id) {
         try {
           window.sessionStorage.removeItem(draftStorageKey);
+          if (isNew) {
+            window.sessionStorage.setItem(OPEN_TILE_STATE_KEY, "organizations");
+            window.sessionStorage.removeItem(PROFILE_EDIT_STATE_KEY);
+          }
         } catch {
           // Ignore storage access errors.
         }
         router.refresh();
-        router.push(`/tenants`);
+        router.push(isNew ? `/dashboard` : `/tenants`);
       } else if (!result.success) {
         alert(result.error || "Changes not saved; please check for errors.");
       }

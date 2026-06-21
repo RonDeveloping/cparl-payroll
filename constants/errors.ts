@@ -31,4 +31,8 @@ export const ERRORS = {
   SLUG_TAKEN: "This slug is already taken",
   REAUTH_REQUIRED:
     "For security, please log in again before changing your login email.",
+  BANK_NUMBER_MUST_BE_3_DIGITS: "Bank number must be 3 digits.",
+  INSTITUTION_INVALID_PER_CPA: "Invalid per CPA",
+  TRANSIT_ACCOUNT_INVALID_FORMAT:
+    "Use format 12345-1234567 (5-digit transit, 7-12 digit account).",
 };

@@ -2,6 +2,8 @@
 import { z } from "zod";
 import { isValidCanadianPostalCode } from "../../utils/validators/postalCode";
 import { isValidSINLuhn } from "../../utils/formatters/sin";
+import { isValidInstitutionCode } from "@/constants/financial-institutions";
+import { ERRORS } from "@/constants/errors";
 
 const bankAccountInputSchema = z.object({
   id: z.string().optional(),
@@ -16,7 +18,7 @@ const bankAccountInputSchema = z.object({
     .string()
     .trim()
     .optional()
-    .refine((val) => !val || /^\d{5}[-\s]?\d{5,17}$/.test(val), {
+    .refine((val) => !val || /^\d{5}[-\s]?\d{7,12}$/.test(val), {
       message: "Use format 12345-1234567 (branch-account)",
     }),
   distributionType: z.preprocess(
@@ -297,7 +299,19 @@ export const contactSchema = z
         });
       }
 
-      if (hasBankDetails && !/^\d{5}[-\s]?\d{5,17}$/.test(bankDetails)) {
+      if (
+        hasInstitutionNumber &&
+        /^\d{3}$/.test(institutionNumber) &&
+        !isValidInstitutionCode(institutionNumber)
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["bankAccounts", index, "institutionNumber"],
+          message: ERRORS.INSTITUTION_INVALID_PER_PC_LIST,
+        });
+      }
+
+      if (hasBankDetails && !/^\d{5}[-\s]?\d{7,12}$/.test(bankDetails)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["bankAccounts", index, "bankDetails"],

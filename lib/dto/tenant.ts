@@ -34,6 +34,10 @@ type TenantRow = {
   createdAt: Date;
 };
 
+function normalizeNameForComparison(name: string): string {
+  return name.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
 function coerceTenantNameCached(input: unknown): TenantNameCached {
   if (typeof input !== "object" || input === null) {
     return { coreName: "Employer" };
@@ -54,9 +58,18 @@ function coerceTenantNameCached(input: unknown): TenantNameCached {
 
 export function toTenantSummaryDto(tenant: TenantRow): TenantSummaryDto {
   const nameCached = coerceTenantNameCached(tenant.nameCached);
-  const displayName = `${nameCached.coreName}${
+  const legalName = `${nameCached.coreName}${
     nameCached.kindName ? ` ${nameCached.kindName}` : ""
-  }${nameCached.aliasName ? ` (o/a ${nameCached.aliasName})` : ""}`;
+  }`;
+  const aliasName = nameCached.aliasName?.trim() || "";
+  const normalizedAliasName = normalizeNameForComparison(aliasName);
+  const shouldShowOperatingAs =
+    aliasName.length > 0 &&
+    normalizedAliasName !== normalizeNameForComparison(legalName) &&
+    normalizedAliasName !== normalizeNameForComparison(nameCached.coreName);
+  const displayName = `${legalName}${
+    shouldShowOperatingAs ? ` (o/a ${aliasName})` : ""
+  }`;
   const operatingAsName =
     nameCached.aliasName?.trim() || nameCached.coreName || "Employer";
   const displayBusinessNumber =

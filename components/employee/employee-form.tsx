@@ -19,6 +19,10 @@ import { Clarification } from "@/components/clarification";
 import formatSIN from "@/utils/formatters/sin";
 import { cn } from "@/lib/utils";
 import { CANADA_PROVINCE_TERRITORY_OPTIONS } from "@/constants/canada-provinces";
+import {
+  getInstitutionBadgeClass,
+  getInstitutionShortName,
+} from "@/constants/financial-institutions";
 
 interface EmployeeFormProps {
   errors: FieldErrors<ContactFormInput>;
@@ -31,9 +35,9 @@ const formatInstitutionInput = (value: string) =>
   value.replace(/\D/g, "").slice(0, 3);
 
 const formatTransitAccountInput = (value: string) => {
-  const digits = value.replace(/\D/g, "").slice(0, 22);
+  const digits = value.replace(/\D/g, "").slice(0, 17);
   const branch = digits.slice(0, 5);
-  const account = digits.slice(5, 22);
+  const account = digits.slice(5, 17);
   return [branch, account].filter(Boolean).join("-");
 };
 
@@ -72,32 +76,6 @@ const normalizePercentageOnBlur = (value: string) => {
   return Number.isInteger(clamped)
     ? String(clamped)
     : String(Number(clamped.toFixed(2)));
-};
-
-const BANK_ABBREVIATIONS: Record<string, string> = {
-  "001": "BMO",
-  "002": "Scotia",
-  "003": "RBC",
-  "004": "TD",
-  "006": "National",
-  "010": "CIBC",
-  "016": "HSBC",
-  "030": "CWB",
-  "039": "Laurentian",
-  "614": "Tangerine",
-};
-
-const BANK_BADGE_CLASSES: Record<string, string> = {
-  "001": "text-blue-700",
-  "002": "text-red-700",
-  "003": "text-blue-800",
-  "004": "text-emerald-700",
-  "006": "text-slate-800",
-  "010": "text-red-700",
-  "016": "text-red-700",
-  "030": "text-amber-700",
-  "039": "text-rose-700",
-  "614": "text-orange-700",
 };
 
 const VERIFICATION_BADGE: Record<string, { label: string; className: string }> =
@@ -147,7 +125,7 @@ function BankAccountRow({
   const distributionType = useWatch({
     name: `bankAccounts.${index}.distributionType` as const,
   });
-  const bankLabel = BANK_ABBREVIATIONS[institutionNumber || ""];
+  const bankLabel = getInstitutionShortName(institutionNumber || "");
 
   return (
     <div className="grid w-full grid-cols-[2rem_6rem_12rem_8rem_6rem_6rem] items-start gap-2 px-3 py-2">
@@ -178,7 +156,7 @@ function BankAccountRow({
             <div
               className={cn(
                 "pointer-events-none absolute inset-y-0 right-2 flex items-center text-[8px] font-medium uppercase tracking-[0.04em]",
-                BANK_BADGE_CLASSES[institutionNumber || ""] || "text-slate-600",
+                getInstitutionBadgeClass(institutionNumber || ""),
               )}
             >
               {bankLabel}
@@ -198,7 +176,7 @@ function BankAccountRow({
           placeholder="12345-1234567"
           aria-label="Branch number and account number"
           inputMode="numeric"
-          maxLength={23}
+          maxLength={18}
           onChange={(e) => {
             e.target.value = formatTransitAccountInput(e.target.value);
             bankDetailsRegistration.onChange(e);

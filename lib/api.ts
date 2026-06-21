@@ -82,6 +82,7 @@ export type SavedPapAccount = {
   currency: string;
   isDefault: boolean;
   verificationStatus: string;
+  createdAt: string;
 };
 
 export type PaymentMethodsSummary = {
@@ -133,6 +134,27 @@ export async function createPapAccount(
     throw new Error(payload.error || "PAP account creation failed");
   }
   return payload;
+}
+
+export async function deletePaymentCard(id: string): Promise<void> {
+  const res = await fetch(`/api/payments?id=${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(payload.error || "Failed to delete payment card");
+  }
+}
+
+export async function deletePapAccount(id: string): Promise<void> {
+  const res = await fetch(
+    `/api/payments/pap-accounts?id=${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+  );
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(payload.error || "Failed to delete PAP account");
+  }
 }
 
 export async function getPaymentMethods(): Promise<SavedPaymentCard[]> {
