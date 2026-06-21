@@ -64,13 +64,14 @@ export default async function EditEmployeePage({
       jobPayType: undefined,
       jobStartDate: "",
       jobPayRate: "",
+      jobHoursPerWeek: "",
       jobEndDate: "",
       status: "ACTIVE",
       email: "",
       phone: "",
       street: "",
-      city: "Ottawa",
-      province: "ON",
+      city: "",
+      province: "",
       postalCode: "",
       country: "Canada",
       bankAccounts: ensureMinimumBankRows([
@@ -138,11 +139,15 @@ export default async function EditEmployeePage({
           startDate: true,
           payType: true,
           payRate: true,
+          hoursPerWeek: true,
           endDate: true,
         },
         orderBy: { startDate: "desc" },
       })
     : null;
+  const jobAssignmentHoursPerWeek = (
+    jobAssignment as { hoursPerWeek?: { toString(): string } | null } | null
+  )?.hoursPerWeek;
 
   const bankAccounts = employee?.id
     ? await prisma.bankAccount.findMany({
@@ -207,6 +212,7 @@ export default async function EditEmployeePage({
       ? jobAssignment.startDate.toISOString().slice(0, 10)
       : "",
     jobPayRate: jobAssignment?.payRate?.toString() || "",
+    jobHoursPerWeek: jobAssignmentHoursPerWeek?.toString() || "",
     jobEndDate: jobAssignment?.endDate
       ? jobAssignment.endDate.toISOString().slice(0, 10)
       : "",

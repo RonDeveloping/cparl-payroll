@@ -34,6 +34,36 @@ const bankAccountInputSchema = z.object({
     }),
 });
 
+function parseIsoDateUtc(value: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+
+  const [yearPart, monthPart, dayPart] = value.split("-");
+  const year = Number(yearPart);
+  const month = Number(monthPart);
+  const day = Number(dayPart);
+
+  if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
+    return null;
+  }
+
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+function isValidIsoDate(value: string) {
+  return Boolean(parseIsoDateUtc(value));
+}
+
 function isValidDobRange(value: string) {
   const normalized = value.trim();
   const digits = normalized.replace(/\D/g, "");
@@ -157,14 +187,15 @@ export const contactSchema = z
     hireDate: z
       .string()
       .optional()
-      .refine((val) => !val || /^\d{4}-\d{2}-\d{2}$/.test(val), {
-        message: "Hire date must be in YYYY-MM-DD format",
+      .refine((val) => !val || isValidIsoDate(val), {
+        message: "Hire date must be a valid date in YYYY-MM-DD format",
       }),
     employmentEndDate: z
       .string()
       .optional()
-      .refine((val) => !val || /^\d{4}-\d{2}-\d{2}$/.test(val), {
-        message: "Employment end date must be in YYYY-MM-DD format",
+      .refine((val) => !val || isValidIsoDate(val), {
+        message:
+          "Employment end date must be a valid date in YYYY-MM-DD format",
       }),
     employmentProvinceCode: z
       .string()
@@ -202,8 +233,8 @@ export const contactSchema = z
     jobStartDate: z
       .string()
       .optional()
-      .refine((val) => !val || /^\d{4}-\d{2}-\d{2}$/.test(val), {
-        message: "Job start date must be in YYYY-MM-DD format",
+      .refine((val) => !val || isValidIsoDate(val), {
+        message: "Job start date must be a valid date in YYYY-MM-DD format",
       }),
     jobPayRate: z
       .string()
@@ -212,14 +243,22 @@ export const contactSchema = z
       .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
         message: "Pay rate must be a valid amount with up to 2 decimals",
       }),
+    jobHoursPerWeek: z
+      .string()
+      .trim()
+      .optional()
+      .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
+        message:
+          "Hours per week must be a valid amount with up to 2 decimals",
+      }),
     jobEndDate: z
       .string()
       .optional()
-      .refine((val) => !val || /^\d{4}-\d{2}-\d{2}$/.test(val), {
-        message: "Job end date must be in YYYY-MM-DD format",
+      .refine((val) => !val || isValidIsoDate(val), {
+        message: "Job end date must be a valid date in YYYY-MM-DD format",
       }),
     status: z.enum(["ACTIVE", "TERMINATED", "ON_LEAVE"]).optional(),
-    email: z.string().email("Invalid email address"),
+    email: z.string().trim().email("Invalid email address"),
     phone: z
       .string()
       .optional()
@@ -236,31 +275,48 @@ export const contactSchema = z
     province: z.string().optional(),
     country: z.string().optional(),
     postalCode: z
-      .string()
-      // .nonempty("Postal code cannot be empty")
-      .transform((val) => val.trim().toUpperCase()) //trim whitespace
-      .refine(isValidCanadianPostalCode, {
-        message: "Enter a valid Canadian postal code (e.g., K1A 0B1)",
-      })
+      .preprocess(
+        (val) => {
+          if (typeof val !== "string") {
+            return val;
+          }
+
+          const normalized = val.trim().toUpperCase();
+          return normalized === "" ? undefined : normalized;
+        },
+        z
+          .string()
+          .refine(isValidCanadianPostalCode, {
+            message: "Enter a valid Canadian postal code (e.g., K1A 0B1)",
+          })
+          .optional(),
+      )
       .optional(),
     bankAccounts: z.array(bankAccountInputSchema).default([]),
   })
   .superRefine((val, ctx) => {
-    if (val.employmentEndDate && !val.terminationReason) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["terminationReason"],
-        message:
-          "Termination reason is required when employment end date is set",
-      });
-    }
+    const hireDate = val.hireDate ? parseIsoDateUtc(val.hireDate) : null;
+    const employmentEndDate = val.employmentEndDate
+      ? parseIsoDateUtc(val.employmentEndDate)
+      : null;
+    const jobStartDate = val.jobStartDate
+      ? parseIsoDateUtc(val.jobStartDate)
+      : null;
+    const jobEndDate = val.jobEndDate ? parseIsoDateUtc(val.jobEndDate) : null;
 
-    if (val.terminationReason && !val.employmentEndDate) {
+    if (hireDate && employmentEndDate && employmentEndDate < hireDate) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["employmentEndDate"],
-        message:
-          "Employment end date is required when termination reason is set",
+        message: "Employment end date must be on or after hire date",
+      });
+    }
+
+    if (jobStartDate && jobEndDate && jobEndDate < jobStartDate) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["jobEndDate"],
+        message: "Job end date must be on or after job start date",
       });
     }
 
@@ -307,7 +363,7 @@ export const contactSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["bankAccounts", index, "institutionNumber"],
-          message: ERRORS.INSTITUTION_INVALID_PER_PC_LIST,
+          message: ERRORS.INSTITUTION_INVALID_PER_CPA,
         });
       }
 

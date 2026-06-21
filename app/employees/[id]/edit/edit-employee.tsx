@@ -42,7 +42,7 @@ export default function EditEmployeeForm({
     resolver: zodResolver(contactSchema) as never,
     values: initialData,
     shouldFocusError: false,
-    mode: "onChange",
+    mode: "onBlur",
   });
 
   const {

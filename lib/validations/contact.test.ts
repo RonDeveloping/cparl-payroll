@@ -64,4 +64,51 @@ describe("contactSchema postalCode", () => {
       expect(messages).toContain("Last name cannot contain numbers");
     }
   });
+
+  it("accepts empty postal code", () => {
+    const result = contactSchema.safeParse({
+      givenName: "John",
+      familyName: "Doe",
+      city: "Ottawa",
+      province: "ON",
+      country: "Canada",
+      email: "john@example.com",
+      postalCode: "",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects impossible hire date", () => {
+    const result = contactSchema.safeParse({
+      givenName: "John",
+      familyName: "Doe",
+      email: "john@example.com",
+      hireDate: "2026-02-30",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const messages = result.error.issues.map((issue) => issue.message);
+      expect(messages).toContain(
+        "Hire date must be a valid date in YYYY-MM-DD format",
+      );
+    }
+  });
+
+  it("requires employment end date to be on or after hire date", () => {
+    const result = contactSchema.safeParse({
+      givenName: "John",
+      familyName: "Doe",
+      email: "john@example.com",
+      hireDate: "2026-05-20",
+      employmentEndDate: "2026-05-01",
+      terminationReason: "ROE_K_OTHER",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const messages = result.error.issues.map((issue) => issue.message);
+      expect(messages).toContain(
+        "Employment end date must be on or after hire date",
+      );
+    }
+  });
 });

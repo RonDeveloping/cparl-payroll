@@ -89,13 +89,24 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
     "U"
   ).toUpperCase();
   const isPayrollDashboard = pathname?.startsWith("/payroll");
+  const isTenantsRoute = pathname?.startsWith("/tenants");
+  const isDashboardRoute = pathname?.startsWith("/dashboard");
   const createTitle = isPayrollDashboard ? "Create Employee" : "Create Tenant";
   const isAuthenticated = Boolean(user);
   const selectedTenantId = searchParams.get("tenantId")?.trim() || "";
+  const tenantIdFromPathMatch = pathname?.match(/^\/tenants\/([^/]+)/);
+  const tenantIdFromPath =
+    tenantIdFromPathMatch && tenantIdFromPathMatch[1] !== "new"
+      ? tenantIdFromPathMatch[1]
+      : "";
+  const effectiveTenantId = selectedTenantId || tenantIdFromPath;
   const isInEmployerPayrollOverview =
     isPayrollDashboard && Boolean(selectedTenantId);
-  const canCreateEmployer = isAuthenticated && !isInEmployerPayrollOverview;
-  const canCreateEmployee = isAuthenticated && Boolean(selectedTenantId);
+  const canCreateEmployer =
+    isAuthenticated && !isInEmployerPayrollOverview && !isTenantsRoute;
+  const canCreateEmployee =
+    isAuthenticated && (isTenantsRoute || Boolean(effectiveTenantId));
+  const canImportEmployees = isAuthenticated && !isDashboardRoute;
   const isCreatingTenant = pathname?.startsWith("/tenants/new");
   const homeHref = isCreatingTenant
     ? "/payments"
@@ -224,9 +235,10 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
                   disabled={!canCreateEmployee}
                   onClick={() => {
                     if (!canCreateEmployee) return;
-                    router.push(
-                      `/employees/new/edit?tenantId=${selectedTenantId}`,
-                    );
+                    const employeeCreateHref = effectiveTenantId
+                      ? `/employees/new/edit?tenantId=${effectiveTenantId}`
+                      : "/employees/new/edit";
+                    router.push(employeeCreateHref);
                     setIsCreateMenuOpen(false);
                   }}
                 >
@@ -244,8 +256,14 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
                 </button>
                 <button
                   type="button"
-                  className={navbarStyles.settingsMenuItem}
+                  className={cn(
+                    navbarStyles.settingsMenuItem,
+                    !canImportEmployees &&
+                      "cursor-not-allowed text-stone-400 hover:bg-transparent",
+                  )}
+                  disabled={!canImportEmployees}
                   onClick={() => {
+                    if (!canImportEmployees) return;
                     router.push("/employees/import");
                     setIsCreateMenuOpen(false);
                   }}

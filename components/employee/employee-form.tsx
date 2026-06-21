@@ -1,8 +1,10 @@
 "use client";
 // components/employee/employee-form.tsx
 
+import { useState } from "react";
 import {
   FieldErrors,
+  Path,
   UseFormGetValues,
   UseFormRegister,
   UseFormSetValue,
@@ -14,11 +16,21 @@ import FormSection from "@/components/form/form-section";
 import InputWithChanges from "@/components/form/input-with-changes";
 import CustomDatePickerWithChanges from "@/components/form/custom-date-picker-with-changes";
 import SelectWithChanges from "@/components/form/select-with-changes";
+import SectionDisclosure from "@/components/section-disclosure";
 import { FormGrid } from "@/components/form/form-grid";
 import { Clarification } from "@/components/clarification";
 import formatSIN from "@/utils/formatters/sin";
+import formatPostalCode from "@/utils/formatters/postalCode";
+import {
+  MailingAddressSection,
+  type MailingAddressField,
+} from "../shared/mailing-address-section";
 import { cn } from "@/lib/utils";
 import { CANADA_PROVINCE_TERRITORY_OPTIONS } from "@/constants/canada-provinces";
+import {
+  getPostalCodeProgress,
+  type PostalCodeProgressTone,
+} from "@/utils/validators/postalCodeProgress";
 import {
   getInstitutionBadgeClass,
   getInstitutionShortName,
@@ -30,6 +42,30 @@ interface EmployeeFormProps {
 }
 
 const MAX_BANK_ACCOUNTS = 10;
+
+const EMPLOYEE_ADDRESS_FIELDS: MailingAddressField<ContactFormInput>[] = [
+  {
+    label: "Street",
+    name: "street",
+    rules: {},
+  },
+  {
+    label: "Postal code",
+    name: "postalCode",
+    rules: {},
+    formatOnChange: formatPostalCode,
+  },
+  {
+    label: "City",
+    name: "city",
+    rules: {},
+  },
+  {
+    label: "Province",
+    name: "province",
+    rules: {},
+  },
+];
 
 const formatInstitutionInput = (value: string) =>
   value.replace(/\D/g, "").slice(0, 3);
@@ -285,8 +321,62 @@ export function EmployeeForm({
   bankAccountStatuses = [],
 }: EmployeeFormProps) {
   const { register, setValue, getValues } = useFormContext<ContactFormInput>();
+  const [postalProgress, setPostalProgress] = useState<{
+    text: string;
+    tone: PostalCodeProgressTone;
+  }>({
+    text: "",
+    tone: "neutral",
+  });
+  const [showOptionalIdentification, setShowOptionalIdentification] =
+    useState(false);
+  const [showOptionalEmployment, setShowOptionalEmployment] = useState(false);
   const bankAccounts = (useWatch({ name: "bankAccounts" as const }) ||
     []) as ContactFormInput["bankAccounts"];
+  const [
+    employeeNumberValue,
+    employmentEndDateValue,
+    terminationReasonValue,
+    employmentTitleValue,
+    employmentDepartmentValue,
+    jobStartDateValue,
+    jobEndDateValue,
+    jobHoursPerWeekValue,
+  ] = useWatch({
+    name: [
+      "employeeNumber",
+      "employmentEndDate",
+      "terminationReason",
+      "employmentTitle",
+      "employmentDepartment",
+      "jobStartDate",
+      "jobEndDate",
+      "jobHoursPerWeek",
+    ],
+  });
+  const optionalIdentificationExpanded =
+    showOptionalIdentification ||
+    Boolean(errors.sin?.message || errors.dob?.message);
+  const optionalEmploymentExpanded =
+    showOptionalEmployment ||
+    Boolean(
+      errors.employeeNumber?.message ||
+      errors.employmentEndDate?.message ||
+      errors.terminationReason?.message ||
+      errors.employmentTitle?.message ||
+      errors.employmentDepartment?.message ||
+      errors.jobStartDate?.message ||
+      errors.jobEndDate?.message ||
+      errors.jobHoursPerWeek?.message ||
+      String(employeeNumberValue || "").trim() ||
+      String(employmentEndDateValue || "").trim() ||
+      String(terminationReasonValue || "").trim() ||
+      String(employmentTitleValue || "").trim() ||
+      String(employmentDepartmentValue || "").trim() ||
+      String(jobStartDateValue || "").trim() ||
+      String(jobEndDateValue || "").trim() ||
+      String(jobHoursPerWeekValue || "").trim(),
+    );
 
   const addBankAccountRow = () => {
     const currentBankAccounts = getValues("bankAccounts") || [];
@@ -314,6 +404,14 @@ export function EmployeeForm({
   minDobDate.setFullYear(today.getFullYear() - 150);
   const minDob = minDobDate.toISOString().slice(0, 10);
 
+  const handlePostalCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPostalProgress(getPostalCodeProgress(e.target.value || ""));
+  };
+
+  const handlePostalCodeBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    setPostalProgress(getPostalCodeProgress(e.target.value || ""));
+  };
+
   return (
     <>
       <FormSection title="Identification">
@@ -330,41 +428,95 @@ export function EmployeeForm({
             rules={{ required: "Family name is required" }}
             error={errors.familyName?.message}
           />
-          <InputWithChanges<ContactFormInput>
-            label={
-              <Clarification
-                term="SIN"
-                description="Social Insurance Number (9 digits, formatted as XXX-XXX-XXX)."
-              />
-            }
-            name="sin"
-            type="text"
-            placeholder="123-456-789"
-            maxLength={11}
-            formatOnChange={formatSIN}
-            rules={{}}
-            error={errors.sin?.message}
-          />
-          <CustomDatePickerWithChanges<ContactFormInput>
-            label={
-              <Clarification term="Date of birth" description="YYYY-MM-DD" />
-            }
-            name="dob"
-            minDate={minDob}
-            maxDate={maxDob}
-            error={errors.dob?.message}
-          />
         </FormGrid>
+
+        <SectionDisclosure
+          label="Optional"
+          expanded={optionalIdentificationExpanded}
+          onToggle={() => setShowOptionalIdentification((v) => !v)}
+        />
+
+        <div
+          inert={!optionalIdentificationExpanded}
+          aria-hidden={!optionalIdentificationExpanded}
+          className={`overflow-hidden transition-[max-height,opacity,padding] duration-300 ease-in-out ${
+            optionalIdentificationExpanded
+              ? "max-h-[240px] p-1 opacity-100"
+              : "max-h-0 p-0 opacity-0"
+          }`}
+        >
+          <FormGrid>
+            <InputWithChanges<ContactFormInput>
+              label={
+                <Clarification
+                  term="SIN"
+                  description="Social Insurance Number (9 digits, formatted as XXX-XXX-XXX)."
+                />
+              }
+              name="sin"
+              type="text"
+              placeholder="123-456-789"
+              maxLength={11}
+              formatOnChange={formatSIN}
+              rules={{}}
+              error={errors.sin?.message}
+            />
+            <CustomDatePickerWithChanges<ContactFormInput>
+              label={
+                <Clarification term="Date of birth" description="YYYY-MM-DD" />
+              }
+              name="dob"
+              minDate={minDob}
+              maxDate={maxDob}
+              error={errors.dob?.message}
+            />
+          </FormGrid>
+        </div>
       </FormSection>
+
+      <MailingAddressSection<ContactFormInput>
+        fields={EMPLOYEE_ADDRESS_FIELDS}
+        errors={errors}
+        getFieldError={(fieldName: Path<ContactFormInput>) => {
+          switch (fieldName) {
+            case "street":
+              return errors.street?.message;
+            case "postalCode":
+              return errors.postalCode?.message;
+            case "city":
+              return errors.city?.message;
+            case "province":
+              return errors.province?.message;
+            default:
+              return undefined;
+          }
+        }}
+        isProvinceField={(fieldName: Path<ContactFormInput>) =>
+          fieldName === "province"
+        }
+        isPostalCodeField={(fieldName: Path<ContactFormInput>) =>
+          fieldName === "postalCode"
+        }
+        onPostalCodeChange={handlePostalCodeChange}
+        onPostalCodeBlur={handlePostalCodeBlur}
+        postalProgress={postalProgress}
+        postalLookup={{
+          postalCodeField: "postalCode",
+          cityField: "city",
+          provinceField: "province",
+          getValue: (fieldName) => getValues(fieldName),
+          setValue: (fieldName, value) => {
+            setValue(fieldName, value, {
+              shouldDirty: true,
+              shouldTouch: true,
+              shouldValidate: true,
+            });
+          },
+        }}
+      />
 
       <FormSection title="Employment">
         <FormGrid>
-          <InputWithChanges<ContactFormInput>
-            label="Employee number"
-            name="employeeNumber"
-            rules={{}}
-            error={errors.employeeNumber?.message}
-          />
           <SelectWithChanges<ContactFormInput>
             label="Employment status"
             name="status"
@@ -384,63 +536,6 @@ export function EmployeeForm({
             reversePositiveYearJumps={true}
             error={errors.hireDate?.message}
           />
-          <CustomDatePickerWithChanges<ContactFormInput>
-            label={
-              <Clarification
-                term="Employment end date"
-                description="YYYY-MM-DD"
-              />
-            }
-            name="employmentEndDate"
-            maxDate={maxDob}
-            yearJumps={[6, 4, 2]}
-            defaultYearOffset={0}
-            reversePositiveYearJumps={true}
-            error={errors.employmentEndDate?.message}
-          />
-          <SelectWithChanges<ContactFormInput>
-            label="Termination reason (ROE)"
-            name="terminationReason"
-            error={errors.terminationReason?.message}
-            options={[
-              { label: "Not set", value: "" },
-              {
-                label: "A - Shortage of work (layoff)",
-                value: "ROE_A_SHORTAGE_OF_WORK",
-              },
-              {
-                label: "B - Strike or lockout",
-                value: "ROE_B_STRIKE_OR_LOCKOUT",
-              },
-              {
-                label: "C - Return to school",
-                value: "ROE_C_RETURN_TO_SCHOOL",
-              },
-              {
-                label: "D - Illness or injury",
-                value: "ROE_D_ILLNESS_OR_INJURY",
-              },
-              { label: "E - Quit", value: "ROE_E_QUIT" },
-              { label: "F - Maternity", value: "ROE_F_MATERNITY" },
-              { label: "G - Retirement", value: "ROE_G_RETIREMENT" },
-              { label: "H - Work sharing", value: "ROE_H_WORK_SHARING" },
-              {
-                label: "J - Apprentice training",
-                value: "ROE_J_APPRENTICE_TRAINING",
-              },
-              { label: "K - Other", value: "ROE_K_OTHER" },
-              { label: "M - Dismissal", value: "ROE_M_DISMISSAL" },
-              {
-                label: "N - Leave of absence",
-                value: "ROE_N_LEAVE_OF_ABSENCE",
-              },
-              { label: "P - Parental", value: "ROE_P_PARENTAL" },
-              {
-                label: "Z - Compassionate care / family caregiver",
-                value: "ROE_Z_COMPASSIONATE_CARE_OR_FAMILY_CAREGIVER",
-              },
-            ]}
-          />
           <SelectWithChanges<ContactFormInput>
             label={
               <Clarification
@@ -451,29 +546,6 @@ export function EmployeeForm({
             name="employmentProvinceCode"
             options={[...CANADA_PROVINCE_TERRITORY_OPTIONS]}
             error={errors.employmentProvinceCode?.message}
-          />
-          <InputWithChanges<ContactFormInput>
-            label="Job title"
-            name="employmentTitle"
-            rules={{}}
-            error={errors.employmentTitle?.message}
-          />
-          <InputWithChanges<ContactFormInput>
-            label="Department"
-            name="employmentDepartment"
-            rules={{}}
-            error={errors.employmentDepartment?.message}
-          />
-          <CustomDatePickerWithChanges<ContactFormInput>
-            label={
-              <Clarification term="Job start date" description="YYYY-MM-DD" />
-            }
-            name="jobStartDate"
-            maxDate={maxDob}
-            yearJumps={[6, 4, 2]}
-            defaultYearOffset={0}
-            reversePositiveYearJumps={true}
-            error={errors.jobStartDate?.message}
           />
           <SelectWithChanges<ContactFormInput>
             label="Pay type"
@@ -492,32 +564,147 @@ export function EmployeeForm({
             rules={{}}
             error={errors.jobPayRate?.message}
           />
-          <CustomDatePickerWithChanges<ContactFormInput>
-            label={
-              <Clarification
-                term="Job end date"
-                description="YYYY-MM-DD (leave empty if ongoing)"
-              />
-            }
-            name="jobEndDate"
-            maxDate={maxDob}
-            yearJumps={[6, 4, 2]}
-            defaultYearOffset={0}
-            reversePositiveYearJumps={true}
-            error={errors.jobEndDate?.message}
+          <InputWithChanges<ContactFormInput>
+            label="Hours per week"
+            name="jobHoursPerWeek"
+            placeholder="37.50"
+            rules={{}}
+            error={errors.jobHoursPerWeek?.message}
           />
         </FormGrid>
+
+        <SectionDisclosure
+          label="Optional"
+          expanded={optionalEmploymentExpanded}
+          onToggle={() => setShowOptionalEmployment((v) => !v)}
+        />
+
+        <div
+          inert={!optionalEmploymentExpanded}
+          aria-hidden={!optionalEmploymentExpanded}
+          className={`overflow-hidden transition-[max-height,opacity,padding] duration-300 ease-in-out ${
+            optionalEmploymentExpanded
+              ? "max-h-[700px] p-1 opacity-100"
+              : "max-h-0 p-0 opacity-0"
+          }`}
+        >
+          <FormGrid>
+            <InputWithChanges<ContactFormInput>
+              label="Employee number"
+              name="employeeNumber"
+              rules={{}}
+              error={errors.employeeNumber?.message}
+            />
+            <CustomDatePickerWithChanges<ContactFormInput>
+              label={
+                <Clarification
+                  term="Employment end date"
+                  description="YYYY-MM-DD"
+                />
+              }
+              name="employmentEndDate"
+              maxDate={maxDob}
+              yearJumps={[6, 4, 2]}
+              defaultYearOffset={0}
+              reversePositiveYearJumps={true}
+              error={errors.employmentEndDate?.message}
+            />
+            <SelectWithChanges<ContactFormInput>
+              label="Termination reason (ROE)"
+              name="terminationReason"
+              error={errors.terminationReason?.message}
+              options={[
+                { label: "Not set", value: "" },
+                {
+                  label: "A - Shortage of work (layoff)",
+                  value: "ROE_A_SHORTAGE_OF_WORK",
+                },
+                {
+                  label: "B - Strike or lockout",
+                  value: "ROE_B_STRIKE_OR_LOCKOUT",
+                },
+                {
+                  label: "C - Return to school",
+                  value: "ROE_C_RETURN_TO_SCHOOL",
+                },
+                {
+                  label: "D - Illness or injury",
+                  value: "ROE_D_ILLNESS_OR_INJURY",
+                },
+                { label: "E - Quit", value: "ROE_E_QUIT" },
+                { label: "F - Maternity", value: "ROE_F_MATERNITY" },
+                { label: "G - Retirement", value: "ROE_G_RETIREMENT" },
+                { label: "H - Work sharing", value: "ROE_H_WORK_SHARING" },
+                {
+                  label: "J - Apprentice training",
+                  value: "ROE_J_APPRENTICE_TRAINING",
+                },
+                { label: "K - Other", value: "ROE_K_OTHER" },
+                { label: "M - Dismissal", value: "ROE_M_DISMISSAL" },
+                {
+                  label: "N - Leave of absence",
+                  value: "ROE_N_LEAVE_OF_ABSENCE",
+                },
+                { label: "P - Parental", value: "ROE_P_PARENTAL" },
+                {
+                  label: "Z - Compassionate care / family caregiver",
+                  value: "ROE_Z_COMPASSIONATE_CARE_OR_FAMILY_CAREGIVER",
+                },
+              ]}
+            />
+            <InputWithChanges<ContactFormInput>
+              label="Job title"
+              name="employmentTitle"
+              rules={{}}
+              error={errors.employmentTitle?.message}
+            />
+            <InputWithChanges<ContactFormInput>
+              label="Department"
+              name="employmentDepartment"
+              rules={{}}
+              error={errors.employmentDepartment?.message}
+            />
+            <CustomDatePickerWithChanges<ContactFormInput>
+              label={
+                <Clarification
+                  term="Job start date"
+                  description="YYYY-MM-DD (defaults to hire date if empty)"
+                />
+              }
+              name="jobStartDate"
+              maxDate={maxDob}
+              yearJumps={[6, 4, 2]}
+              defaultYearOffset={0}
+              reversePositiveYearJumps={true}
+              error={errors.jobStartDate?.message}
+            />
+            <CustomDatePickerWithChanges<ContactFormInput>
+              label={
+                <Clarification
+                  term="Job end date"
+                  description="YYYY-MM-DD (defaults to employment end date if empty)"
+                />
+              }
+              name="jobEndDate"
+              maxDate={maxDob}
+              yearJumps={[6, 4, 2]}
+              defaultYearOffset={0}
+              reversePositiveYearJumps={true}
+              error={errors.jobEndDate?.message}
+            />
+          </FormGrid>
+        </div>
       </FormSection>
 
-      <FormSection title="Bank Accounts For Direct Deposit">
+      <FormSection title="Bank accounts for direct deposit">
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
           <div className="grid w-full grid-cols-[2rem_6rem_12rem_8rem_6rem_6rem] gap-2 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-600">
-            <div className="text-center">Seq.</div>
-            <div className="text-center">Bank#</div>
-            <div className="text-center">Transit#-Account#</div>
-            <div className="text-center">Split By</div>
-            <div className="text-center">Amount / %</div>
-            <div className="pl-1 text-left">Status</div>
+            <div className="text-center normal-case">Seq.</div>
+            <div className="text-center normal-case">Bank#</div>
+            <div className="text-center normal-case">Transit#-Account#</div>
+            <div className="text-center normal-case">Split by</div>
+            <div className="text-center normal-case">Amount / %</div>
+            <div className="pl-1 text-left normal-case">Status</div>
           </div>
           <div className="divide-y divide-slate-100">
             {bankAccounts.map(
@@ -564,41 +751,6 @@ export function EmployeeForm({
             type="tel"
             rules={{}}
             error={errors.phone?.message}
-          />
-        </FormGrid>
-      </FormSection>
-
-      <FormSection title="Address">
-        <FormGrid>
-          <InputWithChanges<ContactFormInput>
-            label="Street"
-            name="street"
-            rules={{}}
-            error={errors.street?.message}
-          />
-          <InputWithChanges<ContactFormInput>
-            label="City"
-            name="city"
-            rules={{}}
-            error={errors.city?.message}
-          />
-          <SelectWithChanges<ContactFormInput>
-            label="Province"
-            name="province"
-            options={[...CANADA_PROVINCE_TERRITORY_OPTIONS]}
-            error={errors.province?.message}
-          />
-          <InputWithChanges<ContactFormInput>
-            label="Postal code"
-            name="postalCode"
-            rules={{}}
-            error={errors.postalCode?.message}
-          />
-          <InputWithChanges<ContactFormInput>
-            label="Country"
-            name="country"
-            rules={{}}
-            error={errors.country?.message}
           />
         </FormGrid>
       </FormSection>

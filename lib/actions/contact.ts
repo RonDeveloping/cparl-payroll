@@ -5,21 +5,8 @@ import { ContactFormInput } from "@/lib/validations/contact-schema";
 import prisma from "@/db/prismaDrizzle";
 import { safe } from "@/utils/validators/safe";
 import { upsertAddress } from "@/lib/utils/address-hash";
+import { upsertEmployeePEAInternal } from "@/db/internal/employeeHelper";
 import { DistributionType } from "@prisma/client";
-
-function parseIsoDate(value: string): Date | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
-  const [year, month, day] = value.split("-").map(Number);
-  const parsed = new Date(year, month - 1, day);
-  if (
-    parsed.getFullYear() !== year ||
-    parsed.getMonth() !== month - 1 ||
-    parsed.getDate() !== day
-  ) {
-    return null;
-  }
-  return parsed;
-}
 
 function parseBankDetails(
   institutionNumberValue: string,
@@ -34,7 +21,7 @@ function parseBankDetails(
   if (!institution || !transitAccount) return null;
 
   const institutionMatch = institution.match(/^(\d{3})$/);
-  const transitAccountMatch = transitAccount.match(/^(\d{5})[-\s]?(\d{7,12})$/);
+  const transitAccountMatch = transitAccount.match(/^\d{5}[-\s]?(\d{7,12})$/);
   if (!institutionMatch || !transitAccountMatch) return null;
 
   return {
@@ -58,11 +45,9 @@ export async function upsertContactPEA(
 
   return await safe(
     prisma.$transaction(async (tx) => {
-      // 1. CONTACT UPSERT
       const contact = await tx.contact.upsert({
-        where: { id: id === "new" || !id ? "placeholder-id" : id }, //"placeholder-id won't match a CUID for sure, which forces Prisma into the create block"
+        where: { id: id === "new" || !id ? "placeholder-id" : id },
         update: {
-          //if id matched in .upsert instruction
           coreName: data.givenName,
           kindName: data.familyName,
           aliasName: data.nickName,
@@ -71,7 +56,6 @@ export async function upsertContactPEA(
           source: "USER",
         },
         create: {
-          //if id missed in .upsert instruction
           coreName: data.givenName,
           kindName: data.familyName,
           aliasName: data.nickName,
@@ -81,7 +65,6 @@ export async function upsertContactPEA(
         },
       });
 
-      // 2. PHONE UPSERT (@@unique([contactId, phone]))
       await tx.phone.upsert({
         where: {
           contactId_number: { contactId: contact.id, number: phoneNumber },
@@ -90,7 +73,6 @@ export async function upsertContactPEA(
         create: { contactId: contact.id, number: phoneNumber, isPrimary: true },
       });
 
-      // 3. EMAIL UPSERT (@@unique([contactId, email]))
       await tx.email.upsert({
         where: {
           contactId_emailAddress: {
@@ -106,7 +88,6 @@ export async function upsertContactPEA(
         },
       });
 
-      // 4. ADDRESS UPSERT (using reusable utility)
       await upsertAddress(tx, contact.id, {
         street: data.street,
         city: data.city,
@@ -115,37 +96,7 @@ export async function upsertContactPEA(
         country: data.country,
       });
 
-      // 5. EMPLOYEE UPSERT (tenant-scoped) when tenant context is provided
       if (tenantId) {
-        const sinDigits = (data.sin ?? "").replace(/\D/g, "");
-        const hasSin = sinDigits.length > 0;
-        const parsedDob = parseIsoDate(data.dob ?? "");
-        const parsedHireDate = parseIsoDate(data.hireDate ?? "");
-        const parsedEmploymentEndDate = parseIsoDate(
-          data.employmentEndDate ?? "",
-        );
-        const terminationReason = parsedEmploymentEndDate
-          ? (data.terminationReason ?? null)
-          : null;
-        const now = new Date();
-        const fallbackDob = new Date(
-          now.getFullYear() - 18,
-          now.getMonth(),
-          now.getDate(),
-        );
-        const employmentProvinceCode = (
-          data.employmentProvinceCode ||
-          data.province ||
-          "ON"
-        )
-          .trim()
-          .toUpperCase();
-        const employmentTitle = data.employmentTitle?.trim() || null;
-        const employmentDepartment = data.employmentDepartment?.trim() || null;
-        const jobPayRate = data.jobPayRate?.trim() || null;
-        const parsedJobStartDate = parseIsoDate(data.jobStartDate ?? "");
-        const parsedJobEndDate = parseIsoDate(data.jobEndDate ?? "");
-        const hasJobAssignmentData = Boolean(data.jobPayType && jobPayRate);
         const bankLabels = ["Main", "Secondary", "Auxiliary"] as const;
         const sanitizedBankAccounts = (data.bankAccounts || [])
           .map((account, index) => {
@@ -173,152 +124,12 @@ export async function upsertContactPEA(
           )
           .sort((a, b) => a.priority - b.priority);
 
-        const nameCached = {
-          coreName: data.givenName,
-          kindName: data.familyName,
-          middleName: data.middleName ?? null,
-          prefix: data.prefix ?? null,
-          suffix: data.suffix ?? null,
-          aliasName: data.nickName ?? null,
-          displayName: data.displayName ?? null,
-        };
-
-        const addressCached = {
-          street: data.street ?? "",
-          city: data.city ?? "",
-          province: data.province ?? "",
-          postalCode: data.postalCode ?? "",
-          country: data.country ?? "",
-        };
-
-        const employee = await tx.employee.upsert({
-          where: {
-            tenantId_contactId: {
-              tenantId,
-              contactId: contact.id,
-            },
-          },
-          update: {
-            employeeNumber: data.employeeNumber?.trim() || null,
-            nameCached,
-            addressCached,
-            emailCached: emailClean || null,
-            ...(parsedHireDate ? { hireDate: parsedHireDate } : {}),
-            ...(data.status
-              ? { status: data.status }
-              : { status: "ACTIVE" as const }),
-            ...(phoneNumber
-              ? {
-                  phoneCached: [
-                    {
-                      number: phoneNumber,
-                      type: "MOBILE",
-                      isPrimary: true,
-                    },
-                  ],
-                }
-              : {}),
-            ...(parsedDob ? { dateOfBirth: parsedDob } : {}),
-            ...(hasSin
-              ? {
-                  taxIdEncrypted: Buffer.from(sinDigits, "utf-8"),
-                  taxIdLast4: sinDigits.slice(-4),
-                }
-              : {}),
-          },
-          create: {
-            tenantId,
-            contactId: contact.id,
-            employeeNumber: data.employeeNumber?.trim() || null,
-            taxIdEncrypted: Buffer.from(hasSin ? sinDigits : "", "utf-8"),
-            taxIdLast4: hasSin ? sinDigits.slice(-4) : "0000",
-            dateOfBirth: parsedDob ?? fallbackDob,
-            hireDate: parsedHireDate ?? now,
-            status: data.status || "ACTIVE",
-            nameCached,
-            addressCached,
-            emailCached: emailClean || null,
-            ...(phoneNumber
-              ? {
-                  phoneCached: [
-                    {
-                      number: phoneNumber,
-                      type: "MOBILE",
-                      isPrimary: true,
-                    },
-                  ],
-                }
-              : {}),
-          },
-        });
-
-        const latestEmployment = await tx.employment.findFirst({
-          where: {
-            tenantId,
-            employeeId: employee.id,
-          },
-          orderBy: { startDate: "desc" },
-        });
-
-        const employment = latestEmployment
-          ? await tx.employment.update({
-              where: { id: latestEmployment.id },
-              data: {
-                title: employmentTitle,
-                department: employmentDepartment,
-                provinceCode: employmentProvinceCode,
-                ...(parsedHireDate ? { startDate: parsedHireDate } : {}),
-                endDate: parsedEmploymentEndDate ?? null,
-                terminationReason,
-              },
-            })
-          : await tx.employment.create({
-              data: {
-                tenantId,
-                employeeId: employee.id,
-                title: employmentTitle,
-                department: employmentDepartment,
-                startDate: parsedHireDate ?? now,
-                endDate: parsedEmploymentEndDate ?? null,
-                terminationReason,
-                provinceCode: employmentProvinceCode,
-                countryCode: "CA",
-              },
-            });
-
-        if (hasJobAssignmentData && jobPayRate) {
-          const latestJobAssignment = await tx.jobAssignment.findFirst({
-            where: { employmentId: employment.id },
-            orderBy: { startDate: "desc" },
-          });
-
-          if (latestJobAssignment) {
-            await tx.jobAssignment.update({
-              where: { id: latestJobAssignment.id },
-              data: {
-                ...(parsedJobStartDate
-                  ? { startDate: parsedJobStartDate }
-                  : parsedHireDate
-                    ? { startDate: parsedHireDate }
-                    : {}),
-                payType: data.jobPayType!,
-                payRate: jobPayRate,
-                endDate: parsedJobEndDate ?? null,
-              },
-            });
-          } else {
-            await tx.jobAssignment.create({
-              data: {
-                employmentId: employment.id,
-                startDate:
-                  parsedJobStartDate ?? parsedHireDate ?? employment.startDate,
-                payType: data.jobPayType!,
-                payRate: jobPayRate,
-                endDate: parsedJobEndDate ?? null,
-              },
-            });
-          }
-        }
+        const employee = await upsertEmployeePEAInternal(
+          data,
+          contact.id,
+          tenantId,
+          tx,
+        );
 
         await tx.bankAccount.deleteMany({ where: { employeeId: employee.id } });
 

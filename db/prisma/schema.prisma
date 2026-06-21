@@ -611,6 +611,7 @@ model JobAssignment {
   employmentId String    @map("employment_id")
   startDate    DateTime  @map("start_date")
   endDate      DateTime? @map("end_date")
+  hoursPerWeek Decimal?  @db.Decimal(6, 2) @map("hours_per_week")
   payRate      Decimal   @db.Decimal(10, 2) @map("pay_rate")
   payType      PayType   @map("pay_type")
 

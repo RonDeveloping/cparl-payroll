@@ -10,7 +10,6 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { tenantSchema, TenantFormInput } from "@/lib/validations/tenant-schema";
 import { upsertTenant } from "@/lib/actions/tenant";
 import { getFieldChanges, ChangeEntry } from "@/utils/formChanges";
-import { getPostalLocationSuggestion } from "@/utils/validators/postalCodeLookup";
 
 import FormLayout from "@/components/form/form-layout";
 import { SmartFormProvider } from "@/components/form/form-change-context";
@@ -136,45 +135,6 @@ export default function EditTenantForm({
   const changeCount = changes.length;
   const [showChanges, setShowChanges] = useState(false);
 
-  const applyPostalCodeSuggestion = () => {
-    const suggestion = getPostalLocationSuggestion(
-      getValues("address.postalCode"),
-    );
-    if (!suggestion) return;
-
-    if (suggestion.provinceCode) {
-      const currentProvince = (getValues("address.province") || "")
-        .trim()
-        .toUpperCase();
-      if (currentProvince !== suggestion.provinceCode) {
-        setValue("address.province", suggestion.provinceCode, {
-          shouldDirty: true,
-          shouldTouch: true,
-          shouldValidate: true,
-        });
-      }
-    }
-
-    if (suggestion.city) {
-      const currentCity = (getValues("address.city") || "").trim();
-      if (currentCity.toLowerCase() !== suggestion.city.toLowerCase()) {
-        setValue("address.city", suggestion.city, {
-          shouldDirty: true,
-          shouldTouch: true,
-          shouldValidate: true,
-        });
-      }
-    }
-  };
-
-  const handlePostalCodeChange = () => {
-    applyPostalCodeSuggestion();
-  };
-
-  const handlePostalCodeBlur = () => {
-    applyPostalCodeSuggestion();
-  };
-
   const onSave = async (data: TenantFormInput) => {
     try {
       const result = await upsertTenant(data, params.id);
@@ -226,8 +186,14 @@ export default function EditTenantForm({
           <TenantForm
             errors={errors}
             showMembership={isNew}
-            onPostalCodeChange={handlePostalCodeChange}
-            onPostalCodeBlur={handlePostalCodeBlur}
+            getFieldValue={(fieldName) => getValues(fieldName)}
+            setFieldValue={(fieldName, value) =>
+              setValue(fieldName, value, {
+                shouldDirty: true,
+                shouldTouch: true,
+                shouldValidate: true,
+              })
+            }
           />
         </form>
       </SmartFormProvider>

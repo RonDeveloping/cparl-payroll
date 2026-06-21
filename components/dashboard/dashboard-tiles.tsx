@@ -742,9 +742,7 @@ export default function DashboardTiles({
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <Link
-                                    href={`/tenants/${tenant.id}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                    href={`/payroll?tenantId=${tenant.id}`}
                                     className="font-semibold text-slate-900 transition hover:text-violet-700"
                                   >
                                     {tenant.displayName}
