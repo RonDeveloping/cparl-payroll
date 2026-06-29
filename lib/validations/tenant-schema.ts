@@ -73,6 +73,98 @@ export const tenantSchema = z.object({
     .optional()
     .nullable(),
   // slug is auto-generated from coreName and legalNameEnding, not user input
+
+  // Payroll unit setup
+  payrollUnitName: z.string().trim().optional().nullable(),
+  payScheduleCode: z.string().trim().optional().nullable(),
+  payFrequency: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z
+      .enum(["WEEKLY", "BIWEEKLY", "SEMIMONTHLY", "MONTHLY", "ANNUALLY"])
+      .nullable()
+      .optional(),
+  ),
+  periodBoundaryType: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.enum(["CALENDAR", "ANCHORED"]).nullable().optional(),
+  ),
+  firstBoundaryAnchorDay: z.preprocess(
+    (val) => (val === "" || val == null ? null : Number(val)),
+    z.number().int().min(1).max(31).nullable().optional(),
+  ),
+  firstBoundaryAnchorWeekday: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z
+      .enum([
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+        "SUNDAY",
+      ])
+      .nullable()
+      .optional(),
+  ),
+  firstPaydayOffsetDays: z.preprocess(
+    (val) => (val === "" || val == null ? null : Number(val)),
+    z.number().int().min(-31).max(31).nullable().optional(),
+  ),
+  firstPaydayWeekday: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z
+      .enum([
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+        "SUNDAY",
+      ])
+      .nullable()
+      .optional(),
+  ),
+  monthlyPaydayDay: z.preprocess(
+    (val) => (val === "" || val == null ? null : Number(val)),
+    z.number().int().min(1).max(31).nullable().optional(),
+  ),
+  calendarPeriodEndDay: z.preprocess(
+    (val) => (val === "" || val == null ? null : Number(val)),
+    z.number().int().min(1).max(31).nullable().optional(),
+  ),
+  secondBoundaryAnchorDay: z.preprocess(
+    (val) => (val === "" || val == null ? null : Number(val)),
+    z.number().int().min(1).max(31).nullable().optional(),
+  ),
+  secondPaydayOffsetDays: z.preprocess(
+    (val) => (val === "" || val == null ? null : Number(val)),
+    z.number().int().min(-31).max(31).nullable().optional(),
+  ),
+  secondPaydayWeekday: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z
+      .enum([
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+        "SUNDAY",
+      ])
+      .nullable()
+      .optional(),
+  ),
+  fundingMethod: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.enum(["PAP", "WIRE", "MANUAL"]).nullable().optional(),
+  ),
+  fundingLeadDays: z.coerce.number().int().min(0).max(30).optional().nullable(),
+  glExpenseAccountCode: z.string().trim().optional().nullable(),
+  glLiabilityAccountCode: z.string().trim().optional().nullable(),
+  glClearingAccountCode: z.string().trim().optional().nullable(),
 });
 
 export type TenantFormInput = z.infer<typeof tenantSchema>;

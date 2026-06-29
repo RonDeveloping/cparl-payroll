@@ -21,12 +21,14 @@ import { FormGrid } from "@/components/form/form-grid";
 import { Clarification } from "@/components/clarification";
 import formatSIN from "@/utils/formatters/sin";
 import formatPostalCode from "@/utils/formatters/postalCode";
+import { IDENTITY_FIELDS } from "@/constants/contact-fields";
 import {
   MailingAddressSection,
   type MailingAddressField,
 } from "../shared/mailing-address-section";
 import { cn } from "@/lib/utils";
 import { CANADA_PROVINCE_TERRITORY_OPTIONS } from "@/constants/canada-provinces";
+import { employeeFieldContent } from "@/constants/content";
 import {
   getPostalCodeProgress,
   type PostalCodeProgressTone,
@@ -333,10 +335,14 @@ export function EmployeeForm({
   const [showOptionalEmployment, setShowOptionalEmployment] = useState(false);
   const bankAccounts = (useWatch({ name: "bankAccounts" as const }) ||
     []) as ContactFormInput["bankAccounts"];
+  const statusValue = useWatch({ name: "status" as const });
   const [
+    middleNameValue,
+    nickNameValue,
+    prefixValue,
+    suffixValue,
+    displayNameValue,
     employeeNumberValue,
-    employmentEndDateValue,
-    terminationReasonValue,
     employmentTitleValue,
     employmentDepartmentValue,
     jobStartDateValue,
@@ -344,9 +350,12 @@ export function EmployeeForm({
     jobHoursPerWeekValue,
   ] = useWatch({
     name: [
+      "middleName",
+      "nickName",
+      "prefix",
+      "suffix",
+      "displayName",
       "employeeNumber",
-      "employmentEndDate",
-      "terminationReason",
       "employmentTitle",
       "employmentDepartment",
       "jobStartDate",
@@ -354,23 +363,31 @@ export function EmployeeForm({
       "jobHoursPerWeek",
     ],
   });
+  const optionalIdentityFieldsExpanded = Boolean(
+    errors.middleName?.message ||
+    errors.nickName?.message ||
+    errors.prefix?.message ||
+    errors.suffix?.message ||
+    errors.displayName?.message ||
+    String(middleNameValue || "").trim() ||
+    String(nickNameValue || "").trim() ||
+    String(prefixValue || "").trim() ||
+    String(suffixValue || "").trim() ||
+    String(displayNameValue || "").trim(),
+  );
   const optionalIdentificationExpanded =
-    showOptionalIdentification ||
-    Boolean(errors.sin?.message || errors.dob?.message);
+    showOptionalIdentification || optionalIdentityFieldsExpanded;
+  const showTerminationDetails = statusValue === "TERMINATED";
   const optionalEmploymentExpanded =
     showOptionalEmployment ||
     Boolean(
       errors.employeeNumber?.message ||
-      errors.employmentEndDate?.message ||
-      errors.terminationReason?.message ||
       errors.employmentTitle?.message ||
       errors.employmentDepartment?.message ||
       errors.jobStartDate?.message ||
       errors.jobEndDate?.message ||
       errors.jobHoursPerWeek?.message ||
       String(employeeNumberValue || "").trim() ||
-      String(employmentEndDateValue || "").trim() ||
-      String(terminationReasonValue || "").trim() ||
       String(employmentTitleValue || "").trim() ||
       String(employmentDepartmentValue || "").trim() ||
       String(jobStartDateValue || "").trim() ||
@@ -412,6 +429,17 @@ export function EmployeeForm({
     setPostalProgress(getPostalCodeProgress(e.target.value || ""));
   };
 
+  const hireDateValue = useWatch({ name: "hireDate" }) as string | undefined;
+  const statusGuidance =
+    statusValue === "TERMINATED"
+      ? "Not included in payroll runs. Add termination details."
+      : statusValue === "INACTIVE"
+        ? "Not included in payroll runs."
+        : null;
+  const isFutureHireDate = hireDateValue
+    ? new Date(hireDateValue + "T00:00:00Z") > new Date()
+    : false;
+
   return (
     <>
       <FormSection title="Identification">
@@ -427,6 +455,33 @@ export function EmployeeForm({
             name="familyName"
             rules={{ required: "Family name is required" }}
             error={errors.familyName?.message}
+          />
+          <InputWithChanges<ContactFormInput>
+            label={
+              <Clarification
+                term={employeeFieldContent.sin.term}
+                description={employeeFieldContent.sin.description}
+              />
+            }
+            name="sin"
+            type="text"
+            placeholder="123-456-789"
+            maxLength={11}
+            formatOnChange={formatSIN}
+            rules={{}}
+            error={errors.sin?.message}
+          />
+          <CustomDatePickerWithChanges<ContactFormInput>
+            label={
+              <Clarification
+                term={employeeFieldContent.dob.term}
+                description={employeeFieldContent.dob.description}
+              />
+            }
+            name="dob"
+            minDate={minDob}
+            maxDate={maxDob}
+            error={errors.dob?.message}
           />
         </FormGrid>
 
@@ -446,30 +501,21 @@ export function EmployeeForm({
           }`}
         >
           <FormGrid>
-            <InputWithChanges<ContactFormInput>
-              label={
-                <Clarification
-                  term="SIN"
-                  description="Social Insurance Number (9 digits, formatted as XXX-XXX-XXX)."
+            {IDENTITY_FIELDS.optional.map((field) =>
+              field.name === "displayName" ? (
+                <InputWithChanges<ContactFormInput>
+                  key={field.name}
+                  {...field}
+                  error={errors.displayName?.message}
                 />
-              }
-              name="sin"
-              type="text"
-              placeholder="123-456-789"
-              maxLength={11}
-              formatOnChange={formatSIN}
-              rules={{}}
-              error={errors.sin?.message}
-            />
-            <CustomDatePickerWithChanges<ContactFormInput>
-              label={
-                <Clarification term="Date of birth" description="YYYY-MM-DD" />
-              }
-              name="dob"
-              minDate={minDob}
-              maxDate={maxDob}
-              error={errors.dob?.message}
-            />
+              ) : (
+                <InputWithChanges<ContactFormInput>
+                  key={field.name}
+                  {...field}
+                  error={errors[field.name]?.message}
+                />
+              ),
+            )}
           </FormGrid>
         </div>
       </FormSection>
@@ -517,18 +563,118 @@ export function EmployeeForm({
 
       <FormSection title="Employment">
         <FormGrid>
-          <SelectWithChanges<ContactFormInput>
-            label="Employment status"
-            name="status"
-            error={errors.status?.message}
-            options={[
-              { label: "Active", value: "ACTIVE" },
-              { label: "On leave", value: "ON_LEAVE" },
-              { label: "Terminated", value: "TERMINATED" },
-            ]}
+          <div className="space-y-2">
+            <SelectWithChanges<ContactFormInput>
+              label={
+                <Clarification
+                  term={employeeFieldContent.status.term}
+                  description={employeeFieldContent.status.description}
+                />
+              }
+              name="status"
+              error={errors.status?.message}
+              options={[
+                { label: "Active", value: "ACTIVE" },
+                { label: "Inactive", value: "INACTIVE" },
+                { label: "Terminated", value: "TERMINATED" },
+              ]}
+            />
+            {statusGuidance && (
+              <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                {statusGuidance}
+              </div>
+            )}
+          </div>
+          <InputWithChanges<ContactFormInput>
+            label={
+              <Clarification
+                term={employeeFieldContent.email.term}
+                description={employeeFieldContent.email.description}
+              />
+            }
+            name="email"
+            type="email"
+            rules={{ required: "Email is required" }}
+            error={errors.email?.message}
           />
+          {showTerminationDetails && (
+            <div className="col-span-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div className="mb-3 text-sm font-semibold text-slate-900">
+                Termination details
+              </div>
+              <FormGrid>
+                <CustomDatePickerWithChanges<ContactFormInput>
+                  label={
+                    <>
+                      <Clarification
+                        term={employeeFieldContent.employmentEndDate.term}
+                        description={
+                          employeeFieldContent.employmentEndDate.description
+                        }
+                      />{" "}
+                      *
+                    </>
+                  }
+                  name="employmentEndDate"
+                  maxDate={maxDob}
+                  yearJumps={[6, 4, 2]}
+                  defaultYearOffset={0}
+                  reversePositiveYearJumps={true}
+                  error={errors.employmentEndDate?.message}
+                />
+                <SelectWithChanges<ContactFormInput>
+                  label="Termination reason (ROE) *"
+                  name="terminationReason"
+                  error={errors.terminationReason?.message}
+                  options={[
+                    { label: "Not set", value: "" },
+                    {
+                      label: "A - Shortage of work (layoff)",
+                      value: "ROE_A_SHORTAGE_OF_WORK",
+                    },
+                    {
+                      label: "B - Strike or lockout",
+                      value: "ROE_B_STRIKE_OR_LOCKOUT",
+                    },
+                    {
+                      label: "C - Return to school",
+                      value: "ROE_C_RETURN_TO_SCHOOL",
+                    },
+                    {
+                      label: "D - Illness or injury",
+                      value: "ROE_D_ILLNESS_OR_INJURY",
+                    },
+                    { label: "E - Quit", value: "ROE_E_QUIT" },
+                    { label: "F - Maternity", value: "ROE_F_MATERNITY" },
+                    { label: "G - Retirement", value: "ROE_G_RETIREMENT" },
+                    { label: "H - Work sharing", value: "ROE_H_WORK_SHARING" },
+                    {
+                      label: "J - Apprentice training",
+                      value: "ROE_J_APPRENTICE_TRAINING",
+                    },
+                    { label: "K - Other", value: "ROE_K_OTHER" },
+                    { label: "M - Dismissal", value: "ROE_M_DISMISSAL" },
+                    {
+                      label: "N - Leave of absence",
+                      value: "ROE_N_LEAVE_OF_ABSENCE",
+                    },
+                    { label: "P - Parental", value: "ROE_P_PARENTAL" },
+                    {
+                      label: "Z - Compassionate care / family caregiver",
+                      value: "ROE_Z_COMPASSIONATE_CARE_OR_FAMILY_CAREGIVER",
+                    },
+                  ]}
+                />
+              </FormGrid>
+            </div>
+          )}
           <CustomDatePickerWithChanges<ContactFormInput>
-            label={<Clarification term="Hire date" description="YYYY-MM-DD" />}
+            label={
+              <Clarification
+                term={employeeFieldContent.hireDate.term}
+                description={employeeFieldContent.hireDate.description}
+              />
+            }
             name="hireDate"
             maxDate={maxDob}
             yearJumps={[6, 4, 2]}
@@ -536,11 +682,19 @@ export function EmployeeForm({
             reversePositiveYearJumps={true}
             error={errors.hireDate?.message}
           />
+          {isFutureHireDate && (
+            <div className="col-span-2 rounded border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-700">
+              Future start date detected. Use Inactive until the employee begins
+              work.
+            </div>
+          )}
           <SelectWithChanges<ContactFormInput>
             label={
               <Clarification
-                term="Employment province code"
-                description="use the province of the employer establishment where the employee reports for work, or where they are paid from."
+                term={employeeFieldContent.provinceOfEmployment.term}
+                description={
+                  employeeFieldContent.provinceOfEmployment.description
+                }
               />
             }
             name="employmentProvinceCode"
@@ -558,14 +712,24 @@ export function EmployeeForm({
             ]}
           />
           <InputWithChanges<ContactFormInput>
-            label="Pay rate"
+            label={
+              <Clarification
+                term={employeeFieldContent.jobPayRate.term}
+                description={employeeFieldContent.jobPayRate.description}
+              />
+            }
             name="jobPayRate"
             placeholder="25.00"
             rules={{}}
             error={errors.jobPayRate?.message}
           />
           <InputWithChanges<ContactFormInput>
-            label="Hours per week"
+            label={
+              <Clarification
+                term={employeeFieldContent.jobHoursPerWeek.term}
+                description={employeeFieldContent.jobHoursPerWeek.description}
+              />
+            }
             name="jobHoursPerWeek"
             placeholder="37.50"
             rules={{}}
@@ -595,63 +759,6 @@ export function EmployeeForm({
               rules={{}}
               error={errors.employeeNumber?.message}
             />
-            <CustomDatePickerWithChanges<ContactFormInput>
-              label={
-                <Clarification
-                  term="Employment end date"
-                  description="YYYY-MM-DD"
-                />
-              }
-              name="employmentEndDate"
-              maxDate={maxDob}
-              yearJumps={[6, 4, 2]}
-              defaultYearOffset={0}
-              reversePositiveYearJumps={true}
-              error={errors.employmentEndDate?.message}
-            />
-            <SelectWithChanges<ContactFormInput>
-              label="Termination reason (ROE)"
-              name="terminationReason"
-              error={errors.terminationReason?.message}
-              options={[
-                { label: "Not set", value: "" },
-                {
-                  label: "A - Shortage of work (layoff)",
-                  value: "ROE_A_SHORTAGE_OF_WORK",
-                },
-                {
-                  label: "B - Strike or lockout",
-                  value: "ROE_B_STRIKE_OR_LOCKOUT",
-                },
-                {
-                  label: "C - Return to school",
-                  value: "ROE_C_RETURN_TO_SCHOOL",
-                },
-                {
-                  label: "D - Illness or injury",
-                  value: "ROE_D_ILLNESS_OR_INJURY",
-                },
-                { label: "E - Quit", value: "ROE_E_QUIT" },
-                { label: "F - Maternity", value: "ROE_F_MATERNITY" },
-                { label: "G - Retirement", value: "ROE_G_RETIREMENT" },
-                { label: "H - Work sharing", value: "ROE_H_WORK_SHARING" },
-                {
-                  label: "J - Apprentice training",
-                  value: "ROE_J_APPRENTICE_TRAINING",
-                },
-                { label: "K - Other", value: "ROE_K_OTHER" },
-                { label: "M - Dismissal", value: "ROE_M_DISMISSAL" },
-                {
-                  label: "N - Leave of absence",
-                  value: "ROE_N_LEAVE_OF_ABSENCE",
-                },
-                { label: "P - Parental", value: "ROE_P_PARENTAL" },
-                {
-                  label: "Z - Compassionate care / family caregiver",
-                  value: "ROE_Z_COMPASSIONATE_CARE_OR_FAMILY_CAREGIVER",
-                },
-              ]}
-            />
             <InputWithChanges<ContactFormInput>
               label="Job title"
               name="employmentTitle"
@@ -667,8 +774,8 @@ export function EmployeeForm({
             <CustomDatePickerWithChanges<ContactFormInput>
               label={
                 <Clarification
-                  term="Job start date"
-                  description="YYYY-MM-DD (defaults to hire date if empty)"
+                  term={employeeFieldContent.jobStartDate.term}
+                  description={employeeFieldContent.jobStartDate.description}
                 />
               }
               name="jobStartDate"
@@ -681,8 +788,8 @@ export function EmployeeForm({
             <CustomDatePickerWithChanges<ContactFormInput>
               label={
                 <Clarification
-                  term="Job end date"
-                  description="YYYY-MM-DD (defaults to employment end date if empty)"
+                  term={employeeFieldContent.jobEndDate.term}
+                  description={employeeFieldContent.jobEndDate.description}
                 />
               }
               name="jobEndDate"
@@ -738,13 +845,6 @@ export function EmployeeForm({
 
       <FormSection title="Contact">
         <FormGrid>
-          <InputWithChanges<ContactFormInput>
-            label="Email"
-            name="email"
-            type="email"
-            rules={{ required: "Email is required" }}
-            error={errors.email?.message}
-          />
           <InputWithChanges<ContactFormInput>
             label="Phone"
             name="phone"

@@ -248,8 +248,7 @@ export const contactSchema = z
       .trim()
       .optional()
       .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
-        message:
-          "Hours per week must be a valid amount with up to 2 decimals",
+        message: "Hours per week must be a valid amount with up to 2 decimals",
       }),
     jobEndDate: z
       .string()
@@ -257,7 +256,7 @@ export const contactSchema = z
       .refine((val) => !val || isValidIsoDate(val), {
         message: "Job end date must be a valid date in YYYY-MM-DD format",
       }),
-    status: z.enum(["ACTIVE", "TERMINATED", "ON_LEAVE"]).optional(),
+    status: z.enum(["ACTIVE", "TERMINATED", "INACTIVE"]).optional(),
     email: z.string().trim().email("Invalid email address"),
     phone: z
       .string()
@@ -317,6 +316,22 @@ export const contactSchema = z
         code: z.ZodIssueCode.custom,
         path: ["jobEndDate"],
         message: "Job end date must be on or after job start date",
+      });
+    }
+
+    if (val.status === "TERMINATED" && !val.employmentEndDate) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["employmentEndDate"],
+        message: "Employment end date is required when status is Terminated",
+      });
+    }
+
+    if (val.status === "TERMINATED" && !val.terminationReason) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["terminationReason"],
+        message: "Termination reason is required when status is Terminated",
       });
     }
 

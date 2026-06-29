@@ -456,7 +456,7 @@ export const formActionsStyles: FormActionsStyleSchema = {
   backLabelActive: "text-slate-500 hover:text-slate-800 cursor-pointer",
   backLabelDisabled: "text-slate-100 select-none",
   showChangesButton: cn(
-    "flex items-center text-xs font-semibold tracking-wider text-slate-500 hover:text-slate-800 transition-colors whitespace-nowrap",
+    "flex items-center text-sm font-semibold tracking-wide text-slate-500 hover:text-slate-800 transition-colors whitespace-nowrap",
     sharedStyles.gap4,
   ),
   showChangesIcon: sharedStyles.textSmSlate500,

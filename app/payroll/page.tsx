@@ -22,13 +22,15 @@ function getEmployerDisplayName(nameCached: unknown): string {
     typeof record.coreName === "string" ? record.coreName.trim() : "";
   const kindName =
     typeof record.kindName === "string" ? record.kindName.trim() : "";
+  const legalName = [coreName, kindName].filter(Boolean).join(" ").trim();
 
   if (displayName) return displayName;
   if (aliasName && coreName) {
+    if (aliasName === legalName) return legalName || aliasName;
+
     return `${coreName}${kindName ? ` ${kindName}` : ""} (o/a ${aliasName})`;
   }
 
-  const legalName = [coreName, kindName].filter(Boolean).join(" ").trim();
   if (legalName) return legalName;
   if (aliasName) return aliasName;
 
@@ -317,7 +319,7 @@ export default async function PayrollOverviewPage({
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-900">
-                  Employees for This Employer ({totalEmployeeCount})
+                  Employees ({totalEmployeeCount})
                 </h2>
                 <div className="flex items-center gap-4">
                   <Link
@@ -325,16 +327,6 @@ export default async function PayrollOverviewPage({
                     className="text-sm font-semibold text-slate-700 hover:text-slate-900"
                   >
                     View all
-                  </Link>
-                  <Link
-                    href={
-                      selectedTenantId
-                        ? `/employees/new/edit?tenantId=${selectedTenantId}`
-                        : "/employees/new/edit"
-                    }
-                    className="text-sm font-semibold text-emerald-700 hover:text-emerald-600"
-                  >
-                    Add employee
                   </Link>
                 </div>
               </div>

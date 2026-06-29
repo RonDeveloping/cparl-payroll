@@ -20,6 +20,20 @@ import Link from "next/link";
 import { contactProfileStyles } from "@/constants/styles";
 // import { Contact, Email, Phone, Address } from "@prisma/client";
 
+const formatOrganizationTitle = (legalName: string, operatingName?: string) => {
+  const normalizedLegalName = legalName.trim();
+  const normalizedOperatingName = operatingName?.trim();
+
+  if (
+    !normalizedOperatingName ||
+    normalizedOperatingName === normalizedLegalName
+  ) {
+    return normalizedLegalName;
+  }
+
+  return `${normalizedLegalName} (o/a ${normalizedOperatingName})`;
+};
+
 // 1. Define a base interface for anything that can be "Primary"
 interface PrimarySelectable {
   isPrimary: boolean;
@@ -61,7 +75,10 @@ export default async function ProfilePage({
         role: "Administrator",
       },
       tenant: {
-        companyName: "11113333 Ontario Inc.(o/a Enterprise Center)",
+        companyName: formatOrganizationTitle(
+          "LR Professional Corp.",
+          "LR Professional Corp.",
+        ),
         domain: "acme-na.payroll.com",
       },
       employee: {

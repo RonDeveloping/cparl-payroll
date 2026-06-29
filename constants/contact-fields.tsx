@@ -2,7 +2,7 @@
 import { ContactFormInput } from "@/lib/validations/contact-schema";
 import { Clarification } from "@/components/clarification";
 import { ReactNode } from "react";
-import { contactFieldContent } from "@/constants/content";
+import { contactFieldContent, employeeFieldContent } from "@/constants/content";
 
 export type FieldDef = {
   label: ReactNode;
@@ -24,9 +24,33 @@ export const IDENTITY_FIELDS = {
       ),
       name: "middleName",
     },
-    { label: "Nickname", name: "nickName" },
-    { label: "Prefix", name: "prefix" },
-    { label: "Suffix", name: "suffix" },
+    {
+      label: (
+        <Clarification
+          term={employeeFieldContent.nickname.term}
+          description={employeeFieldContent.nickname.description}
+        />
+      ),
+      name: "nickName",
+    },
+    {
+      label: (
+        <Clarification
+          term={employeeFieldContent.prefix.term}
+          description={employeeFieldContent.prefix.description}
+        />
+      ),
+      name: "prefix",
+    },
+    {
+      label: (
+        <Clarification
+          term={employeeFieldContent.suffix.term}
+          description={employeeFieldContent.suffix.description}
+        />
+      ),
+      name: "suffix",
+    },
     {
       label: (
         <Clarification

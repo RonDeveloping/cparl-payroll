@@ -33,6 +33,13 @@ export default function EditTenantForm({
   const shouldAutoSyncOperatingNameRef = useRef(
     !String(initialData.operatingName ?? "").trim(),
   );
+  const initialValues: TenantFormInput = useMemo(
+    () => ({
+      ...initialData,
+      periodBoundaryType: initialData.periodBoundaryType ?? "ANCHORED",
+    }),
+    [initialData],
+  );
 
   const {
     register,
@@ -43,8 +50,8 @@ export default function EditTenantForm({
     control,
     setValue,
   } = useForm<TenantFormInput>({
-    resolver: zodResolver(tenantSchema),
-    values: initialData,
+    resolver: zodResolver(tenantSchema) as never,
+    values: initialValues,
     shouldFocusError: false,
     mode: "onBlur",
   });
@@ -64,10 +71,12 @@ export default function EditTenantForm({
 
       reset(
         {
-          ...initialData,
+          ...initialValues,
           ...parsedDraft,
+          periodBoundaryType:
+            parsedDraft.periodBoundaryType ?? initialValues.periodBoundaryType,
           address: {
-            ...initialData.address,
+            ...initialValues.address,
             ...(parsedDraft.address ?? {}),
           },
         },
@@ -76,12 +85,17 @@ export default function EditTenantForm({
     } catch {
       // Ignore storage access or parsing errors.
     }
-  }, [draftStorageKey, initialData, reset]);
+  }, [draftStorageKey, initialValues, reset]);
 
   const currentValues = getValues();
   const watchedValues = useWatch({ control });
   const watchedCoreName = useWatch({ control, name: "coreName" });
   const watchedOperatingName = useWatch({ control, name: "operatingName" });
+  const watchedPayFrequency = useWatch({ control, name: "payFrequency" });
+  const watchedPeriodBoundaryType = useWatch({
+    control,
+    name: "periodBoundaryType",
+  });
 
   useEffect(() => {
     // Once user edits DBA, stop auto-sync and preserve their explicit value.
@@ -186,6 +200,8 @@ export default function EditTenantForm({
           <TenantForm
             errors={errors}
             showMembership={isNew}
+            payFrequency={watchedPayFrequency}
+            periodBoundaryType={watchedPeriodBoundaryType}
             getFieldValue={(fieldName) => getValues(fieldName)}
             setFieldValue={(fieldName, value) =>
               setValue(fieldName, value, {
