@@ -550,9 +550,6 @@ model ChartOfAccount {
   updatedAt DateTime         @updatedAt @map("updated_at")
 
   glMappings GLMapping[] // Mapping logic: Which payroll items point here?
-  payrollGlExpenseMatrixRefs PayrollGLMatrix[] @relation("PayrollGLMatrixExpenseAccount")
-  payrollGlLiabilityMatrixRefs PayrollGLMatrix[] @relation("PayrollGLMatrixLiabilityAccount")
-  payrollGlClearingMatrixRefs PayrollGLMatrix[] @relation("PayrollGLMatrixClearingAccount")
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -577,20 +574,38 @@ model GLMapping {
 model PayrollGLMatrix {
   id               String         @id @default(cuid())
   tenantId         String         @map("tenant_id")
+  itemClass         ItemClass     @map("item_class")
+  glAccountId       String         @map("gl_account_id")
+  glAccoountName     String         @map("gl_account_name")
+  isDebit            Boolean        @default(true) @map("is_debit")
   payrollUnitId    String         @map("payroll_unit_id")
-  expenseAccountId   String?      @map("expense_account_id")
-  liabilityAccountId String?      @map("liability_account_id")
-  clearingAccountId  String?      @map("clearing_account_id")
   createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
 
   payrollUnit    PayrollUnit    @relation(fields: [payrollUnitId], references: [id])
-  expenseAccount   ChartOfAccount? @relation("PayrollGLMatrixExpenseAccount", fields: [expenseAccountId], references: [id])
-  liabilityAccount ChartOfAccount? @relation("PayrollGLMatrixLiabilityAccount", fields: [liabilityAccountId], references: [id])
-  clearingAccount  ChartOfAccount? @relation("PayrollGLMatrixClearingAccount", fields: [clearingAccountId], references: [id])
-
   @@index([tenantId, payrollUnitId])
   @@map("payroll_gl_matrix")
 }
+
+enum ItemClass {
+  GROSS_PAY
+  TAXABLE_ALLOWANCES
+  KIND_BENEFITS
+  TAXES_PAYABLE
+  EMPLOYER_CPP
+  EMPLOYER_EI
+  CPP_PAYABLE
+  EI_PAYABLE  
+  BENEFITS_PAYABLE
+  REASONABLE_ALLOWANCES
+  PAYROLL_CLEARING
+}
+/*
+KIND_BENEFITS = taxable benefits (e.g., company car, health insurance premiums paid by employer, etc.) can be contra-expense account to vehicle expense or life insurance one.
+GROSS_REMUNERATION = GROSS_PAY + TAXABLE_ALLOWANCES + KIND_BENEFITS
+GROSS_PAID = GROSS_PAY + TAXABLE_ALLOWANCES + REASONABLE_ALLOWANCES
+PAYROLL_CLEARING = GROSS_PAID - (TAXES_PAYABLE + CPP_PAYABLE - EMPLOYER_CPP + EI_PAYABLE - EMPLOYER_EI)
+*/
 /*
 mapping flow
 1	Line Level	Look at earningType (e.g., "Regular") or deductionType (e.g., "Tax").
@@ -934,6 +949,63 @@ model RemittanceToPayrollRun {
   @@map("remittance_to_payroll_runs")
 }
 
+model cppEIRates {
+  id String @id @default(cuid())
+  taxYear Int @map("tax_year")
+  provinceCode String @map("province_code") @db.Char(2)
+  cppBaseRate Decimal @db.Decimal(5, 4) @map("cpp_base_rate")//e.g. 4.95% for 2026
+  cppEnhancedRate Decimal @db.Decimal(5, 4) @map("cpp_enhanced_rate")//e.g. 1%
+  cppExemption Decimal @db.Decimal(5, 4) @map("cpp_exemption")//e.g. 3.5k  
+  cppYMPE Decimal @db.Decimal(10, 2) @map("cpp_ympe") //e.g. $74.6K Tier 1 CAP
+  cpp2Rate Decimal @db.Decimal(5, 4) @map("cpp2_rate")//4%
+  cpp2YMPE Decimal @db.Decimal(10, 2) @map("cpp2_ympe") //e.g. $85K Tier 2 CAP
+  eiRate Decimal @db.Decimal(5, 4) @map("ei_rate")//e.g. 1.63% for 2026
+  eiMaxEarnings Decimal @db.Decimal(10, 2) @map("ei_max_earnings")//e.g. $68.9K
+  eiMultiplier Decimal @db.Decimal(5, 4) @map("ei_multiplier")//e.g. 1.4
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@unique([taxYear, provinceCode], name: "unique_cpp_ei_rates")
+  @@map("cpp_ei_rates")
+}
+
+model TaxRate {
+  id String @id @default(cuid())
+  taxYear Int @map("tax_year")
+  provinceCode String @map("province_code") @db.Char(2)
+  marginalRate Decimal @db.Decimal(5, 4) @map("federal_rate")//e.g. 15%
+  lowerBound Decimal @db.Decimal(10, 2) @map("lower_bound")//e.g. $53,359
+  upperBound Decimal? @db.Decimal(10, 2) @map("upper_bound")//e.g. $106,717
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@unique([taxYear, provinceCode], name: "unique_tax_rates")
+  @@index([taxYear, provinceCode])
+  @@map("tax_rates")
+}
+
+model EarningCode {
+  id String @id @default(cuid())
+  tenantId String @map("tenant_id")
+  code String @map("code") //e.g. "REG" for regular pay, "OT" for overtime, "BONUS" for bonus, etc.
+  description String @map("description")
+  earningType EarningType @map("earning_type")
+  isTaxable Boolean @default(true) @map("is_taxable")
+  isKindBenefit Boolean @default(false) @map("is_kind_benefit")//e.g. company car, health insurance premiums paid by employer, etc. add to tax not net pay.
+  isSubjectToCPP Boolean @default(true) @map("is_subject_to_cpp")
+  isSubjectToEI Boolean @default(true) @map("is_subject_to_ei")
+  t4BoxNumber Int? @map("t4_box_number")//e.g. 14 for regular pay, 71 for taxable benefits, etc.
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@unique([code, tenantId], name: "unique_earning_codes_per_tenant")
+  @@map("earning_codes")
+}
+
+model EmployeePolicy{
+  id String @id @default(cuid())
+  tenantId String @map("tenant_id")
+  employeeId String @map("employee_id")
+  policyName String @map("policy_name")//e.g. "Vacation", "Sick Leave", "Health Insurance", etc.
+  policyValue Decimal @db.Decimal(10, 2) @map("policy_value")//e.g. 10% for vacation, $
+}
 // ==========================================
 // ===== ENUMS (Lowercase for Postgres) =====
 // ==========================================
@@ -1179,4 +1251,49 @@ enum PaymentMethodType {
   CARD @map("card")
   PAP @map("pap")
   @@map("payment_method_type")
+}
+
+enum ProvinceCode {
+  AB @map("AB")
+  BC @map("BC")
+  MB @map("MB")
+  NB @map("NB")
+  NL @map("NL")
+  NS @map("NS")
+  NT @map("NT")
+  NU @map("NU")
+  ON @map("ON")
+  PE @map("PE")
+  QC @map("QC")
+  SK @map("SK")
+  YT @map("YT")
+  CA @map("CA") // For federal rates
+  @@map("province_code")
+}
+
+enum TaxCalculationMethod {
+  REGULAR @map("regular") //standard tax tables based on annualized income
+  BONUS @map("bonus") //pass 1 regular annualized and pass 2 add bonus to get total annual tax and then subtract regular tax to get bonus tax only plus regular tax/26
+  FLAT @map("flat") //e.g., 10% of severance pay
+  EXEMPT @map("exempt")
+  @@map("tax_calculation_method")
+}
+
+enum VacationPolicy {
+  ACCRUAL @map("accrual") // Accrue vacation based on hours worked
+  CASH @map("cash") // Pay out vacation in a lump sum
+  @@map("vacation_policy")
+} 
+
+enum VacationAccrualMethod {
+  HOURS_WORKED @map("hours_worked") // Accrue vacation based on hours worked
+  PAY_EARNED @map("pay_earned") // Accrue vacation based on pay earned
+  @@map("vacation_accrual_method")
+}
+
+enum HolidayPayMethod {
+  STATUTORY @map("statutory") // Statutory holiday pay based on average daily earnings over past 4 weeks
+  AVERAGE @map("average") // Average daily earnings over a period
+  FIXED @map("fixed") // Fixed amount per statutory holiday AB 5% of gross wages in 4 weeks prior to statutory holiday.
+  @@map("holiday_pay_method")
 }

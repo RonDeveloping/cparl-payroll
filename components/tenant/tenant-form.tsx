@@ -268,12 +268,10 @@ export function TenantForm({
             name="payFrequency"
             error={errors.payFrequency?.message}
             options={[
-              { label: "Not set", value: "" },
-              { label: "Weekly", value: "WEEKLY" },
-              { label: "Biweekly", value: "BIWEEKLY" },
-              { label: "Semi-monthly", value: "SEMIMONTHLY" },
               { label: "Monthly", value: "MONTHLY" },
-              { label: "Annually", value: "ANNUALLY" },
+              { label: "Semi-monthly", value: "SEMIMONTHLY" },
+              { label: "Biweekly", value: "BIWEEKLY" },
+              { label: "Weekly", value: "WEEKLY" },
             ]}
           />
 

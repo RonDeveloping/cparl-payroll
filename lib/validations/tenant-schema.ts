@@ -80,7 +80,7 @@ export const tenantSchema = z.object({
   payFrequency: z.preprocess(
     (val) => (val === "" ? null : val),
     z
-      .enum(["WEEKLY", "BIWEEKLY", "SEMIMONTHLY", "MONTHLY", "ANNUALLY"])
+      .enum(["WEEKLY", "BIWEEKLY", "SEMIMONTHLY", "MONTHLY"])
       .nullable()
       .optional(),
   ),
