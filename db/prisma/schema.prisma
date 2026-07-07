@@ -391,6 +391,8 @@ model Tenant {
   payrollUnits   PayrollUnit[]
   departments    Department[]
   subscriptions  TenantSubscription[]
+  overtimeConfigs OvertimeConfig[]
+  holidayPolicies HolidayPolicy[]
 
   @@index([businessBn9, businessProgramId, programRefNum])
   @@map("tenant")
@@ -653,6 +655,10 @@ model Employee {
   payrollUnitAssignments PayrollUnitEmployee[]
   payrollRuns  PayrollRunEmployee[]
   bankAccounts BankAccount[]
+  vacationPolicies VacPolicy[]
+  vacationLedgerEntries VacLedger[]
+  holidayLedgerEntries HolidayLedger[]
+  severanceRecords SeveranceRecord[]
 
   @@unique([tenantId, contactId])//for tenant-scoped uniquenessone employee per contact per tenant
   @@unique([tenantId, employeeNumber])//PostgreSQL allows multiple NULLs, even with a unique constraint, so multiple employees per tenant can have employeeNumber = null
@@ -747,6 +753,9 @@ model PayrollRun {
 
   payrollUnit PayrollUnit?       @relation(fields: [payrollUnitId], references: [id])
   payrollRunEmployees PayrollRunEmployee[]
+  vacationLedgerEntries VacLedger[]
+  holidayLedgerEntries HolidayLedger[]
+  severanceRecords SeveranceRecord[]
 
   @@unique([tenantId, payrollUnitId, periodStart, periodEnd])//prevent duplicate payroll runs for same unit period per tenant
   @@map("payroll_run")
@@ -786,11 +795,48 @@ model PayrollLine {
   units                Decimal      @db.Decimal(6, 2)//hours from TimeEntry for a payroll period; salary 1 
   amount               Decimal      @db.Decimal(10, 2)
   earningType          EarningType @map("earning_type")
+  countsTowardHolidayPay Boolean @default(true) @map("counts_toward_holiday_pay")
+  countsTowardVacationAccrual Boolean @default(true) @map("counts_toward_vacation_accrual")
+  overtimeDetails      OvertimeDetails?
 
   payrollRunEmployee PayrollRunEmployee @relation(fields: [payrollRunEmployeeId], references: [id])
   jobAssignment      JobAssignment?     @relation(fields: [jobAssignmentId], references: [id])
 
   @@map("payroll_line")
+}
+
+/*Only overtime requires a completely separate child/extension model because of its volatile, event-driven math and compliance requirements.*/
+model OvertimeDetails{
+  id                   String       @id @default(cuid())
+  payrollLineId          String       @unique @map("payroll_line_id")
+  overtimeRate         Decimal      @db.Decimal(10, 2)
+  configId              String       @map("config_id")
+  periodType           OvertimePeriodType @default(WEEKLY) @map("period_type")
+  workDate             DateTime?    @map("work_date")
+  payrollLine          PayrollLine  @relation(fields: [payrollLineId], references: [id], onDelete: Cascade)
+  config               OvertimeConfig @relation(fields: [configId], references: [id])
+  regularRate               Decimal      @db.Decimal(10, 2)
+  overtimeHours             Decimal      @db.Decimal(6, 2)
+  totalAmount                Decimal      @db.Decimal(10, 2)
+}
+
+model OvertimeConfig{
+  id                   String       @id @default(cuid())
+  tenantId             String       @map("tenant_id")
+  provinceCode         ProvinceCode? @map("province_code")
+  description                 String //e.g., "1.5x after 8 hrs"
+  overtimeType         OvertimeType @map("overtime_type")
+  customMultiplier      Decimal?     @db.Decimal(4, 2) @map("custom_multiplier") //nullable for standard overtime types
+  thresholdHours       Decimal      @db.Decimal(6, 2)
+  createdAt            DateTime     @default(now()) @map("created_at")
+  updatedAt            DateTime     @updatedAt @map("updated_at")
+
+  tenant               Tenant       @relation(fields: [tenantId], references: [id])
+  overtimeDetails      OvertimeDetails[]
+
+  @@index([tenantId])
+  @@index([tenantId, provinceCode])
+  @@map("overtime_config")
 }
 
 model Deduction {
@@ -999,13 +1045,101 @@ model EarningCode {
   @@map("earning_codes")
 }
 
-model EmployeePolicy{
+model VacPolicy{
   id String @id @default(cuid())
   tenantId String @map("tenant_id")
   employeeId String @map("employee_id")
-  policyName String @map("policy_name")//e.g. "Vacation", "Sick Leave", "Health Insurance", etc.
-  policyValue Decimal @db.Decimal(10, 2) @map("policy_value")//e.g. 10% for vacation, $
+  vacRate Decimal @db.Decimal(5, 4) @map("vac_rate")//e.g. 0.04 for 4%
+  isAccrualBased Boolean @default(true) @map("is_accrual_based")//true = accrual based, false = lump sum
+  vacBalance Decimal @db.Decimal(10, 2) @map("vac_balance")//e.g. $1000.00
+  balanceUnit VacationBalanceUnit @default(AMOUNT) @map("balance_unit")
+  vacHoursBalance Decimal? @db.Decimal(8, 2) @map("vac_hours_balance")
+  accrualHoursPerPayPeriod Decimal? @db.Decimal(8, 4) @map("accrual_hours_per_pay_period")
+  accrualStartDate DateTime? @map("accrual_start_date")
+  payoutOnTermination Boolean @default(true) @map("payout_on_termination")
+  ledgerEntries VacLedger[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  employee Employee @relation(fields: [employeeId], references: [id])
+  @@unique([tenantId, employeeId], name: "unique_vacation_policy_per_employee")
+  @@map("vacation_policy")
 }
+
+model VacLedger{
+  id String @id @default(cuid())
+  tenantId String @map("tenant_id")
+  employeeId String @map("employee_id")
+  vacPolicyId String @map("vac_policy_id")
+  entryType VacationLedgerEntryType @map("entry_type")
+  effectiveDate DateTime @map("effective_date")
+  hours Decimal? @db.Decimal(8, 2)
+  amount Decimal @db.Decimal(10, 2) @map("amount")//positive = accrual, negative = usage
+  payRunId String? @map("payroll_run_id")
+  description String @map("description")
+  createdAt DateTime @default(now()) @map("created_at")
+  employee Employee @relation(fields: [employeeId], references: [id])
+  vacPolicy VacPolicy @relation(fields: [vacPolicyId], references: [id])
+  payrollRun PayrollRun? @relation(fields: [payRunId], references: [id])
+
+  @@index([tenantId, employeeId, effectiveDate])
+  @@map("vacation_ledger")
+}
+
+model HolidayPolicy {
+  id                    String           @id @default(cuid())
+  tenantId              String           @map("tenant_id")
+  provinceCode          ProvinceCode     @map("province_code")
+  method                HolidayPayMethod @map("method")
+  averageWindowWeeks    Int?             @default(4) @map("average_window_weeks")
+  fixedPercent          Decimal?         @db.Decimal(5, 4) @map("fixed_percent")
+  minimumEmploymentDays Int?             @map("minimum_employment_days")
+  includeVacationPay    Boolean          @default(false) @map("include_vacation_pay")
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
+
+  tenant                Tenant           @relation(fields: [tenantId], references: [id])
+  holidayLedgerEntries  HolidayLedger[]
+
+  @@unique([tenantId, provinceCode], name: "unique_holiday_policy_per_province")
+  @@map("holiday_policy")
+}
+
+model HolidayLedger {
+  id              String         @id @default(cuid())
+  tenantId        String         @map("tenant_id")
+  employeeId      String         @map("employee_id")
+  holidayPolicyId String         @map("holiday_policy_id")
+  payrollRunId    String?        @map("payroll_run_id")
+  holidayDate     DateTime       @map("holiday_date")
+  baseEarnings    Decimal        @db.Decimal(10, 2) @map("base_earnings")
+  hours           Decimal?       @db.Decimal(8, 2)
+  amount          Decimal        @db.Decimal(10, 2)
+  description     String?        @map("description")
+  createdAt       DateTime       @default(now()) @map("created_at")
+
+  employee        Employee       @relation(fields: [employeeId], references: [id])
+  holidayPolicy   HolidayPolicy  @relation(fields: [holidayPolicyId], references: [id])
+  payrollRun      PayrollRun?    @relation(fields: [payrollRunId], references: [id])
+
+  @@index([tenantId, employeeId, holidayDate])
+  @@map("holiday_ledger")
+}
+
+model SeveranceRecord{
+  id String @id @default(cuid())
+  payRunId String @map("payroll_run_id")
+  employeeId String @map("employee_id")
+  severanceType String @map("severance_type")
+  grossAmount Decimal @db.Decimal(10, 2) @map("gross_amount")
+  taxWithheld Decimal @db.Decimal(10, 2) @map("tax_withheld")
+  t4BoxCode Int @map("t4_box_code")//e.g. 66 eligible or 67 non-eligible retiring allce.
+  createdAt DateTime @default(now()) @map("created_at")
+  employee Employee @relation(fields: [employeeId], references: [id])
+  payrollRun PayrollRun @relation(fields: [payRunId], references: [id])
+  @@map("severance_record")
+}
+
+
 // ==========================================
 // ===== ENUMS (Lowercase for Postgres) =====
 // ==========================================
@@ -1035,7 +1169,6 @@ enum NameSource {
   SYSTEM @map("system")  //e.g., auto-generated based on rules such as first name variations plus last name etc.
 	@@map("conversational_name_source")
 }
-
 
 enum PhoneType {
   MOBILE @map("mobile")
@@ -1077,6 +1210,8 @@ enum PayType {
 enum EarningType {
   REGULAR @map("regular")
   OVERTIME @map("overtime")
+  HOLIDAY @map("holiday")
+  VACATION @map("vacation")
   BONUS @map("bonus")
   COMMISSION @map("commission")
   OTHER @map("other")
@@ -1279,21 +1414,43 @@ enum TaxCalculationMethod {
   @@map("tax_calculation_method")
 }
 
-enum VacationPolicy {
-  ACCRUAL @map("accrual") // Accrue vacation based on hours worked
-  CASH @map("cash") // Pay out vacation in a lump sum
-  @@map("vacation_policy")
-} 
-
-enum VacationAccrualMethod {
-  HOURS_WORKED @map("hours_worked") // Accrue vacation based on hours worked
-  PAY_EARNED @map("pay_earned") // Accrue vacation based on pay earned
-  @@map("vacation_accrual_method")
-}
-
 enum HolidayPayMethod {
-  STATUTORY @map("statutory") // Statutory holiday pay based on average daily earnings over past 4 weeks
-  AVERAGE @map("average") // Average daily earnings over a period
+  AVERAGE4WEEKS @map("statutory") // Statutory holiday pay based on average daily earnings over past 4 weeks
   FIXED @map("fixed") // Fixed amount per statutory holiday AB 5% of gross wages in 4 weeks prior to statutory holiday.
   @@map("holiday_pay_method")
+}
+
+enum OvertimePeriodType {
+  DAILY @map("daily")
+  WEEKLY @map("weekly")
+  HOLIDAY @map("holiday")
+  @@map("overtime_period_type")
+}
+
+enum OvertimeType {
+  STANDARD @map("standard") // e.g., 1.5x for hours over 40/week
+  DOUBLE @map("double") // e.g., 2x for hours over 60/week
+  CUSTOM @map("custom") // e.g., 1.75x for hours over 50/week defined by user.
+  @@map("overtime_type")
+}
+
+enum VacationBalanceUnit {
+  AMOUNT @map("amount")
+  HOURS @map("hours")
+  @@map("vacation_balance_unit")
+}
+
+enum VacationLedgerEntryType {
+  ACCRUAL @map("accrual")
+  USAGE @map("usage")
+  PAYOUT @map("payout")
+  ADJUSTMENT @map("adjustment")
+  @@map("vacation_ledger_entry_type")
+}
+
+enum SeveranceType {
+  RETIRING_DIRECT @map("retiring_direct") // paid 2 employee w/flat tax rate but w/o cpp/ei.
+  RETIRING_TRANSFER @map("retiring_transfer")//rollover to RRSP w/o the withheld.
+  SALARY_CONTINUATION @map("salary_continuation")//ordinary salary continuation w/regular tax tables, cpp, ei.
+  @@map("severance_type")
 }

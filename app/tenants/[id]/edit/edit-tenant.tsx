@@ -36,6 +36,7 @@ export default function EditTenantForm({
   const initialValues: TenantFormInput = useMemo(
     () => ({
       ...initialData,
+      payFrequency: initialData.payFrequency ?? "MONTHLY",
       periodBoundaryType: initialData.periodBoundaryType ?? "ANCHORED",
     }),
     [initialData],

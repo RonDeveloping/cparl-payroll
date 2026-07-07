@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { FieldValues, Path } from "react-hook-form";
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { inputGroupStyles, inputWithChangesStyles } from "@/constants/styles";
 import { useFormChangeContext } from "@/components/form/form-change-context";
@@ -15,7 +15,10 @@ interface DayOfMonthPickerWithChangesProps<TFormValues extends FieldValues> {
   placeholder?: string;
   defaultDay?: number | null;
   relativeName?: Path<TFormValues>;
-  relativeLabel?: string;
+}
+
+function startOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
 }
 
 export default function DayOfMonthPickerWithChanges<
@@ -27,7 +30,6 @@ export default function DayOfMonthPickerWithChanges<
   placeholder = "Choose a day (1-31)",
   defaultDay = 31,
   relativeName,
-  relativeLabel = "Relative days to payday",
 }: DayOfMonthPickerWithChangesProps<TFormValues>) {
   const { changes, showChanges, register } =
     useFormChangeContext<TFormValues>();
@@ -39,36 +41,48 @@ export default function DayOfMonthPickerWithChanges<
   const relativeRegistration = relativeName ? register(relativeName) : null;
   const hiddenInputRef = useRef<HTMLInputElement | null>(null);
   const hiddenRelativeInputRef = useRef<HTMLInputElement | null>(null);
+  const initializedRef = useRef(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [value, setValue] = useState("");
   const [relativeValue, setRelativeValue] = useState("");
+  const [visibleMonth, setVisibleMonth] = useState(() =>
+    startOfMonth(new Date()),
+  );
+  const [paydayMonth] = useState(() => startOfMonth(new Date()));
+  const [pickedMonthOffset, setPickedMonthOffset] = useState(0);
 
-  useEffect(() => {
+  const initializeFromHiddenInputs = () => {
+    if (initializedRef.current) return;
+
     const initial = hiddenInputRef.current?.value ?? "";
     const initialRelative = hiddenRelativeInputRef.current?.value ?? "";
 
     if (initialRelative) {
+      initializedRef.current = true;
       setRelativeValue(initialRelative);
       return;
     }
 
     if (initial) {
+      initializedRef.current = true;
       setValue(initial);
       return;
     }
 
     if (defaultDay == null) {
+      initializedRef.current = true;
       return;
     }
 
     const nextDefault = String(defaultDay);
+    initializedRef.current = true;
     setValue(nextDefault);
     registration.onChange({
       target: { name: registration.name, value: nextDefault },
       type: "change",
     });
-  }, []);
+  };
 
   useEffect(() => {
     const onClickOutside = (event: MouseEvent) => {
@@ -83,6 +97,44 @@ export default function DayOfMonthPickerWithChanges<
   }, []);
 
   const selectedDay = Number(value);
+  const showCalendarNavigation = Boolean(relativeRegistration);
+  const monthOffsetFromPayday =
+    (visibleMonth.getFullYear() - paydayMonth.getFullYear()) * 12 +
+    (visibleMonth.getMonth() - paydayMonth.getMonth());
+  const canGoPrevMonth = monthOffsetFromPayday > -1;
+  const canGoNextMonth = monthOffsetFromPayday < 1;
+
+  const getMonthRelationSentenceText = (offset: number) =>
+    offset < 0 ? "prior month" : offset > 0 ? "next month" : "the month";
+
+  const getDayLabel = (day: number) => {
+    if (day === 29) return "-3";
+    if (day === 30) return "-2";
+    if (day === 31) return "-1";
+    return String(day);
+  };
+
+  const getDaySentenceText = (dayValue: string) => {
+    if (dayValue === "31") return "Last day";
+    if (dayValue === "30") return "2nd-to-last day";
+    if (dayValue === "29") return "3rd-to-last day";
+    return `Day ${dayValue}`;
+  };
+
+  const monthRelationLabel =
+    monthOffsetFromPayday < 0 ? (
+      <>
+        The month <span className="underline">before</span> the payday
+      </>
+    ) : monthOffsetFromPayday > 0 ? (
+      <>
+        The month <span className="underline">after</span> the payday
+      </>
+    ) : (
+      <>
+        The month <span className="underline">of</span> the payday
+      </>
+    );
 
   const clearRelativeSelection = () => {
     if (!relativeRegistration) return;
@@ -97,22 +149,11 @@ export default function DayOfMonthPickerWithChanges<
     });
   };
 
-  const clearDaySelection = () => {
-    setValue("");
-    registration.onChange({
-      target: { name: registration.name, value: "" },
-      type: "change",
-    });
-    registration.onBlur({
-      target: { name: registration.name, value: "" },
-      type: "blur",
-    });
-  };
-
   const onSelectDay = (day: number) => {
     const nextValue = String(day);
     clearRelativeSelection();
     setValue(nextValue);
+    setPickedMonthOffset(monthOffsetFromPayday);
 
     registration.onChange({
       target: { name: registration.name, value: nextValue },
@@ -127,47 +168,13 @@ export default function DayOfMonthPickerWithChanges<
     setIsOpen(false);
   };
 
-  const updateRelativeValue = (nextValue: string) => {
-    if (!relativeRegistration) return;
-
-    if (nextValue === "") {
-      setRelativeValue("");
-      relativeRegistration.onChange({
-        target: { name: relativeRegistration.name, value: "" },
-        type: "change",
-      });
-      relativeRegistration.onBlur({
-        target: { name: relativeRegistration.name, value: "" },
-        type: "blur",
-      });
-      return;
-    }
-
-    const numericValue = Number(nextValue);
-    const clampedValue = String(Math.max(-31, Math.min(31, numericValue)));
-
-    clearDaySelection();
-    setRelativeValue(clampedValue);
-    relativeRegistration.onChange({
-      target: { name: relativeRegistration.name, value: clampedValue },
-      type: "change",
-    });
-    relativeRegistration.onBlur({
-      target: { name: relativeRegistration.name, value: clampedValue },
-      type: "blur",
-    });
-  };
-
-  const shiftRelativeValue = (delta: number) => {
-    const currentValue = relativeValue === "" ? 0 : Number(relativeValue);
-    updateRelativeValue(String(currentValue + delta));
-  };
-
   const displayValue =
     relativeValue !== ""
       ? `${relativeValue} day${relativeValue === "1" || relativeValue === "-1" ? "" : "s"} to payday`
       : value
-        ? `Day ${value}`
+        ? showCalendarNavigation
+          ? `${getDaySentenceText(value)} in ${getMonthRelationSentenceText(pickedMonthOffset)}`
+          : `${getDaySentenceText(value)} in a month`
         : placeholder;
 
   return (
@@ -190,6 +197,7 @@ export default function DayOfMonthPickerWithChanges<
         ref={(element) => {
           registration.ref(element);
           hiddenInputRef.current = element;
+          initializeFromHiddenInputs();
         }}
       />
 
@@ -201,6 +209,7 @@ export default function DayOfMonthPickerWithChanges<
           ref={(element) => {
             relativeRegistration.ref(element);
             hiddenRelativeInputRef.current = element;
+            initializeFromHiddenInputs();
           }}
         />
       )}
@@ -216,83 +225,66 @@ export default function DayOfMonthPickerWithChanges<
             value || relativeValue ? "text-slate-900" : "text-slate-400",
           )}
         >
-          <span>{displayValue}</span>
+          <span className="truncate whitespace-nowrap pr-2">
+            {displayValue}
+          </span>
           <ChevronDown className="h-4 w-4 text-slate-400" />
         </button>
 
         {isOpen && (
           <div className="absolute left-0 right-0 z-30 mt-2 w-full rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
-            {relativeRegistration && (
-              <div className="mb-3 space-y-1 px-1">
-                <div className="flex w-full items-center justify-between gap-0">
-                  {[-14, -7, -1].map((delta) => (
-                    <button
-                      key={delta}
-                      type="button"
-                      onClick={() => shiftRelativeValue(delta)}
-                      className="rounded-md px-1 py-1 text-[11px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                      aria-label={`${delta} days`}
-                    >
-                      {delta}
-                    </button>
-                  ))}
+            {showCalendarNavigation && (
+              <div className="mb-3 px-1">
+                <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-100/80 px-2 py-1.5">
+                  <button
+                    type="button"
+                    disabled={!canGoPrevMonth}
+                    onClick={() =>
+                      canGoPrevMonth &&
+                      setVisibleMonth(
+                        new Date(
+                          visibleMonth.getFullYear(),
+                          visibleMonth.getMonth() - 1,
+                          1,
+                        ),
+                      )
+                    }
+                    className="rounded-md px-2 py-1 text-sm font-semibold text-slate-700 hover:bg-white disabled:opacity-40"
+                    aria-label="Previous month"
+                  >
+                    {"<"}
+                  </button>
 
-                  <div className="flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-slate-100/80 px-1 py-1">
-                    <button
-                      type="button"
-                      onClick={() => shiftRelativeValue(-1)}
-                      className="rounded-md p-0.5 text-slate-700 hover:bg-white"
-                      aria-label="Decrease relative days"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-
-                    <input
-                      type="number"
-                      min={-31}
-                      max={31}
-                      value={relativeValue}
-                      onChange={(event) =>
-                        updateRelativeValue(event.target.value)
-                      }
-                      placeholder="0"
-                      className="w-16 rounded-md border border-slate-300 bg-white px-2 py-1 text-center text-sm font-semibold text-slate-900"
-                      aria-label={relativeLabel}
-                    />
-
-                    <button
-                      type="button"
-                      onClick={() => shiftRelativeValue(1)}
-                      className="rounded-md p-0.5 text-slate-700 hover:bg-white"
-                      aria-label="Increase relative days"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
+                  <div className="text-center text-sm font-semibold text-slate-900">
+                    {monthRelationLabel}
                   </div>
 
-                  {[1, 7, 14].map((delta) => (
-                    <button
-                      key={delta}
-                      type="button"
-                      onClick={() => shiftRelativeValue(delta)}
-                      className="rounded-md px-1 py-1 text-[11px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                      aria-label={`+${delta} days`}
-                    >
-                      +{delta}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="text-center text-xs text-slate-500">
-                  {relativeLabel}
+                  <button
+                    type="button"
+                    disabled={!canGoNextMonth}
+                    onClick={() =>
+                      canGoNextMonth &&
+                      setVisibleMonth(
+                        new Date(
+                          visibleMonth.getFullYear(),
+                          visibleMonth.getMonth() + 1,
+                          1,
+                        ),
+                      )
+                    }
+                    className="rounded-md px-2 py-1 text-sm font-semibold text-slate-700 hover:bg-white disabled:opacity-40"
+                    aria-label="Next month"
+                  >
+                    {">"}
+                  </button>
                 </div>
               </div>
             )}
 
-            <div className="grid w-full grid-cols-8 gap-0 px-1">
+            <div className={cn("grid w-full gap-0 px-1", "grid-cols-8")}>
               {Array.from({ length: 31 }).map((_, index) => {
                 const day = index + 1;
-                const selected = day === selectedDay;
+                const selected = relativeValue === "" && day === selectedDay;
 
                 return (
                   <button
@@ -306,7 +298,7 @@ export default function DayOfMonthPickerWithChanges<
                         : "text-slate-700 hover:bg-slate-100",
                     )}
                   >
-                    {day}
+                    {getDayLabel(day)}
                   </button>
                 );
               })}

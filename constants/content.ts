@@ -197,7 +197,7 @@ export const tenantFieldContent = {
   calendarPeriodEndDay: {
     term: "Pay period end",
     description:
-      "Set days to payday above or pick a calendar day below. Selecting one clears the other. If a month has fewer days than selected, the last day is used.",
+      "Pick a calendar day for period end. If a month has fewer days than selected, the last day is used.",
   },
   secondBoundaryAnchorDay: {
     term: "Second period anchor day",

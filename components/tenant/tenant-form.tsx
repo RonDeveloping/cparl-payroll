@@ -1,7 +1,7 @@
 "use client";
 // components/tenant/tenant-form.tsx
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FieldErrors } from "react-hook-form";
 import { TenantFormInput } from "@/lib/validations/tenant-schema";
 import FormSection from "@/components/form/form-section";
@@ -21,6 +21,7 @@ import {
 } from "@/utils/validators/postalCodeProgress";
 import SelectWithChanges from "@/components/form/select-with-changes";
 import DayOfMonthPickerWithChanges from "@/components/form/day-of-month-picker-with-changes";
+import DayOfWeekPickerWithChanges from "@/components/form/day-of-week-picker-with-changes";
 import { tenantFieldContent } from "@/constants/content";
 
 interface TenantFormProps {
@@ -80,16 +81,20 @@ export function TenantForm({
   const hasSelectedPayFrequency = Boolean(selectedPayFrequency);
   const isSemiMonthly = selectedPayFrequency === "SEMIMONTHLY";
   const isMonthly = selectedPayFrequency === "MONTHLY";
-  const showAnchoredWeekday =
-    selectedPayFrequency === "WEEKLY" || selectedPayFrequency === "BIWEEKLY";
-  const showAnchoredDay = selectedPayFrequency === "SEMIMONTHLY";
-  const showPayPeriodEndPicker = isMonthly || isSemiMonthly;
-  const showFirstPaydayOffsetDays =
-    selectedPayFrequency === "WEEKLY" || selectedPayFrequency === "BIWEEKLY";
-  const showFirstPaydayWeekday =
-    selectedPayFrequency === "WEEKLY" ||
-    selectedPayFrequency === "BIWEEKLY" ||
-    selectedPayFrequency === "SEMIMONTHLY";
+  const isBiweekly = selectedPayFrequency === "BIWEEKLY";
+  const isWeekly = selectedPayFrequency === "WEEKLY";
+  const showAnchoredDay = false;
+  const showPayPeriodEndPicker = isMonthly;
+  const unitNamePlaceholder =
+    selectedPayFrequency === "MONTHLY"
+      ? "e.g. Main Monthly or Monthly_HQ"
+      : selectedPayFrequency === "SEMIMONTHLY"
+        ? "e.g. Main Semi-Monthly or SemiMonthly_HQ"
+        : selectedPayFrequency === "BIWEEKLY"
+          ? "e.g. Main Biweekly or Biweekly_HQ"
+          : selectedPayFrequency === "WEEKLY"
+            ? "e.g. Main Weekly or Weekly_HQ"
+            : "e.g. Main Payroll or Payroll_HQ";
 
   const handlePostalCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPostalProgress(getPostalCodeProgress(e.target.value || ""));
@@ -98,6 +103,15 @@ export function TenantForm({
   const handlePostalCodeBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     setPostalProgress(getPostalCodeProgress(e.target.value || ""));
   };
+
+  useEffect(() => {
+    if (!(isBiweekly || isWeekly)) return;
+
+    const currentWeekOffset = getFieldValue("firstPaydayOffsetDays");
+    if (currentWeekOffset === "" || currentWeekOffset == null) {
+      setFieldValue("firstPaydayOffsetDays", "-7");
+    }
+  }, [getFieldValue, isBiweekly, isWeekly, setFieldValue]);
 
   return (
     <>
@@ -285,7 +299,7 @@ export function TenantForm({
                   />
                 }
                 name="payrollUnitName"
-                placeholder="e.g. Main Weekly or Biweekly_HQ"
+                placeholder={unitNamePlaceholder}
                 rules={{}}
                 error={errors.payrollUnitName?.message}
               />
@@ -321,8 +335,108 @@ export function TenantForm({
                   placeholder="Choose a day (1-31)"
                   defaultDay={null}
                   relativeName="firstPaydayOffsetDays"
-                  relativeLabel="Set days to payday above or pick a calendar below"
                 />
+              )}
+
+              {(isBiweekly || isWeekly) && (
+                <>
+                  <DayOfWeekPickerWithChanges<TenantFormInput>
+                    label={
+                      <Clarification
+                        term="Payday"
+                        description={
+                          tenantFieldContent.firstPaydayWeekday.description
+                        }
+                      />
+                    }
+                    name="firstPaydayWeekday"
+                    error={errors.firstPaydayWeekday?.message}
+                    defaultWeekday="MONDAY"
+                  />
+
+                  <DayOfWeekPickerWithChanges<TenantFormInput>
+                    label={
+                      <Clarification
+                        term="Pay period end"
+                        description="Pick a weekday and a relative week (prior, same, or next) compared with payday week."
+                      />
+                    }
+                    name="firstBoundaryAnchorWeekday"
+                    error={
+                      errors.firstBoundaryAnchorWeekday?.message ||
+                      errors.firstPaydayOffsetDays?.message
+                    }
+                    defaultWeekday="FRIDAY"
+                    relativeWeekName="firstPaydayOffsetDays"
+                    defaultRelativeWeekOffsetDays={-7}
+                  />
+                </>
+              )}
+
+              {isSemiMonthly && (
+                <>
+                  <DayOfMonthPickerWithChanges<TenantFormInput>
+                    label={
+                      <Clarification
+                        term="First payday"
+                        description={
+                          tenantFieldContent.monthlyPaydayDay.description
+                        }
+                      />
+                    }
+                    name="monthlyPaydayDay"
+                    error={errors.monthlyPaydayDay?.message}
+                    placeholder="Choose a day (1-31)"
+                    defaultDay={15}
+                  />
+
+                  <DayOfMonthPickerWithChanges<TenantFormInput>
+                    label={
+                      <Clarification
+                        term="First pay period end"
+                        description={
+                          tenantFieldContent.firstBoundaryAnchorDay.description
+                        }
+                      />
+                    }
+                    name="firstBoundaryAnchorDay"
+                    error={errors.firstBoundaryAnchorDay?.message}
+                    placeholder="Choose a day (1-31)"
+                    defaultDay={14}
+                    relativeName="firstPaydayOffsetDays"
+                  />
+
+                  <DayOfMonthPickerWithChanges<TenantFormInput>
+                    label={
+                      <Clarification
+                        term="Second payday"
+                        description={
+                          tenantFieldContent.secondBoundaryAnchorDay.description
+                        }
+                      />
+                    }
+                    name="secondBoundaryAnchorDay"
+                    error={errors.secondBoundaryAnchorDay?.message}
+                    placeholder="Choose a day (1-31)"
+                    defaultDay={30}
+                  />
+
+                  <DayOfMonthPickerWithChanges<TenantFormInput>
+                    label={
+                      <Clarification
+                        term="Second pay period end"
+                        description={
+                          tenantFieldContent.calendarPeriodEndDay.description
+                        }
+                      />
+                    }
+                    name="calendarPeriodEndDay"
+                    error={errors.calendarPeriodEndDay?.message}
+                    placeholder="Choose a day (1-31)"
+                    defaultDay={29}
+                    relativeName="secondPaydayOffsetDays"
+                  />
+                </>
               )}
 
               {showAnchoredDay && (
@@ -341,132 +455,6 @@ export function TenantForm({
                   rules={{}}
                   error={errors.firstBoundaryAnchorDay?.message}
                 />
-              )}
-
-              {showAnchoredWeekday && (
-                <SelectWithChanges<TenantFormInput>
-                  label={
-                    <Clarification
-                      term={tenantFieldContent.firstBoundaryAnchorWeekday.term}
-                      description={
-                        tenantFieldContent.firstBoundaryAnchorWeekday
-                          .description
-                      }
-                    />
-                  }
-                  name="firstBoundaryAnchorWeekday"
-                  error={errors.firstBoundaryAnchorWeekday?.message}
-                  options={[
-                    { label: "Not set", value: "" },
-                    { label: "Monday", value: "MONDAY" },
-                    { label: "Tuesday", value: "TUESDAY" },
-                    { label: "Wednesday", value: "WEDNESDAY" },
-                    { label: "Thursday", value: "THURSDAY" },
-                    { label: "Friday", value: "FRIDAY" },
-                    { label: "Saturday", value: "SATURDAY" },
-                    { label: "Sunday", value: "SUNDAY" },
-                  ]}
-                />
-              )}
-
-              {showFirstPaydayOffsetDays && (
-                <InputWithChanges<TenantFormInput>
-                  label={
-                    <Clarification
-                      term={tenantFieldContent.firstPaydayOffsetDays.term}
-                      description={
-                        tenantFieldContent.firstPaydayOffsetDays.description
-                      }
-                    />
-                  }
-                  name="firstPaydayOffsetDays"
-                  placeholder="e.g. 0"
-                  type="number"
-                  rules={{}}
-                  error={errors.firstPaydayOffsetDays?.message}
-                />
-              )}
-
-              {showFirstPaydayWeekday && (
-                <SelectWithChanges<TenantFormInput>
-                  label={
-                    <Clarification
-                      term={tenantFieldContent.firstPaydayWeekday.term}
-                      description={
-                        tenantFieldContent.firstPaydayWeekday.description
-                      }
-                    />
-                  }
-                  name="firstPaydayWeekday"
-                  error={errors.firstPaydayWeekday?.message}
-                  options={[
-                    { label: "Not set", value: "" },
-                    { label: "Monday", value: "MONDAY" },
-                    { label: "Tuesday", value: "TUESDAY" },
-                    { label: "Wednesday", value: "WEDNESDAY" },
-                    { label: "Thursday", value: "THURSDAY" },
-                    { label: "Friday", value: "FRIDAY" },
-                    { label: "Saturday", value: "SATURDAY" },
-                    { label: "Sunday", value: "SUNDAY" },
-                  ]}
-                />
-              )}
-
-              {isSemiMonthly && (
-                <>
-                  <InputWithChanges<TenantFormInput>
-                    label={
-                      <Clarification
-                        term={tenantFieldContent.secondBoundaryAnchorDay.term}
-                        description={
-                          tenantFieldContent.secondBoundaryAnchorDay.description
-                        }
-                      />
-                    }
-                    name="secondBoundaryAnchorDay"
-                    placeholder="e.g. 16"
-                    type="number"
-                    rules={{}}
-                    error={errors.secondBoundaryAnchorDay?.message}
-                  />
-                  <InputWithChanges<TenantFormInput>
-                    label={
-                      <Clarification
-                        term={tenantFieldContent.secondPaydayOffsetDays.term}
-                        description={
-                          tenantFieldContent.secondPaydayOffsetDays.description
-                        }
-                      />
-                    }
-                    name="secondPaydayOffsetDays"
-                    placeholder="e.g. 0"
-                    type="number"
-                    rules={{}}
-                    error={errors.secondPaydayOffsetDays?.message}
-                  />
-                  <SelectWithChanges<TenantFormInput>
-                    label={
-                      <Clarification
-                        term={tenantFieldContent.secondPaydayWeekday.term}
-                        description={
-                          tenantFieldContent.secondPaydayWeekday.description
-                        }
-                      />
-                    }
-                    name="secondPaydayWeekday"
-                    error={errors.secondPaydayWeekday?.message}
-                    options={[
-                      { label: "Not set", value: "" },
-                      { label: "Monday", value: "MONDAY" },
-                      { label: "Tuesday", value: "TUESDAY" },
-                      { label: "Wednesday", value: "WEDNESDAY" },
-                      { label: "Thursday", value: "THURSDAY" },
-                      { label: "Friday", value: "FRIDAY" },
-                      { label: "Saturday", value: "SATURDAY" },
-                      { label: "Sunday", value: "SUNDAY" },
-                    ]}
-                  />
-                </>
               )}
             </>
           )}

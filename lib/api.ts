@@ -5,8 +5,17 @@ import type { TenantSummaryDto } from "@/lib/dto/tenant";
 
 export async function getTenants(): Promise<TenantSummaryDto[]> {
   const res = await fetch("/api/tenants");
-  if (!res.ok) throw new Error("Failed to fetch tenants");
-  return res.json();
+  if (res.status === 401) {
+    // Treat unauthenticated state as no accessible tenants.
+    return [];
+  }
+
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(payload.error || "Failed to fetch tenants");
+  }
+
+  return Array.isArray(payload) ? payload : [];
 }
 
 export async function activateAccount(token: string) {

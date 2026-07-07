@@ -114,18 +114,9 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
       ? "/tenants"
       : "/auth/login";
   const homeTitle = isCreatingTenant ? "Payments" : "Home";
-  const iconLinkClass = cn(
-    navbarStyles.iconLink,
-    !isAuthenticated && navbarStyles.iconLinkDisabled,
-  );
-  const iconLinkPrimaryClass = cn(
-    navbarStyles.iconLinkPrimary,
-    !isAuthenticated && navbarStyles.iconLinkPrimaryDisabled,
-  );
-  const settingsButtonClass = cn(
-    navbarStyles.settingsMenuButton,
-    !isAuthenticated && navbarStyles.settingsMenuButtonDisabled,
-  );
+  const iconLinkClass = cn(navbarStyles.iconLink);
+  const iconLinkPrimaryClass = cn(navbarStyles.iconLinkPrimary);
+  const settingsButtonClass = cn(navbarStyles.settingsMenuButton);
 
   // Determine final visibility
   const shouldShow = !isScrolledDown || isHovered;
@@ -201,7 +192,13 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
               type="button"
               title={createTitle}
               className={iconLinkPrimaryClass}
-              onClick={() => setIsCreateMenuOpen((open) => !open)}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  router.push("/auth/login");
+                  return;
+                }
+                setIsCreateMenuOpen((open) => !open);
+              }}
               aria-expanded={isCreateMenuOpen}
             >
               <Plus className="w-6 h-6" />
@@ -303,7 +300,13 @@ export default function Navbar({ user }: { user: NavbarUser | null }) {
               type="button"
               title="Settings"
               className={settingsButtonClass}
-              onClick={() => setIsSettingsOpen((open) => !open)}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  router.push("/auth/login");
+                  return;
+                }
+                setIsSettingsOpen((open) => !open);
+              }}
               aria-expanded={isSettingsOpen}
             >
               <Settings className="w-6 h-6" />
