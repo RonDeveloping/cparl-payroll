@@ -37,7 +37,6 @@ export default function EditTenantForm({
     () => ({
       ...initialData,
       payFrequency: initialData.payFrequency ?? "MONTHLY",
-      periodBoundaryType: initialData.periodBoundaryType ?? "ANCHORED",
     }),
     [initialData],
   );
@@ -74,8 +73,6 @@ export default function EditTenantForm({
         {
           ...initialValues,
           ...parsedDraft,
-          periodBoundaryType:
-            parsedDraft.periodBoundaryType ?? initialValues.periodBoundaryType,
           address: {
             ...initialValues.address,
             ...(parsedDraft.address ?? {}),
@@ -93,10 +90,6 @@ export default function EditTenantForm({
   const watchedCoreName = useWatch({ control, name: "coreName" });
   const watchedOperatingName = useWatch({ control, name: "operatingName" });
   const watchedPayFrequency = useWatch({ control, name: "payFrequency" });
-  const watchedPeriodBoundaryType = useWatch({
-    control,
-    name: "periodBoundaryType",
-  });
 
   useEffect(() => {
     // Once user edits DBA, stop auto-sync and preserve their explicit value.
@@ -202,7 +195,6 @@ export default function EditTenantForm({
             errors={errors}
             showMembership={isNew}
             payFrequency={watchedPayFrequency}
-            periodBoundaryType={watchedPeriodBoundaryType}
             getFieldValue={(fieldName) => getValues(fieldName)}
             setFieldValue={(fieldName, value) =>
               setValue(fieldName, value, {

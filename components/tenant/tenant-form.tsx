@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { FieldErrors } from "react-hook-form";
+import { Path } from "react-hook-form";
 import { TenantFormInput } from "@/lib/validations/tenant-schema";
 import FormSection from "@/components/form/form-section";
 import InputWithChanges from "@/components/form/input-with-changes";
@@ -21,16 +22,15 @@ import {
 } from "@/utils/validators/postalCodeProgress";
 import SelectWithChanges from "@/components/form/select-with-changes";
 import DayOfMonthPickerWithChanges from "@/components/form/day-of-month-picker-with-changes";
-import DayOfWeekPickerWithChanges from "@/components/form/day-of-week-picker-with-changes";
+import DayOfWeekPickerWithChanges from "../form/day-of-week-picker-with-changes";
 import { tenantFieldContent } from "@/constants/content";
 
 interface TenantFormProps {
   errors: FieldErrors<TenantFormInput>;
   showMembership?: boolean;
   payFrequency?: TenantFormInput["payFrequency"];
-  periodBoundaryType?: TenantFormInput["periodBoundaryType"];
-  getFieldValue: (fieldName: string) => unknown;
-  setFieldValue: (fieldName: string, value: string) => void;
+  getFieldValue: (fieldName: Path<TenantFormInput>) => unknown;
+  setFieldValue: (fieldName: Path<TenantFormInput>, value: string) => void;
 }
 
 const TENANT_ADDRESS_FIELDS: MailingAddressField<TenantFormInput>[] = [
@@ -61,7 +61,6 @@ export function TenantForm({
   errors,
   showMembership,
   payFrequency,
-  periodBoundaryType,
   getFieldValue,
   setFieldValue,
 }: TenantFormProps) {
@@ -107,9 +106,9 @@ export function TenantForm({
   useEffect(() => {
     if (!(isBiweekly || isWeekly)) return;
 
-    const currentWeekOffset = getFieldValue("firstPaydayOffsetDays");
+    const currentWeekOffset = getFieldValue("boundaryShift");
     if (currentWeekOffset === "" || currentWeekOffset == null) {
-      setFieldValue("firstPaydayOffsetDays", "-7");
+      setFieldValue("boundaryShift", "-1");
     }
   }, [getFieldValue, isBiweekly, isWeekly, setFieldValue]);
 
@@ -308,14 +307,12 @@ export function TenantForm({
                 <DayOfMonthPickerWithChanges<TenantFormInput>
                   label={
                     <Clarification
-                      term={tenantFieldContent.monthlyPaydayDay.term}
-                      description={
-                        tenantFieldContent.monthlyPaydayDay.description
-                      }
+                      term={tenantFieldContent.payday.term}
+                      description={tenantFieldContent.payday.description}
                     />
                   }
-                  name="monthlyPaydayDay"
-                  error={errors.monthlyPaydayDay?.message}
+                  name="payday"
+                  error={errors.payday?.message}
                   placeholder="Choose a day (1-31)"
                   defaultDay={31}
                 />
@@ -324,17 +321,17 @@ export function TenantForm({
                 <DayOfMonthPickerWithChanges<TenantFormInput>
                   label={
                     <Clarification
-                      term={tenantFieldContent.calendarPeriodEndDay.term}
+                      term={tenantFieldContent.periodEndDayMonthly.term}
                       description={
-                        tenantFieldContent.calendarPeriodEndDay.description
+                        tenantFieldContent.periodEndDayMonthly.description
                       }
                     />
                   }
-                  name="calendarPeriodEndDay"
-                  error={errors.calendarPeriodEndDay?.message}
-                  placeholder="Choose a day (1-31)"
+                  name="periodEndDay"
+                  error={errors.periodEndDay?.message}
+                  placeholder="Choose a day (1-28, or -1 to -3 for month-end days)"
                   defaultDay={null}
-                  relativeName="firstPaydayOffsetDays"
+                  monthShiftName="boundaryShift"
                 />
               )}
 
@@ -344,13 +341,11 @@ export function TenantForm({
                     label={
                       <Clarification
                         term="Payday"
-                        description={
-                          tenantFieldContent.firstPaydayWeekday.description
-                        }
+                        description={tenantFieldContent.payWeekday.description}
                       />
                     }
-                    name="firstPaydayWeekday"
-                    error={errors.firstPaydayWeekday?.message}
+                    name="payWeekday"
+                    error={errors.payWeekday?.message}
                     defaultWeekday="MONDAY"
                   />
 
@@ -361,14 +356,14 @@ export function TenantForm({
                         description="Pick a weekday and a relative week (prior, same, or next) compared with payday week."
                       />
                     }
-                    name="firstBoundaryAnchorWeekday"
+                    name="periodEndWeekday"
                     error={
-                      errors.firstBoundaryAnchorWeekday?.message ||
-                      errors.firstPaydayOffsetDays?.message
+                      errors.periodEndWeekday?.message ||
+                      errors.boundaryShift?.message
                     }
                     defaultWeekday="FRIDAY"
-                    relativeWeekName="firstPaydayOffsetDays"
-                    defaultRelativeWeekOffsetDays={-7}
+                    relativeWeekName="boundaryShift"
+                    defaultRelativeWeekShift={-1}
                   />
                 </>
               )}
@@ -379,13 +374,11 @@ export function TenantForm({
                     label={
                       <Clarification
                         term="First payday"
-                        description={
-                          tenantFieldContent.monthlyPaydayDay.description
-                        }
+                        description={tenantFieldContent.payday.description}
                       />
                     }
-                    name="monthlyPaydayDay"
-                    error={errors.monthlyPaydayDay?.message}
+                    name="payday"
+                    error={errors.payday?.message}
                     placeholder="Choose a day (1-31)"
                     defaultDay={15}
                   />
@@ -395,28 +388,26 @@ export function TenantForm({
                       <Clarification
                         term="First pay period end"
                         description={
-                          tenantFieldContent.firstBoundaryAnchorDay.description
+                          tenantFieldContent.periodEndDay.description
                         }
                       />
                     }
-                    name="firstBoundaryAnchorDay"
-                    error={errors.firstBoundaryAnchorDay?.message}
-                    placeholder="Choose a day (1-31)"
+                    name="periodEndDay"
+                    error={errors.periodEndDay?.message}
+                    placeholder="Choose a day (1-28, or -1 to -3 for month-end days)"
                     defaultDay={14}
-                    relativeName="firstPaydayOffsetDays"
+                    monthShiftName="boundaryShift"
                   />
 
                   <DayOfMonthPickerWithChanges<TenantFormInput>
                     label={
                       <Clarification
                         term="Second payday"
-                        description={
-                          tenantFieldContent.secondBoundaryAnchorDay.description
-                        }
+                        description={tenantFieldContent.payday2.description}
                       />
                     }
-                    name="secondBoundaryAnchorDay"
-                    error={errors.secondBoundaryAnchorDay?.message}
+                    name="payday2"
+                    error={errors.payday2?.message}
                     placeholder="Choose a day (1-31)"
                     defaultDay={30}
                   />
@@ -426,15 +417,15 @@ export function TenantForm({
                       <Clarification
                         term="Second pay period end"
                         description={
-                          tenantFieldContent.calendarPeriodEndDay.description
+                          tenantFieldContent.periodEndDay2.description
                         }
                       />
                     }
-                    name="calendarPeriodEndDay"
-                    error={errors.calendarPeriodEndDay?.message}
+                    name="periodEndDay2"
+                    error={errors.periodEndDay2?.message}
                     placeholder="Choose a day (1-31)"
                     defaultDay={29}
-                    relativeName="secondPaydayOffsetDays"
+                    monthShiftName="boundaryShift2"
                   />
                 </>
               )}
@@ -443,17 +434,15 @@ export function TenantForm({
                 <InputWithChanges<TenantFormInput>
                   label={
                     <Clarification
-                      term={tenantFieldContent.firstBoundaryAnchorDay.term}
-                      description={
-                        tenantFieldContent.firstBoundaryAnchorDay.description
-                      }
+                      term={tenantFieldContent.periodEndDay.term}
+                      description={tenantFieldContent.periodEndDay.description}
                     />
                   }
-                  name="firstBoundaryAnchorDay"
+                  name="periodEndDay"
                   placeholder="e.g. 1"
                   type="number"
                   rules={{}}
-                  error={errors.firstBoundaryAnchorDay?.message}
+                  error={errors.periodEndDay?.message}
                 />
               )}
             </>

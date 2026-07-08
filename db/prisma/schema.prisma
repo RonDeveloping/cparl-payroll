@@ -3,6 +3,7 @@
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
   provider = "postgresql"
 }
@@ -11,62 +12,61 @@ datasource db {
 // ===== Billing/Subscription service  =====
 // ==========================================
 model ServicePlan {
-  id            String    @id @default(cuid())
-  displayName   String    @map("display_name")
-  description   String?
-  monthlyPrice  Decimal   @db.Decimal(10, 2) @map("monthly_price")
-  yearlyPrice   Decimal   @db.Decimal(10, 2) @map("yearly_price")
-  trialDays     Int       @default(0) @map("trial_days")
-  maxEmployees  Int?      @map("max_employees")         // null = unlimited
-  isActive      Boolean   @default(true) @map("is_active")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  id           String   @id @default(cuid())
+  displayName  String   @map("display_name")
+  description  String?
+  monthlyPrice Decimal  @map("monthly_price") @db.Decimal(10, 2)
+  yearlyPrice  Decimal  @map("yearly_price") @db.Decimal(10, 2)
+  trialDays    Int      @default(0) @map("trial_days")
+  maxEmployees Int?     @map("max_employees") // null = unlimited
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@map("service_plan")
 }
 
-
 model BillingCustomer {
-  id                    String   @id @default(cuid())
-  tenantId              String   @unique @map("tenant_id")
-  billingEmail          String?  @map("billing_email")
-  externalCustomerId    String?  @unique @map("external_customer_id")
-  isActive              Boolean  @default(true) @map("is_active")
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  id                 String   @id @default(cuid())
+  tenantId           String   @unique @map("tenant_id")
+  billingEmail       String?  @map("billing_email")
+  externalCustomerId String?  @unique @map("external_customer_id")
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
-  invoices              BillingInvoice[]
-  paymentTransactions   PaymentTransaction[]
+  invoices            BillingInvoice[]
+  paymentTransactions PaymentTransaction[]
 
   @@index([tenantId])
   @@map("billing_customer")
 }
 
 model BillingInvoice {
-  id                    String            @id @default(cuid())
-  billingCustomerId     String            @map("billing_customer_id")
-  tenantId              String            @map("tenant_id")
-  invoiceNumber         String            @unique @map("invoice_number")
-  status                InvoiceStatus     @default(DRAFT) @map("status")
-  billingInterval       BillingInterval   @map("billing_interval")
-  periodStart           DateTime          @map("period_start")
-  periodEnd             DateTime          @map("period_end")
-  currency              String            @default("CAD") @map("currency")
-  subtotal              Decimal           @db.Decimal(12, 2)
-  taxTotal              Decimal           @db.Decimal(12, 2) @map("tax_total")
-  total                 Decimal           @db.Decimal(12, 2)
-  amountPaid            Decimal           @default(0) @db.Decimal(12, 2) @map("amount_paid")
-  dueDate               DateTime?         @map("due_date")
-  issuedAt              DateTime?         @map("issued_at")
-  paidAt                DateTime?         @map("paid_at")
-  voidedAt              DateTime?         @map("voided_at")
-  externalInvoiceId     String?           @map("external_invoice_id")
-  createdAt             DateTime          @default(now()) @map("created_at")
-  updatedAt             DateTime          @updatedAt @map("updated_at")
+  id                String          @id @default(cuid())
+  billingCustomerId String          @map("billing_customer_id")
+  tenantId          String          @map("tenant_id")
+  invoiceNumber     String          @unique @map("invoice_number")
+  status            InvoiceStatus   @default(DRAFT) @map("status")
+  billingInterval   BillingInterval @map("billing_interval")
+  periodStart       DateTime        @map("period_start")
+  periodEnd         DateTime        @map("period_end")
+  currency          String          @default("CAD") @map("currency")
+  subtotal          Decimal         @db.Decimal(12, 2)
+  taxTotal          Decimal         @map("tax_total") @db.Decimal(12, 2)
+  total             Decimal         @db.Decimal(12, 2)
+  amountPaid        Decimal         @default(0) @map("amount_paid") @db.Decimal(12, 2)
+  dueDate           DateTime?       @map("due_date")
+  issuedAt          DateTime?       @map("issued_at")
+  paidAt            DateTime?       @map("paid_at")
+  voidedAt          DateTime?       @map("voided_at")
+  externalInvoiceId String?         @map("external_invoice_id")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
 
-  billingCustomer       BillingCustomer   @relation(fields: [billingCustomerId], references: [id], onDelete: Cascade)
-  lineItems             BillingInvoiceLine[]
-  paymentTransactions   PaymentTransaction[]
+  billingCustomer     BillingCustomer      @relation(fields: [billingCustomerId], references: [id], onDelete: Cascade)
+  lineItems           BillingInvoiceLine[]
+  paymentTransactions PaymentTransaction[]
 
   @@index([tenantId, status])
   @@index([billingCustomerId, status])
@@ -75,15 +75,15 @@ model BillingInvoice {
 
 model BillingInvoiceLine {
   id               String   @id @default(cuid())
-  billingInvoiceId  String   @map("billing_invoice_id")
-  planId            String?  @map("plan_id")
-  description       String
-  quantity          Decimal  @default(1) @db.Decimal(10, 2)
-  unitPrice         Decimal  @db.Decimal(12, 2) @map("unit_price")
-  amount            Decimal  @db.Decimal(12, 2)
-  createdAt         DateTime @default(now()) @map("created_at")
+  billingInvoiceId String   @map("billing_invoice_id")
+  planId           String?  @map("plan_id")
+  description      String
+  quantity         Decimal  @default(1) @db.Decimal(10, 2)
+  unitPrice        Decimal  @map("unit_price") @db.Decimal(12, 2)
+  amount           Decimal  @db.Decimal(12, 2)
+  createdAt        DateTime @default(now()) @map("created_at")
 
-  billingInvoice    BillingInvoice @relation(fields: [billingInvoiceId], references: [id], onDelete: Cascade)
+  billingInvoice BillingInvoice @relation(fields: [billingInvoiceId], references: [id], onDelete: Cascade)
 
   @@index([billingInvoiceId])
   @@index([planId])
@@ -91,24 +91,24 @@ model BillingInvoiceLine {
 }
 
 model PaymentTransaction {
-  id                    String              @id @default(cuid())
-  billingCustomerId     String              @map("billing_customer_id")
-  billingInvoiceId      String?             @map("billing_invoice_id")
-  tenantId              String              @map("tenant_id")
-  amount                Decimal             @db.Decimal(12, 2)
-  currency              String              @default("CAD") @map("currency")
+  id                    String            @id @default(cuid())
+  billingCustomerId     String            @map("billing_customer_id")
+  billingInvoiceId      String?           @map("billing_invoice_id")
+  tenantId              String            @map("tenant_id")
+  amount                Decimal           @db.Decimal(12, 2)
+  currency              String            @default("CAD") @map("currency")
   paymentMethodType     PaymentMethodType @default(CARD) @map("payment_method_type")
-  status                PaymentStatus       @default(PENDING) @map("status")
-  provider              PaymentProvider     @map("provider")
-  cachedPaymentDetails Json?                @map("payment_method_snapshot") // card example: {"providerPaymentMethodId":"pm_xxx","cardBrand":"visa","cardLast4":"4242"}; PAP example: {"providerPaymentMethodId":"ba_xxx","accountLast4":"6789","institutionNumber":1,"branchNumber":23456}
-  providerTransactionId String?             @unique @map("provider_transaction_id")
-  failureReason         String?             @map("failure_reason")
-  processedAt           DateTime?           @map("processed_at")
-  createdAt             DateTime            @default(now()) @map("created_at")
-  updatedAt             DateTime            @updatedAt @map("updated_at")
+  status                PaymentStatus     @default(PENDING) @map("status")
+  provider              PaymentProvider   @map("provider")
+  cachedPaymentDetails  Json?             @map("payment_method_snapshot") // card example: {"providerPaymentMethodId":"pm_xxx","cardBrand":"visa","cardLast4":"4242"}; PAP example: {"providerPaymentMethodId":"ba_xxx","accountLast4":"6789","institutionNumber":1,"branchNumber":23456}
+  providerTransactionId String?           @unique @map("provider_transaction_id")
+  failureReason         String?           @map("failure_reason")
+  processedAt           DateTime?         @map("processed_at")
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
 
-  billingCustomer       BillingCustomer     @relation(fields: [billingCustomerId], references: [id], onDelete: Cascade)
-  billingInvoice        BillingInvoice?     @relation(fields: [billingInvoiceId], references: [id], onDelete: SetNull)
+  billingCustomer BillingCustomer @relation(fields: [billingCustomerId], references: [id], onDelete: Cascade)
+  billingInvoice  BillingInvoice? @relation(fields: [billingInvoiceId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, status])
   @@index([tenantId, paymentMethodType])
@@ -129,34 +129,34 @@ model verificationEmailToken {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("verification_email_token")
   @@index([email])
   @@index([token])
+  @@map("verification_email_token")
 }
 
 model User {
-  id           String   @id @default(cuid()) // Internal, never changes
-  slug         String   @unique // Normalized email, all lowercase
-  email  String   @unique @map("email") //original format user inputs; case-insensitive in practice.
-  emailVerifiedAt       DateTime? @map("email_verified_at")
+  id              String    @id @default(cuid()) // Internal, never changes
+  slug            String    @unique // Normalized email, all lowercase
+  email           String    @unique @map("email") //original format user inputs; case-insensitive in practice.
+  emailVerifiedAt DateTime? @map("email_verified_at")
   candidateEmail  String?   @map("candidate_email")
-  
-  passwordHash String?  @map("password_hash")
-  termsAcceptedAt DateTime? @map("terms_accepted_at")
-  termsVersionAccepted String? @map("terms_version_accepted")
-  contactId    String   @unique @map("contact_id") // soft link only (No @relation)
-  
-  createdAt    DateTime @default(now()) @map("created_at") 
-  updatedAt    DateTime @updatedAt @map("updated_at")
-  last2FAAt          DateTime? @map("last_2fa_at")
 
-  phone  String?   @unique @map("phone")
-  phoneVerifiedAt       DateTime? @map("phone_verified_at")
-  pendingPhone  String?   @map("pending_phone")
+  passwordHash         String?   @map("password_hash")
+  termsAcceptedAt      DateTime? @map("terms_accepted_at")
+  termsVersionAccepted String?   @map("terms_version_accepted")
+  contactId            String    @unique @map("contact_id") // soft link only (No @relation)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  last2FAAt DateTime? @map("last_2fa_at")
+
+  phone           String?   @unique @map("phone")
+  phoneVerifiedAt DateTime? @map("phone_verified_at")
+  pendingPhone    String?   @map("pending_phone")
 
   twoFactorCode     TwoFactorCode?
-  authTokens          AuthToken[]
-  phoneVerification  PhoneVerification?
+  authTokens        AuthToken[]
+  phoneVerification PhoneVerification?
   paymentCards      PaymentCard[]
   paymentAccounts   PaymentAccount[]
 
@@ -164,40 +164,41 @@ model User {
 }
 
 model AuthToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String @map("user_id")
+  id        String    @id @default(cuid())
+  token     String    @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String    @map("user_id")
   type      TokenType @default(EMAIL_VERIFICATION)
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  expiresAt DateTime  @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
-  @@map("auth_token")
   @@index([userId, type]) // Helps performance when looking up codes for a specific user
+  @@map("auth_token")
 }
 
 model PhoneVerification {
   id        String   @id @default(cuid())
-  code      String    // The 6-digit code
+  code      String // The 6-digit code
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String  @unique @map("user_id")
+  userId    String   @unique @map("user_id")
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
-  @@map("phone_verification")
+
   @@index([userId]) // Helps performance when looking up codes for a specific user
+  @@map("phone_verification")
 }
 
 model TwoFactorCode {
   id        String   @id @default(cuid())
-  code      String   // 6-digit numeric
+  code      String // 6-digit numeric
   userId    String   @unique @map("user_id")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
 
-  @@map("two_factor_codes")
   @@index([userId]) // Faster lookup during login
+  @@map("two_factor_codes")
 }
 
 model PaymentCard {
@@ -221,19 +222,19 @@ model PaymentCard {
 }
 
 model PaymentAccount {
-  id                 String      @id @default(cuid())
-  userId             String      @map("user_id")
-  label              String?     @map("label")
-  institutionNumber  Int         @map("institution_number")
-  branchNumber       Int         @map("branch_number")
-  accountNumber      String      @map("account_number") // full account number — encrypt at rest in production
-  accountLast4       String      @map("account_last4")  // display only
-  currency           String      @default("CAD") @map("currency")
-  isDefault          Boolean     @default(false) @map("is_default")
-  verificationStatus String      @default("unverified") @map("verification_status")
-  createdAt          DateTime    @default(now()) @map("created_at")
+  id                 String   @id @default(cuid())
+  userId             String   @map("user_id")
+  label              String?  @map("label")
+  institutionNumber  Int      @map("institution_number")
+  branchNumber       Int      @map("branch_number")
+  accountNumber      String   @map("account_number") // full account number — encrypt at rest in production
+  accountLast4       String   @map("account_last4") // display only
+  currency           String   @default("CAD") @map("currency")
+  isDefault          Boolean  @default(false) @map("is_default")
+  verificationStatus String   @default("unverified") @map("verification_status")
+  createdAt          DateTime @default(now()) @map("created_at")
 
-  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("payment_accounts")
@@ -244,20 +245,20 @@ model PaymentAccount {
 // ==========================================
 
 model Contact {
-  id          String   @id @default(cuid())
-  coreName   String   @map("core_name") //John/ACE Enterprise
-  kindName  String   @map("kind_name") //Doe/Inc.
-  middleName  String?  @map("middle_name")
+  id          String      @id @default(cuid())
+  coreName    String      @map("core_name") //John/ACE Enterprise
+  kindName    String      @map("kind_name") //Doe/Inc.
+  middleName  String?     @map("middle_name")
   prefix      String?
   suffix      String?
-  aliasName   String?  @map("alias_name") //Johnie a nick name /Starbucks a DBA(doing bz as)
-  displayName String?  @map("display_name") //Johnnie Doe
+  aliasName   String?     @map("alias_name") //Johnie a nick name /Starbucks a DBA(doing bz as)
+  displayName String?     @map("display_name") //Johnnie Doe
   source      NameSource? @map("source") //USER, SUPPORT, IMPORT, SYSTEM
-  subject     Subject 
-  
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  subject     Subject
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   legalNameHistory          LegalNameHistory[]
   conversationalNameHistory ConversationalNameHistory[]
@@ -269,37 +270,37 @@ model Contact {
 }
 
 model LegalNameHistory {
-  id            String    @id @default(cuid())
-  contactId     String    @map("contact_id")
-  coreName      String    @map("core_name")
-  kindName      String    @map("kind_name")
-  middleName    String?   @map("middle_name")
-  effectiveFrom DateTime  @map("effective_from")
-  effectiveTo   DateTime? @map("effective_to")
-  changedBy     String?   @map("changed_by") //e.g. adminId / system
+  id            String      @id @default(cuid())
+  contactId     String      @map("contact_id")
+  coreName      String      @map("core_name")
+  kindName      String      @map("kind_name")
+  middleName    String?     @map("middle_name")
+  effectiveFrom DateTime    @map("effective_from")
+  effectiveTo   DateTime?   @map("effective_to")
+  changedBy     String?     @map("changed_by") //e.g. adminId / system
   reason        String?
   source        NameSource?
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade) //so prisma generates the foreign key constraint for us:  ALTER TABLE "LegalNameHistory" ADD CONSTRAINT "LegalNameHistory_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") to ensure referential integrity.
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  contact       Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade) //so prisma generates the foreign key constraint for us:  ALTER TABLE "LegalNameHistory" ADD CONSTRAINT "LegalNameHistory_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") to ensure referential integrity.
 
   @@index([contactId, effectiveFrom]) //composite index for efficient querying of time in history table
   @@map("legal_name_history")
 }
 
 model ConversationalNameHistory {
-  id            String                    @id @default(cuid())
-  contactId     String                    @map("contact_id")
+  id            String      @id @default(cuid())
+  contactId     String      @map("contact_id")
   suffix        String?
   prefix        String?
-  aliasName     String?                   @map("alias_name")
-  displayName   String?                   @map("display_name")
+  aliasName     String?     @map("alias_name")
+  displayName   String?     @map("display_name")
   source        NameSource?
-  effectiveFrom DateTime                  @map("effective_from")
-  effectiveTo   DateTime?                 @map("effective_to")
-  createdAt     DateTime                  @default(now()) @map("created_at")
-  updatedAt     DateTime                  @updatedAt @map("updated_at")
-  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  effectiveFrom DateTime    @map("effective_from")
+  effectiveTo   DateTime?   @map("effective_to")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  contact       Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   @@index([contactId, effectiveFrom])
   @@map("conversational_name_history")
@@ -318,11 +319,10 @@ model Address {
 
   contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
-  @@unique([contactId, addressHash])//composite unique constraint to prevent duplicate addresses for same contact
-  @@index([contactId])//speed up queries per contactID
+  @@unique([contactId, addressHash]) //composite unique constraint to prevent duplicate addresses for same contact
+  @@index([contactId]) //speed up queries per contactID
   @@map("address")
 }
-
 
 model Email {
   id           String   @id @default(cuid())
@@ -340,11 +340,11 @@ model Email {
 }
 
 model Phone {
-  id        String      @id @default(cuid())
-  contactId String      @map("contact_id") //it is explicitly given; direct access to ID w/o fetching the relation; otherwise Prisma will create a hidden field.
+  id        String     @id @default(cuid())
+  contactId String     @map("contact_id") //it is explicitly given; direct access to ID w/o fetching the relation; otherwise Prisma will create a hidden field.
   number    String
   type      PhoneType? @default(MOBILE) @map("type")
-  isPrimary Boolean     @default(false) @map("is_primary")
+  isPrimary Boolean    @default(false) @map("is_primary")
 
   contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
@@ -352,61 +352,60 @@ model Phone {
   @@index([contactId])
   @@map("phone")
 }
-/*
-Remeber in migration SQL file, add:
 
-CREATE UNIQUE INDEX one_primary_email_per_contact
-ON "Email"(contactId)
-WHERE isPrimary = true;
-
-CREATE UNIQUE INDEX one_primary_address_per_contact
-ON "Address"(contactId)
-WHERE isPrimary = true;
-
-CREATE UNIQUE INDEX one_primary_phone_per_contact
-ON "Phone"(contactId)
-WHERE isPrimary = true;
-*/
+/**
+ * Remeber in migration SQL file, add:
+ * CREATE UNIQUE INDEX one_primary_email_per_contact
+ * ON "Email"(contactId)
+ * WHERE isPrimary = true;
+ * CREATE UNIQUE INDEX one_primary_address_per_contact
+ * ON "Address"(contactId)
+ * WHERE isPrimary = true;
+ * CREATE UNIQUE INDEX one_primary_phone_per_contact
+ * ON "Phone"(contactId)
+ * WHERE isPrimary = true;
+ */
 
 // ==========================================
 // ===== TENANT SERVICE (Settings)      =====
 // ==========================================
 
 model Tenant {
-  id             String   @id @default(cuid())
-  contactId      String   @map("contact_id") //soft link only (No @relation)
-  primaryContactPersonId String? @map("primary_contact_person_id") //FK to Contact for the employer's contact person
-  nameCached    Json   @map("name_cached")
-  slug           String   @unique
-  businessBn9    String?  @map("business_bn9") @db.Char(9)
-  businessProgramId String? @map("business_program_id") @db.Char(2)
-  programRefNum  String?  @map("program_ref_num") @db.Char(4)
-  isActive       Boolean  @default(true) @map("is_active")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id                     String   @id @default(cuid())
+  contactId              String   @map("contact_id") //soft link only (No @relation)
+  primaryContactPersonId String?  @map("primary_contact_person_id") //FK to Contact for the employer's contact person
+  nameCached             Json     @map("name_cached")
+  slug                   String   @unique
+  businessBn9            String?  @map("business_bn9") @db.Char(9)
+  businessProgramId      String?  @map("business_program_id") @db.Char(2)
+  programRefNum          String?  @map("program_ref_num") @db.Char(4)
+  isActive               Boolean  @default(true) @map("is_active")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
 
-  members        TenantUser[]
-  settings       TenantSettings?
-  paySchedules   PaySchedule[]
-  payrollUnits   PayrollUnit[]
-  departments    Department[]
-  subscriptions  TenantSubscription[]
+  members         TenantUser[]
+  settings        TenantSettings?
+  paySchedules    PaySchedule[]
+  payrollUnits    PayrollUnit[]
+  departments     Department[]
+  subscriptions   TenantSubscription[]
   overtimeConfigs OvertimeConfig[]
   holidayPolicies HolidayPolicy[]
 
   @@index([businessBn9, businessProgramId, programRefNum])
   @@map("tenant")
 }
+
 //TODO: use a middleware or a library (like Prisma's $extends) to automatically inject where: { tenantId: activeTenantId } into every query. This ensures you never forget to filter by the tenant.
 
 model TenantUser {
   id        String   @id @default(cuid())
   userId    String   @map("user_id")
-  role      UserRole  @default(EMPLOYEE) @map("role")
+  role      UserRole @default(EMPLOYEE) @map("role")
   createdAt DateTime @default(now()) @map("created_at")
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-  tenantId  String   @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+  tenantId String @map("tenant_id")
 
   @@unique([tenantId, userId])
   @@index([userId])
@@ -414,18 +413,17 @@ model TenantUser {
 }
 
 model TenantSettings {
-  id                     String  @id @default(cuid())
-  tenantId               String  @unique @map("tenant_id")
-  timezone               String  @default("America/Toronto")
-  billingEmail           String? @map("billing_email")
-  paymentMethodType      PaymentMethodType? @map("payment_method_type")
-  paymentSrcId           String? @map("payment_src_id")
+  id                String             @id @default(cuid())
+  tenantId          String             @unique @map("tenant_id")
+  timezone          String             @default("America/Toronto")
+  billingEmail      String?            @map("billing_email")
+  paymentMethodType PaymentMethodType? @map("payment_method_type")
+  paymentSrcId      String?            @map("payment_src_id")
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@map("tenant_settings")
 }
-
 
 model TenantSubscription {
   id                     String             @id @default(cuid())
@@ -444,14 +442,14 @@ model TenantSubscription {
   updatedAt              DateTime           @updatedAt @map("updated_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
-
-  @@index([tenantId, status])
-  @@index([planId])
-  @@map("tenant_subscription")
   // Add in migration SQL to enforce one active subscription per tenant:
   // CREATE UNIQUE INDEX one_active_sub_per_tenant
   // ON "tenant_subscription" ("tenant_id")
   // WHERE status IN ('trialing','active','past_due');
+
+  @@index([tenantId, status])
+  @@index([planId])
+  @@map("tenant_subscription")
 }
 
 model Department {
@@ -467,32 +465,33 @@ model Department {
 }
 
 model PaySchedule {
-  id                    String             @id @default(cuid())
-  tenantId              String             @map("tenant_id")
-  code                  String
-  name                  String
-  isActive              Boolean            @default(true) @map("is_active")
+  id       String  @id @default(cuid())
+  tenantId String  @map("tenant_id")
+  code     String
+  name     String
+  isActive Boolean @default(true) @map("is_active")
 
-  frequency             PayFrequency       @map("frequency")
-  periodBoundaryType    PeriodBoundaryType @default(CALENDAR) @map("period_boundary_type")
+  frequency PayFrequency @map("frequency")
+
+  fundingLeadDays         Int      @default(2) @map("funding_lead_days")
 
   // Period 1 (all frequencies; for SEMIMONTHLY this covers the first half of the month)
-  firstBoundaryAnchorDay     Int?          @map("first_boundary_anchor_day")
-  firstBoundaryAnchorWeekday Weekday?      @map("first_boundary_anchor_weekday")
-  firstPaydayOffsetDays      Int           @default(0) @map("first_payday_offset_days")
-  firstPaydayWeekday         Weekday?      @map("first_payday_weekday")
-  fundingLeadDays            Int           @default(2) @map("funding_lead_days")
+  payday        Int?     @map("pay_day")
+  payWeekday    Weekday? @map("pay_weekday")
+  boundaryShift Int      @map("boundary_shift")
+  periodEndDay  Int      @map("period_end_day")
+  periodEndWeekday      Weekday? @map("period_end_weekday")
 
   // Period 2 — populated only when frequency = SEMIMONTHLY (second half of the month)
-  secondBoundaryAnchorDay    Int?          @map("second_boundary_anchor_day")
-  secondPaydayOffsetDays     Int?          @map("second_payday_offset_days")
-  secondPaydayWeekday        Weekday?      @map("second_payday_weekday")
+  payday2        Int?     @map("payday2")
+  periodEndDay2  Int?     @map("period_end_day2")
+  boundaryShift2 Int?     @map("boundary_shift2")
 
-  createdAt             DateTime           @default(now()) @map("created_at")
-  updatedAt             DateTime           @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  tenant                Tenant             @relation(fields: [tenantId], references: [id])
-  payrollUnits          PayrollUnit[]
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  payrollUnits PayrollUnit[]
 
   @@unique([tenantId, code])
   @@index([tenantId, isActive])
@@ -500,21 +499,21 @@ model PaySchedule {
 }
 
 model PayrollUnit {
-  id                    String             @id @default(cuid())
-  tenantId              String             @map("tenant_id")
-  payScheduleId         String             @map("pay_schedule_id")
-  code                  String
-  name                  String
-  isActive              Boolean            @default(true) @map("is_active")
+  id            String  @id @default(cuid())
+  tenantId      String  @map("tenant_id")
+  payScheduleId String  @map("pay_schedule_id")
+  code          String
+  name          String
+  isActive      Boolean @default(true) @map("is_active")
 
-  createdAt             DateTime           @default(now()) @map("created_at")
-  updatedAt             DateTime           @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  tenant                Tenant             @relation(fields: [tenantId], references: [id])
-  paySchedule           PaySchedule        @relation(fields: [payScheduleId], references: [id])
-  employeeAssignments   PayrollUnitEmployee[]
-  payrollRuns           PayrollRun[]
-  glMatrix              PayrollGLMatrix[]
+  tenant              Tenant                @relation(fields: [tenantId], references: [id])
+  paySchedule         PaySchedule           @relation(fields: [payScheduleId], references: [id])
+  employeeAssignments PayrollUnitEmployee[]
+  payrollRuns         PayrollRun[]
+  glMatrix            PayrollGLMatrix[]
 
   @@unique([tenantId, code])
   @@index([payScheduleId])
@@ -541,15 +540,15 @@ model PayrollUnitEmployee {
 }
 
 model ChartOfAccount {
-  id        String           @id @default(cuid())
-  tenantId  String           @map("tenant_id")
+  id        String          @id @default(cuid())
+  tenantId  String          @map("tenant_id")
   code      String //acct#
   name      String
   type      AccountType
   category  AccountCategory
-  isActive  Boolean          @default(true) @map("is_active")
-  createdAt DateTime         @default(now()) @map("created_at")
-  updatedAt DateTime         @updatedAt @map("updated_at")
+  isActive  Boolean         @default(true) @map("is_active")
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
 
   glMappings GLMapping[] // Mapping logic: Which payroll items point here?
 
@@ -559,32 +558,33 @@ model ChartOfAccount {
 }
 
 model GLMapping {
-  id                String        @id @default(cuid())
-  tenantId          String        @map("tenant_id")
-  chartOfAccountId  String        @map("chart_of_account_id")
-  mappingType       MappingType  @map("mapping_type")
-  earningType       EarningType? @map("earning_type")
-  deductionType     DeductionType? @map("deduction_type")
-  departmentId      String?       @map("department_id")
+  id               String         @id @default(cuid())
+  tenantId         String         @map("tenant_id")
+  chartOfAccountId String         @map("chart_of_account_id")
+  mappingType      MappingType    @map("mapping_type")
+  earningType      EarningType?   @map("earning_type")
+  deductionType    DeductionType? @map("deduction_type")
+  departmentId     String?        @map("department_id")
 
-  chartOfAccount    ChartOfAccount @relation(fields: [chartOfAccountId], references: [id])
+  chartOfAccount ChartOfAccount @relation(fields: [chartOfAccountId], references: [id])
 
   @@index([tenantId, mappingType])
   @@map("gl_mapping")
 }
 
 model PayrollGLMatrix {
-  id               String         @id @default(cuid())
-  tenantId         String         @map("tenant_id")
-  itemClass         ItemClass     @map("item_class")
-  glAccountId       String         @map("gl_account_id")
-  glAccoountName     String         @map("gl_account_name")
-  isDebit            Boolean        @default(true) @map("is_debit")
-  payrollUnitId    String         @map("payroll_unit_id")
-  createdAt        DateTime       @default(now()) @map("created_at")
-  updatedAt        DateTime       @updatedAt @map("updated_at")
+  id             String    @id @default(cuid())
+  tenantId       String    @map("tenant_id")
+  itemClass      ItemClass @map("item_class")
+  glAccountId    String    @map("gl_account_id")
+  glAccoountName String    @map("gl_account_name")
+  isDebit        Boolean   @default(true) @map("is_debit")
+  payrollUnitId  String    @map("payroll_unit_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  payrollUnit    PayrollUnit    @relation(fields: [payrollUnitId], references: [id])
+  payrollUnit PayrollUnit @relation(fields: [payrollUnitId], references: [id])
+
   @@index([tenantId, payrollUnitId])
   @@map("payroll_gl_matrix")
 }
@@ -597,117 +597,112 @@ enum ItemClass {
   EMPLOYER_CPP
   EMPLOYER_EI
   CPP_PAYABLE
-  EI_PAYABLE  
+  EI_PAYABLE
   BENEFITS_PAYABLE
   REASONABLE_ALLOWANCES
   PAYROLL_CLEARING
 }
-/*
-KIND_BENEFITS = taxable benefits (e.g., company car, health insurance premiums paid by employer, etc.) can be contra-expense account to vehicle expense or life insurance one.
-GROSS_REMUNERATION = GROSS_PAY + TAXABLE_ALLOWANCES + KIND_BENEFITS
-GROSS_PAID = GROSS_PAY + TAXABLE_ALLOWANCES + REASONABLE_ALLOWANCES
-PAYROLL_CLEARING = GROSS_PAID - (TAXES_PAYABLE + CPP_PAYABLE - EMPLOYER_CPP + EI_PAYABLE - EMPLOYER_EI)
-*/
-/*
-mapping flow
-1	Line Level	Look at earningType (e.g., "Regular") or deductionType (e.g., "Tax").
-2	Employee Level	Look at the departmentId and costCenterId associated with that specific JobAssignment.
-3	Mapping Level	Find the GLMapping that matches both the type and the department.
-4	Journal Level	Add the amount to the running total for that specific GL Account.
 
-journalEntries look like:
-5100 - Wages (Eng)	DEBIT	$6,000	Total Regular Pay - Engineering
-5100 - Wages (Sales)	DEBIT	$4,000	Total Regular Pay - Sales
-2100 - Tax Payable	CREDIT	$2,500	Total Income Tax Withheld
-2150 - CPP Payable	CREDIT	$1,000	Total CPP (Employee + Employer)
-1010 - Bank Clearing	CREDIT	$6,500	Total Net Pay to be disbursed
-
-Granularity: Analyzes every PayrollLine/Deduction, but exports a Summarized Total per GL Account.
-*/
-
-
-
+/**
+ * KIND_BENEFITS = taxable benefits (e.g., company car, health insurance premiums paid by employer, etc.) can be contra-expense account to vehicle expense or life insurance one.
+ * GROSS_REMUNERATION = GROSS_PAY + TAXABLE_ALLOWANCES + KIND_BENEFITS
+ * GROSS_PAID = GROSS_PAY + TAXABLE_ALLOWANCES + REASONABLE_ALLOWANCES
+ * PAYROLL_CLEARING = GROSS_PAID - (TAXES_PAYABLE + CPP_PAYABLE - EMPLOYER_CPP + EI_PAYABLE - EMPLOYER_EI)
+ */
+/**
+ * mapping flow
+ * 1	Line Level	Look at earningType (e.g., "Regular") or deductionType (e.g., "Tax").
+ * 2	Employee Level	Look at the departmentId and costCenterId associated with that specific JobAssignment.
+ * 3	Mapping Level	Find the GLMapping that matches both the type and the department.
+ * 4	Journal Level	Add the amount to the running total for that specific GL Account.
+ * journalEntries look like:
+ * 5100 - Wages (Eng)	DEBIT	$6,000	Total Regular Pay - Engineering
+ * 5100 - Wages (Sales)	DEBIT	$4,000	Total Regular Pay - Sales
+ * 2100 - Tax Payable	CREDIT	$2,500	Total Income Tax Withheld
+ * 2150 - CPP Payable	CREDIT	$1,000	Total CPP (Employee + Employer)
+ * 1010 - Bank Clearing	CREDIT	$6,500	Total Net Pay to be disbursed
+ * Granularity: Analyzes every PayrollLine/Deduction, but exports a Summarized Total per GL Account.
+ */
 
 // ==========================================
 // ===== PAYROLL SERVICE (Logic)        =====
 // ==========================================
 //the tenantId acts as a Partition Key and provide row level multi-tenancy isolation by veryfying tenantId in all queries
 model Employee {
-  id             String          @id @default(cuid())
-  tenantId       String          @map("tenant_id")
-  contactId      String          @map("contact_id")
-  employeeNumber String?         @map("employee_number")
-  taxIdEncrypted Bytes           @map("tax_id_encrypted")
-  taxIdLast4     String          @map("tax_id_last_4") ////last 4 digits for display/search purposes
-  dateOfBirth    DateTime        @map("date_of_birth")
-  hireDate       DateTime        @map("hire_date")
-  status         EmployeeStatus    @default(ACTIVE) @map("status")
-  createdAt      DateTime        @default(now()) @map("created_at")
-  updatedAt      DateTime        @updatedAt @map("updated_at")
- // Cached contact info (latest from Contact)
-  addressCached Json   @map("address_cached")
-  emailCached   String? @map("email_cached")
-  phoneCached   Json?  @map("phone_cached")
+  id             String         @id @default(cuid())
+  tenantId       String         @map("tenant_id")
+  contactId      String         @map("contact_id")
+  employeeNumber String?        @map("employee_number")
+  taxIdEncrypted Bytes          @map("tax_id_encrypted")
+  taxIdLast4     String         @map("tax_id_last_4") ////last 4 digits for display/search purposes
+  dateOfBirth    DateTime       @map("date_of_birth")
+  hireDate       DateTime       @map("hire_date")
+  status         EmployeeStatus @default(ACTIVE) @map("status")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  // Cached contact info (latest from Contact)
+  addressCached  Json           @map("address_cached")
+  emailCached    String?        @map("email_cached")
+  phoneCached    Json?          @map("phone_cached")
   //array of ojbect e.g. [{ "number": "+1-613-410-8880", "type": "MOBILE", "isPrimary": true }, {"number": "+1-613-555-1234", "type": "WORK", "isPrimary": false }]
-  nameCached    Json   @map("name_cached")
+  nameCached     Json           @map("name_cached")
 
-  employments  Employment[]
+  employments            Employment[]
   payrollUnitAssignments PayrollUnitEmployee[]
-  payrollRuns  PayrollRunEmployee[]
-  bankAccounts BankAccount[]
-  vacationPolicies VacPolicy[]
-  vacationLedgerEntries VacLedger[]
-  holidayLedgerEntries HolidayLedger[]
-  severanceRecords SeveranceRecord[]
+  payrollRuns            PayrollRunEmployee[]
+  bankAccounts           BankAccount[]
+  vacationPolicies       VacPolicy[]
+  vacationLedgerEntries  VacLedger[]
+  holidayLedgerEntries   HolidayLedger[]
+  severanceRecords       SeveranceRecord[]
 
-  @@unique([tenantId, contactId])//for tenant-scoped uniquenessone employee per contact per tenant
-  @@unique([tenantId, employeeNumber])//PostgreSQL allows multiple NULLs, even with a unique constraint, so multiple employees per tenant can have employeeNumber = null
+  @@unique([tenantId, contactId]) //for tenant-scoped uniquenessone employee per contact per tenant
+  @@unique([tenantId, employeeNumber]) //PostgreSQL allows multiple NULLs, even with a unique constraint, so multiple employees per tenant can have employeeNumber = null
   //@unique,@@unique can only be applied to scalar fields (not relations) and full-table level.
   @@map("employee")
 }
-  /* 
-  ALTER TABLE "Employee" 
-  ADD CONSTRAINT termination_consistency
-  CHECK ( (terminationDate IS NULL AND terminationReason IS NULL)
-        OR
-        (terminationDate IS NOT NULL AND terminationReason IS NOT NULL)
-);
- or/and
-  such both or nothing rules can be enforced in app logic: terminationReason != null ⇒ terminationDate != null; Rehire ⇒ clear both
-*/
+
+/**
+ * ALTER TABLE "Employee"
+ * ADD CONSTRAINT termination_consistency
+ * CHECK ( (terminationDate IS NULL AND terminationReason IS NULL)
+ * OR
+ * (terminationDate IS NOT NULL AND terminationReason IS NOT NULL)
+ * );
+ * or/and
+ * such both or nothing rules can be enforced in app logic: terminationReason != null ⇒ terminationDate != null; Rehire ⇒ clear both
+ */
 
 //TODO: will enforce this in service logic: assert(employment.tenantId === employee.tenantId);Ensure service layer validates that employee.tenantId === employment.tenantId.
 model Employment {
-  id           String    @id @default(cuid())
-  tenantId     String    @map("tenant_id")
-  employeeId   String    @map("employee_id")
-  title        String?
-  department   String?
-  startDate    DateTime  @map("start_date")
-  endDate      DateTime? @map("end_date")
+  id                String             @id @default(cuid())
+  tenantId          String             @map("tenant_id")
+  employeeId        String             @map("employee_id")
+  title             String?
+  department        String?
+  startDate         DateTime           @map("start_date")
+  endDate           DateTime?          @map("end_date")
   terminationReason TerminationReason? @map("termination_reason")
-  countryCode  String    @default("CA") @map("country_code")
-  provinceCode String    @map("province_code")
-  createdAt    DateTime  @default(now()) @map("created_at")
+  countryCode       String             @default("CA") @map("country_code")
+  provinceCode      String             @map("province_code")
+  createdAt         DateTime           @default(now()) @map("created_at")
 
   employee       Employee        @relation(fields: [employeeId], references: [id])
   jobAssignments JobAssignment[] ////e.g. casher $18/hr, stocker $20/hr (Most payroll systems — ADP, Ceridian, Workday payroll mode) — support multiple concurrent job assignments per employment record.
 
-  @@index([tenantId, employeeId, startDate])//tenant-scoped reporting; historical queries and ROE generation
-  @@index([employeeId, startDate])//to speed up querying employment history per employee, ordered by startDate; we can't add an index on WHERE endDate IS NULL to speed up querying current employment record per employee via prisma so far
+  @@index([tenantId, employeeId, startDate]) //tenant-scoped reporting; historical queries and ROE generation
+  @@index([employeeId, startDate]) //to speed up querying employment history per employee, ordered by startDate; we can't add an index on WHERE endDate IS NULL to speed up querying current employment record per employee via prisma so far
   @@map("employment")
 }
-/*
-TODO: some rule must live at the database level, not the primsa schema level, to enforce data integrity. For example, to ensure that only one active employment record (where endDate IS NULL) exists per employee, we need to create a partial unique index in PostgreSQL by running the following commands in terminal:
-npx prisma migrate dev --name add-one-active-employment
 
-Then in the generated migration.sql file, add:
-CREATE UNIQUE INDEX "OneActiveEmploymentPerEmployee" ON "Employment" ("employeeId") WHERE "endDate" IS NULL; 
-
-This ensures that only one active employment record (where endDate IS NULL) exists per employee When violated, Prisma will throw: PrismaClientKnownRequestError#P2002
-
-This one active employment rule is for CPP/EI/tax aggregation purposes and for ROE continuity as well as benefit eligibility.
-*/
+/**
+ * TODO: some rule must live at the database level, not the primsa schema level, to enforce data integrity. For example, to ensure that only one active employment record (where endDate IS NULL) exists per employee, we need to create a partial unique index in PostgreSQL by running the following commands in terminal:
+ * npx prisma migrate dev --name add-one-active-employment
+ * Then in the generated migration.sql file, add:
+ * CREATE UNIQUE INDEX "OneActiveEmploymentPerEmployee" ON "Employment" ("employeeId") WHERE "endDate" IS NULL;
+ * This ensures that only one active employment record (where endDate IS NULL) exists per employee When violated, Prisma will throw: PrismaClientKnownRequestError#P2002
+ * This one active employment rule is for CPP/EI/tax aggregation purposes and for ROE continuity as well as benefit eligibility.
+ */
 
 //assume always accessed via Employment, so no tenantId here
 //TODO: JobAssignment.startDate >= Employment.startDate; //JobAssignment.endDate <= Employment.endDate (if not null) Note enforcable in Prisma must live in service logic or DB constraints/triggers
@@ -716,8 +711,8 @@ model JobAssignment {
   employmentId String    @map("employment_id")
   startDate    DateTime  @map("start_date")
   endDate      DateTime? @map("end_date")
-  hoursPerWeek Decimal?  @db.Decimal(6, 2) @map("hours_per_week")
-  payRate      Decimal   @db.Decimal(10, 2) @map("pay_rate")
+  hoursPerWeek Decimal?  @map("hours_per_week") @db.Decimal(6, 2)
+  payRate      Decimal   @map("pay_rate") @db.Decimal(10, 2)
   payType      PayType   @map("pay_type")
 
   employment   Employment    @relation(fields: [employmentId], references: [id])
@@ -742,62 +737,63 @@ model TimeEntry {
 }
 
 model PayrollRun {
-  id          String             @id @default(cuid())
-  tenantId    String             @map("tenant_id")//Add only where filtering / reporting / safety benefits outweigh joins otherwise use of FK chain to validate tenant
+  id            String           @id @default(cuid())
+  tenantId      String           @map("tenant_id") //Add only where filtering / reporting / safety benefits outweigh joins otherwise use of FK chain to validate tenant
   payrollUnitId String?          @map("payroll_unit_id")
-  periodStart DateTime           @map("period_start")
-  periodEnd   DateTime           @map("period_end")
-  runDate     DateTime           @map("run_date")
-  status      PayrollRunStatus   @default(DRAFT) @map("status")
-  createdAt   DateTime           @default(now()) @map("created_at")
+  periodStart   DateTime         @map("period_start")
+  periodEnd     DateTime         @map("period_end")
+  runDate       DateTime         @map("run_date")
+  status        PayrollRunStatus @default(DRAFT) @map("status")
+  createdAt     DateTime         @default(now()) @map("created_at")
 
-  payrollUnit PayrollUnit?       @relation(fields: [payrollUnitId], references: [id])
-  payrollRunEmployees PayrollRunEmployee[]
+  payrollUnit           PayrollUnit?         @relation(fields: [payrollUnitId], references: [id])
+  payrollRunEmployees   PayrollRunEmployee[]
   vacationLedgerEntries VacLedger[]
-  holidayLedgerEntries HolidayLedger[]
-  severanceRecords SeveranceRecord[]
+  holidayLedgerEntries  HolidayLedger[]
+  severanceRecords      SeveranceRecord[]
 
-  @@unique([tenantId, payrollUnitId, periodStart, periodEnd])//prevent duplicate payroll runs for same unit period per tenant
+  @@unique([tenantId, payrollUnitId, periodStart, periodEnd]) //prevent duplicate payroll runs for same unit period per tenant
   @@map("payroll_run")
 }
 
-/*
-SUM(hours × payRate) GROUP BY: - employeeId (taxes) - jobAssignmentId (costing)
-Taxes, CPP, EI → Employee level
-Earnings → JobAssignment level
-*/
+/**
+ * SUM(hours × payRate) GROUP BY: - employeeId (taxes) - jobAssignmentId (costing)
+ * Taxes, CPP, EI → Employee level
+ * Earnings → JobAssignment level
+ */
 model PayrollRunEmployee {
   id              String   @id @default(cuid())
   payrollRunId    String   @map("payroll_run_id")
   employeeId      String   @map("employee_id")
-  nameSnapshot    String   @map("name_snapshot")// Immutable snapshot fields copied from Employee
+  nameSnapshot    String   @map("name_snapshot") // Immutable snapshot fields copied from Employee
   addressSnapshot String   @map("address_snapshot")
-  grossPay        Decimal  @db.Decimal(10, 2) @map("gross_pay")
+  grossPay        Decimal  @map("gross_pay") @db.Decimal(10, 2)
   deductions      Decimal  @db.Decimal(10, 2)
-  netPay          Decimal  @db.Decimal(10, 2) @map("net_pay")
+  netPay          Decimal  @map("net_pay") @db.Decimal(10, 2)
   createdAt       DateTime @default(now()) @map("created_at")
 
-  payrollRun    PayrollRun            @relation(fields: [payrollRunId], references: [id])
-  employee      Employee              @relation(fields: [employeeId], references: [id])
-  payrollLines  PayrollLine[]
+  payrollRun     PayrollRun            @relation(fields: [payrollRunId], references: [id])
+  employee       Employee              @relation(fields: [employeeId], references: [id])
+  payrollLines   PayrollLine[]
   deductionsList Deduction[]
-  disbursements PayrollDisbursement[]
+  disbursements  PayrollDisbursement[]
 
-  @@unique([payrollRunId, employeeId])//one record per employee per payroll run
+  @@unique([payrollRunId, employeeId]) //one record per employee per payroll run
   @@map("payroll_run_employee")
 }
+
 //Tenant guaranteed by PayrollRun + Employee; One earning type, for one employee, in one payroll run, attributable to one costing source.
 model PayrollLine {
-  id                   String       @id @default(cuid())
-  payrollRunEmployeeId String       @map("payroll_run_employee_id")
-  jobAssignmentId      String?      @map("job_assignment_id")
-  rate                 Decimal      @db.Decimal(10, 2)//payRate from JobAssignment at time of payroll run creation
-  units                Decimal      @db.Decimal(6, 2)//hours from TimeEntry for a payroll period; salary 1 
-  amount               Decimal      @db.Decimal(10, 2)
-  earningType          EarningType @map("earning_type")
-  countsTowardHolidayPay Boolean @default(true) @map("counts_toward_holiday_pay")
-  countsTowardVacationAccrual Boolean @default(true) @map("counts_toward_vacation_accrual")
-  overtimeDetails      OvertimeDetails?
+  id                          String           @id @default(cuid())
+  payrollRunEmployeeId        String           @map("payroll_run_employee_id")
+  jobAssignmentId             String?          @map("job_assignment_id")
+  rate                        Decimal          @db.Decimal(10, 2) //payRate from JobAssignment at time of payroll run creation
+  units                       Decimal          @db.Decimal(6, 2) //hours from TimeEntry for a payroll period; salary 1 
+  amount                      Decimal          @db.Decimal(10, 2)
+  earningType                 EarningType      @map("earning_type")
+  countsTowardHolidayPay      Boolean          @default(true) @map("counts_toward_holiday_pay")
+  countsTowardVacationAccrual Boolean          @default(true) @map("counts_toward_vacation_accrual")
+  overtimeDetails             OvertimeDetails?
 
   payrollRunEmployee PayrollRunEmployee @relation(fields: [payrollRunEmployeeId], references: [id])
   jobAssignment      JobAssignment?     @relation(fields: [jobAssignmentId], references: [id])
@@ -805,34 +801,36 @@ model PayrollLine {
   @@map("payroll_line")
 }
 
-/*Only overtime requires a completely separate child/extension model because of its volatile, event-driven math and compliance requirements.*/
-model OvertimeDetails{
-  id                   String       @id @default(cuid())
-  payrollLineId          String       @unique @map("payroll_line_id")
-  overtimeRate         Decimal      @db.Decimal(10, 2)
-  configId              String       @map("config_id")
-  periodType           OvertimePeriodType @default(WEEKLY) @map("period_type")
-  workDate             DateTime?    @map("work_date")
-  payrollLine          PayrollLine  @relation(fields: [payrollLineId], references: [id], onDelete: Cascade)
-  config               OvertimeConfig @relation(fields: [configId], references: [id])
-  regularRate               Decimal      @db.Decimal(10, 2)
-  overtimeHours             Decimal      @db.Decimal(6, 2)
-  totalAmount                Decimal      @db.Decimal(10, 2)
+/**
+ * Only overtime requires a completely separate child/extension model because of its volatile, event-driven math and compliance requirements.
+ */
+model OvertimeDetails {
+  id            String             @id @default(cuid())
+  payrollLineId String             @unique @map("payroll_line_id")
+  overtimeRate  Decimal            @db.Decimal(10, 2)
+  configId      String             @map("config_id")
+  periodType    OvertimePeriodType @default(WEEKLY) @map("period_type")
+  workDate      DateTime?          @map("work_date")
+  payrollLine   PayrollLine        @relation(fields: [payrollLineId], references: [id], onDelete: Cascade)
+  config        OvertimeConfig     @relation(fields: [configId], references: [id])
+  regularRate   Decimal            @db.Decimal(10, 2)
+  overtimeHours Decimal            @db.Decimal(6, 2)
+  totalAmount   Decimal            @db.Decimal(10, 2)
 }
 
-model OvertimeConfig{
-  id                   String       @id @default(cuid())
-  tenantId             String       @map("tenant_id")
-  provinceCode         ProvinceCode? @map("province_code")
-  description                 String //e.g., "1.5x after 8 hrs"
-  overtimeType         OvertimeType @map("overtime_type")
-  customMultiplier      Decimal?     @db.Decimal(4, 2) @map("custom_multiplier") //nullable for standard overtime types
-  thresholdHours       Decimal      @db.Decimal(6, 2)
-  createdAt            DateTime     @default(now()) @map("created_at")
-  updatedAt            DateTime     @updatedAt @map("updated_at")
+model OvertimeConfig {
+  id               String        @id @default(cuid())
+  tenantId         String        @map("tenant_id")
+  provinceCode     ProvinceCode? @map("province_code")
+  description      String //e.g., "1.5x after 8 hrs"
+  overtimeType     OvertimeType  @map("overtime_type")
+  customMultiplier Decimal?      @map("custom_multiplier") @db.Decimal(4, 2) //nullable for standard overtime types
+  thresholdHours   Decimal       @db.Decimal(6, 2)
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
 
-  tenant               Tenant       @relation(fields: [tenantId], references: [id])
-  overtimeDetails      OvertimeDetails[]
+  tenant          Tenant            @relation(fields: [tenantId], references: [id])
+  overtimeDetails OvertimeDetails[]
 
   @@index([tenantId])
   @@index([tenantId, provinceCode])
@@ -840,115 +838,116 @@ model OvertimeConfig{
 }
 
 model Deduction {
-  id                   String         @id @default(cuid())
-  payrollRunEmployeeId String         @map("payroll_run_employee_id")
-  type                 DeductionType  @map("type")
-  amount               Decimal        @db.Decimal(10, 2)
-  createdAt            DateTime       @default(now()) @map("created_at")
+  id                   String        @id @default(cuid())
+  payrollRunEmployeeId String        @map("payroll_run_employee_id")
+  type                 DeductionType @map("type")
+  amount               Decimal       @db.Decimal(10, 2)
+  createdAt            DateTime      @default(now()) @map("created_at")
 
   payrollRunEmployee PayrollRunEmployee @relation(fields: [payrollRunEmployeeId], references: [id])
 
-  @@unique([payrollRunEmployeeId, type])//reinforce: one deduction type per payroll run employee
+  @@unique([payrollRunEmployeeId, type]) //reinforce: one deduction type per payroll run employee
   @@map("deduction")
 }
 
 model BankAccount {
-  id                String           @id @default(cuid()) @map("id")
-  institutionNumber Int              @map("institution_number")
-  branchNumber      Int              @map("branch_number")
-  accountNumber     String           @map("account_number") // keep as string to preserve leading zeros
-  currency          String           @default("CAD") @map("currency")
-  isPrimary         Boolean          @default(false) @map("is_primary")
+  id                String  @id @default(cuid()) @map("id")
+  institutionNumber Int     @map("institution_number")
+  branchNumber      Int     @map("branch_number")
+  accountNumber     String  @map("account_number") // keep as string to preserve leading zeros
+  currency          String  @default("CAD") @map("currency")
+  isPrimary         Boolean @default(false) @map("is_primary")
 
   // Distribution Logic
-  label             String?          @map("label") // "Main", "Alimony", "Savings"
-  type              DistributionType @default(REMAINDER) @map("type")
-  value             Decimal?         @db.Decimal(10, 2) @map("value") // The $ or % amount
-  priority          Int              @default(1) @map("priority") // Process Fixed/Percentage before Remainder
-  isActive          Boolean          @default(true) @map("is_active")
+  label    String?          @map("label") // "Main", "Alimony", "Savings"
+  type     DistributionType @default(REMAINDER) @map("type")
+  value    Decimal?         @map("value") @db.Decimal(10, 2) // The $ or % amount
+  priority Int              @default(1) @map("priority") // Process Fixed/Percentage before Remainder
+  isActive Boolean          @default(true) @map("is_active")
 
   // Micro-deposit verification
   verificationStatus BankAccountVerificationStatus @default(UNVERIFIED) @map("verification_status")
 
-  employee          Employee         @relation(fields: [employeeId], references: [id])
+  employee   Employee @relation(fields: [employeeId], references: [id])
   // Prisma uses the @relation line to understand how to perform JOINs
-  employeeId        String           @map("employee_id")
+  employeeId String   @map("employee_id")
 
   @@index([employeeId])
   @@map("bank_accounts")
 }
 
 model PayrollDisbursement {
-  id                   String             @id @default(cuid()) @map("id")
-  payrollRunEmployeeId String             @map("payroll_run_employee_id")
+  id                   String @id @default(cuid()) @map("id")
+  payrollRunEmployeeId String @map("payroll_run_employee_id")
 
   // Snapshot of bank details at time of payment
-  institutionNumber    Int                @map("institution_number")
-  branchNumber         Int                @map("branch_number")
-  accountNumber        String             @map("account_number") // Masked or encrypted in production
-  bankLabel            String?            @map("bank_label") // e.g., "Personal Savings" or "Alimony"
+  institutionNumber Int     @map("institution_number")
+  branchNumber      Int     @map("branch_number")
+  accountNumber     String  @map("account_number") // Masked or encrypted in production
+  bankLabel         String? @map("bank_label") // e.g., "Personal Savings" or "Alimony"
 
-  amount               Decimal            @db.Decimal(10, 2) @map("amount")
-  status               DisbursementStatus @default(PENDING) @map("status")
+  amount Decimal            @map("amount") @db.Decimal(10, 2)
+  status DisbursementStatus @default(PENDING) @map("status")
 
   // Tracking for bank file (ACH/EFT) generation
-  referenceNumber      String?            @map("reference_number") // Trace ID from the bank
-  processedAt          DateTime?          @map("processed_at")
+  referenceNumber String?   @map("reference_number") // Trace ID from the bank
+  processedAt     DateTime? @map("processed_at")
 
-  payrollRunEmployee   PayrollRunEmployee @relation(fields: [payrollRunEmployeeId], references: [id])
+  payrollRunEmployee PayrollRunEmployee @relation(fields: [payrollRunEmployeeId], references: [id])
 
   @@index([payrollRunEmployeeId])
   @@map("payroll_disbursements")
 }
 
 model PayrollJournal {
-  id           String         @id @default(cuid()) @map("id")
-  payrollRunId String         @unique @map("payroll_run_id")
-  tenantId     String         @map("tenant_id")
+  id           String @id @default(cuid()) @map("id")
+  payrollRunId String @unique @map("payroll_run_id")
+  tenantId     String @map("tenant_id")
 
-  status       JournalStatus  @default(PENDING) @map("status")
-  postedAt     DateTime?      @map("posted_at")
+  status   JournalStatus @default(PENDING) @map("status")
+  postedAt DateTime?     @map("posted_at")
 
   // Total checks for the entire journal
-  totalDebit   Decimal        @db.Decimal(12, 2) @map("total_debit")
-  totalCredit  Decimal        @db.Decimal(12, 2) @map("total_credit")
+  totalDebit  Decimal @map("total_debit") @db.Decimal(12, 2)
+  totalCredit Decimal @map("total_credit") @db.Decimal(12, 2)
 
-  entries      JournalEntry[]
+  entries JournalEntry[]
 
-  createdAt    DateTime       @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
   @@index([tenantId])
   @@map("payroll_journals")
 }
 
 model JournalEntry {
-  id               String         @id @default(cuid()) @map("id")
-  payrollJournalId String         @map("payroll_journal_id")
+  id               String @id @default(cuid()) @map("id")
+  payrollJournalId String @map("payroll_journal_id")
 
   // Accounting Keys
-  glAccountNumber  String?        @map("gl_account_number") // e.g., "5100" or "2100" for mapping to Chart of Accounts by computer
-  glAccountName    String         @map("gl_account_name") // For human readability in exports
+  glAccountNumber String? @map("gl_account_number") // e.g., "5100" or "2100" for mapping to Chart of Accounts by computer
+  glAccountName   String  @map("gl_account_name") // For human readability in exports
 
-  type             EntryType      @map("type") // DEBIT or CREDIT
-  amount           Decimal        @db.Decimal(12, 2) @map("amount")
+  type   EntryType @map("type") // DEBIT or CREDIT
+  amount Decimal   @map("amount") @db.Decimal(12, 2)
 
-  description      String?        @map("description") // e.g., "Gross Wages - Engineering - Period End 2023-10-01"
+  description String? @map("description") // e.g., "Gross Wages - Engineering - Period End 2023-10-01"
 
-  journal          PayrollJournal @relation(fields: [payrollJournalId], references: [id])
+  journal PayrollJournal @relation(fields: [payrollJournalId], references: [id])
 
   @@map("journal_entries")
 }
 
 model PaySlip {
-  id         String   @id @default(uuid()) @map("id")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id        String   @id @default(uuid()) @map("id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Storage Metadata
-  s3Key      String   @map("s3_key") // Path: "tenant_id/year/month/file.pdf"
-  fileName   String   @map("file_name") // e.g., "PaySlip_Jan_2025.pdf"
-  fileSize   Int      @map("file_size")
-  employeeId String   @map("employee_id")
-  tenantId   String   @map("tenant_id")
+  s3Key      String @map("s3_key") // Path: "tenant_id/year/month/file.pdf"
+  fileName   String @map("file_name") // e.g., "PaySlip_Jan_2025.pdf"
+  fileSize   Int    @map("file_size")
+  employeeId String @map("employee_id")
+  tenantId   String @map("tenant_id")
 
   @@index([employeeId])
   @@index([tenantId])
@@ -958,27 +957,27 @@ model PaySlip {
 }
 
 model Remittance {
-  id                String                   @id @default(cuid()) @map("id")
-  tenantId          String                   @map("tenant_id")
+  id       String @id @default(cuid()) @map("id")
+  tenantId String @map("tenant_id")
 
   // The reporting period
-  periodYear        Int                      @map("period_year") // e.g., 2025
-  periodMonth       Int                      @map("period_month") // e.g., 12
+  periodYear  Int @map("period_year") // e.g., 2025
+  periodMonth Int @map("period_month") // e.g., 12
 
   // Totals for the filing
-  totalGrossPayroll Decimal                  @db.Decimal(12, 2) @map("total_gross_payroll")
-  totalEmployees    Int                      @map("total_employees")
-  totalDue          Decimal                  @db.Decimal(12, 2) @map("total_due")
+  totalGrossPayroll Decimal @map("total_gross_payroll") @db.Decimal(12, 2)
+  totalEmployees    Int     @map("total_employees")
+  totalDue          Decimal @map("total_due") @db.Decimal(12, 2)
 
-  status            RemittanceStatus         @default(PENDING) @map("status")
-  paymentReference  String?                  @map("payment_reference") // Confirmation number from CRA My Business Account
-  filedAt           DateTime?                @map("filed_at")
+  status           RemittanceStatus @default(PENDING) @map("status")
+  paymentReference String?          @map("payment_reference") // Confirmation number from CRA My Business Account
+  filedAt          DateTime?        @map("filed_at")
 
   // Links back to the source data
-  payrollRuns       RemittanceToPayrollRun[]
+  payrollRuns RemittanceToPayrollRun[]
 
-  createdAt         DateTime                 @default(now()) @map("created_at")
-  updatedAt         DateTime                 @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([tenantId, periodYear, periodMonth])
   @@index([tenantId, status])
@@ -989,97 +988,101 @@ model RemittanceToPayrollRun {
   remittanceId String @map("remittance_id")
   payrollRunId String @map("payroll_run_id")
 
-  remittance   Remittance @relation(fields: [remittanceId], references: [id])
+  remittance Remittance @relation(fields: [remittanceId], references: [id])
 
   @@id([remittanceId, payrollRunId])
   @@map("remittance_to_payroll_runs")
 }
 
 model cppEIRates {
-  id String @id @default(cuid())
-  taxYear Int @map("tax_year")
-  provinceCode String @map("province_code") @db.Char(2)
-  cppBaseRate Decimal @db.Decimal(5, 4) @map("cpp_base_rate")//e.g. 4.95% for 2026
-  cppEnhancedRate Decimal @db.Decimal(5, 4) @map("cpp_enhanced_rate")//e.g. 1%
-  cppExemption Decimal @db.Decimal(5, 4) @map("cpp_exemption")//e.g. 3.5k  
-  cppYMPE Decimal @db.Decimal(10, 2) @map("cpp_ympe") //e.g. $74.6K Tier 1 CAP
-  cpp2Rate Decimal @db.Decimal(5, 4) @map("cpp2_rate")//4%
-  cpp2YMPE Decimal @db.Decimal(10, 2) @map("cpp2_ympe") //e.g. $85K Tier 2 CAP
-  eiRate Decimal @db.Decimal(5, 4) @map("ei_rate")//e.g. 1.63% for 2026
-  eiMaxEarnings Decimal @db.Decimal(10, 2) @map("ei_max_earnings")//e.g. $68.9K
-  eiMultiplier Decimal @db.Decimal(5, 4) @map("ei_multiplier")//e.g. 1.4
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id              String   @id @default(cuid())
+  taxYear         Int      @map("tax_year")
+  provinceCode    String   @map("province_code") @db.Char(2)
+  cppBaseRate     Decimal  @map("cpp_base_rate") @db.Decimal(5, 4) //e.g. 4.95% for 2026
+  cppEnhancedRate Decimal  @map("cpp_enhanced_rate") @db.Decimal(5, 4) //e.g. 1%
+  cppExemption    Decimal  @map("cpp_exemption") @db.Decimal(5, 4) //e.g. 3.5k  
+  cppYMPE         Decimal  @map("cpp_ympe") @db.Decimal(10, 2) //e.g. $74.6K Tier 1 CAP
+  cpp2Rate        Decimal  @map("cpp2_rate") @db.Decimal(5, 4) //4%
+  cpp2YMPE        Decimal  @map("cpp2_ympe") @db.Decimal(10, 2) //e.g. $85K Tier 2 CAP
+  eiRate          Decimal  @map("ei_rate") @db.Decimal(5, 4) //e.g. 1.63% for 2026
+  eiMaxEarnings   Decimal  @map("ei_max_earnings") @db.Decimal(10, 2) //e.g. $68.9K
+  eiMultiplier    Decimal  @map("ei_multiplier") @db.Decimal(5, 4) //e.g. 1.4
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
   @@unique([taxYear, provinceCode], name: "unique_cpp_ei_rates")
   @@map("cpp_ei_rates")
 }
 
 model TaxRate {
-  id String @id @default(cuid())
-  taxYear Int @map("tax_year")
-  provinceCode String @map("province_code") @db.Char(2)
-  marginalRate Decimal @db.Decimal(5, 4) @map("federal_rate")//e.g. 15%
-  lowerBound Decimal @db.Decimal(10, 2) @map("lower_bound")//e.g. $53,359
-  upperBound Decimal? @db.Decimal(10, 2) @map("upper_bound")//e.g. $106,717
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(cuid())
+  taxYear      Int      @map("tax_year")
+  provinceCode String   @map("province_code") @db.Char(2)
+  marginalRate Decimal  @map("federal_rate") @db.Decimal(5, 4) //e.g. 15%
+  lowerBound   Decimal  @map("lower_bound") @db.Decimal(10, 2) //e.g. $53,359
+  upperBound   Decimal? @map("upper_bound") @db.Decimal(10, 2) //e.g. $106,717
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
   @@unique([taxYear, provinceCode], name: "unique_tax_rates")
   @@index([taxYear, provinceCode])
   @@map("tax_rates")
 }
 
 model EarningCode {
-  id String @id @default(cuid())
-  tenantId String @map("tenant_id")
-  code String @map("code") //e.g. "REG" for regular pay, "OT" for overtime, "BONUS" for bonus, etc.
-  description String @map("description")
-  earningType EarningType @map("earning_type")
-  isTaxable Boolean @default(true) @map("is_taxable")
-  isKindBenefit Boolean @default(false) @map("is_kind_benefit")//e.g. company car, health insurance premiums paid by employer, etc. add to tax not net pay.
-  isSubjectToCPP Boolean @default(true) @map("is_subject_to_cpp")
-  isSubjectToEI Boolean @default(true) @map("is_subject_to_ei")
-  t4BoxNumber Int? @map("t4_box_number")//e.g. 14 for regular pay, 71 for taxable benefits, etc.
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id             String      @id @default(cuid())
+  tenantId       String      @map("tenant_id")
+  code           String      @map("code") //e.g. "REG" for regular pay, "OT" for overtime, "BONUS" for bonus, etc.
+  description    String      @map("description")
+  earningType    EarningType @map("earning_type")
+  isTaxable      Boolean     @default(true) @map("is_taxable")
+  isKindBenefit  Boolean     @default(false) @map("is_kind_benefit") //e.g. company car, health insurance premiums paid by employer, etc. add to tax not net pay.
+  isSubjectToCPP Boolean     @default(true) @map("is_subject_to_cpp")
+  isSubjectToEI  Boolean     @default(true) @map("is_subject_to_ei")
+  t4BoxNumber    Int?        @map("t4_box_number") //e.g. 14 for regular pay, 71 for taxable benefits, etc.
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
   @@unique([code, tenantId], name: "unique_earning_codes_per_tenant")
   @@map("earning_codes")
 }
 
-model VacPolicy{
-  id String @id @default(cuid())
-  tenantId String @map("tenant_id")
-  employeeId String @map("employee_id")
-  vacRate Decimal @db.Decimal(5, 4) @map("vac_rate")//e.g. 0.04 for 4%
-  isAccrualBased Boolean @default(true) @map("is_accrual_based")//true = accrual based, false = lump sum
-  vacBalance Decimal @db.Decimal(10, 2) @map("vac_balance")//e.g. $1000.00
-  balanceUnit VacationBalanceUnit @default(AMOUNT) @map("balance_unit")
-  vacHoursBalance Decimal? @db.Decimal(8, 2) @map("vac_hours_balance")
-  accrualHoursPerPayPeriod Decimal? @db.Decimal(8, 4) @map("accrual_hours_per_pay_period")
-  accrualStartDate DateTime? @map("accrual_start_date")
-  payoutOnTermination Boolean @default(true) @map("payout_on_termination")
-  ledgerEntries VacLedger[]
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  employee Employee @relation(fields: [employeeId], references: [id])
+model VacPolicy {
+  id                       String              @id @default(cuid())
+  tenantId                 String              @map("tenant_id")
+  employeeId               String              @map("employee_id")
+  vacRate                  Decimal             @map("vac_rate") @db.Decimal(5, 4) //e.g. 0.04 for 4%
+  isAccrualBased           Boolean             @default(true) @map("is_accrual_based") //true = accrual based, false = lump sum
+  vacBalance               Decimal             @map("vac_balance") @db.Decimal(10, 2) //e.g. $1000.00
+  balanceUnit              VacationBalanceUnit @default(AMOUNT) @map("balance_unit")
+  vacHoursBalance          Decimal?            @map("vac_hours_balance") @db.Decimal(8, 2)
+  accrualHoursPerPayPeriod Decimal?            @map("accrual_hours_per_pay_period") @db.Decimal(8, 4)
+  accrualStartDate         DateTime?           @map("accrual_start_date")
+  payoutOnTermination      Boolean             @default(true) @map("payout_on_termination")
+  ledgerEntries            VacLedger[]
+  createdAt                DateTime            @default(now()) @map("created_at")
+  updatedAt                DateTime            @updatedAt @map("updated_at")
+  employee                 Employee            @relation(fields: [employeeId], references: [id])
+
   @@unique([tenantId, employeeId], name: "unique_vacation_policy_per_employee")
   @@map("vacation_policy")
 }
 
-model VacLedger{
-  id String @id @default(cuid())
-  tenantId String @map("tenant_id")
-  employeeId String @map("employee_id")
-  vacPolicyId String @map("vac_policy_id")
-  entryType VacationLedgerEntryType @map("entry_type")
-  effectiveDate DateTime @map("effective_date")
-  hours Decimal? @db.Decimal(8, 2)
-  amount Decimal @db.Decimal(10, 2) @map("amount")//positive = accrual, negative = usage
-  payRunId String? @map("payroll_run_id")
-  description String @map("description")
-  createdAt DateTime @default(now()) @map("created_at")
-  employee Employee @relation(fields: [employeeId], references: [id])
-  vacPolicy VacPolicy @relation(fields: [vacPolicyId], references: [id])
-  payrollRun PayrollRun? @relation(fields: [payRunId], references: [id])
+model VacLedger {
+  id            String                  @id @default(cuid())
+  tenantId      String                  @map("tenant_id")
+  employeeId    String                  @map("employee_id")
+  vacPolicyId   String                  @map("vac_policy_id")
+  entryType     VacationLedgerEntryType @map("entry_type")
+  effectiveDate DateTime                @map("effective_date")
+  hours         Decimal?                @db.Decimal(8, 2)
+  amount        Decimal                 @map("amount") @db.Decimal(10, 2) //positive = accrual, negative = usage
+  payRunId      String?                 @map("payroll_run_id")
+  description   String                  @map("description")
+  createdAt     DateTime                @default(now()) @map("created_at")
+  employee      Employee                @relation(fields: [employeeId], references: [id])
+  vacPolicy     VacPolicy               @relation(fields: [vacPolicyId], references: [id])
+  payrollRun    PayrollRun?             @relation(fields: [payRunId], references: [id])
 
   @@index([tenantId, employeeId, effectiveDate])
   @@map("vacation_ledger")
@@ -1091,54 +1094,54 @@ model HolidayPolicy {
   provinceCode          ProvinceCode     @map("province_code")
   method                HolidayPayMethod @map("method")
   averageWindowWeeks    Int?             @default(4) @map("average_window_weeks")
-  fixedPercent          Decimal?         @db.Decimal(5, 4) @map("fixed_percent")
+  fixedPercent          Decimal?         @map("fixed_percent") @db.Decimal(5, 4)
   minimumEmploymentDays Int?             @map("minimum_employment_days")
   includeVacationPay    Boolean          @default(false) @map("include_vacation_pay")
   createdAt             DateTime         @default(now()) @map("created_at")
   updatedAt             DateTime         @updatedAt @map("updated_at")
 
-  tenant                Tenant           @relation(fields: [tenantId], references: [id])
-  holidayLedgerEntries  HolidayLedger[]
+  tenant               Tenant          @relation(fields: [tenantId], references: [id])
+  holidayLedgerEntries HolidayLedger[]
 
   @@unique([tenantId, provinceCode], name: "unique_holiday_policy_per_province")
   @@map("holiday_policy")
 }
 
 model HolidayLedger {
-  id              String         @id @default(cuid())
-  tenantId        String         @map("tenant_id")
-  employeeId      String         @map("employee_id")
-  holidayPolicyId String         @map("holiday_policy_id")
-  payrollRunId    String?        @map("payroll_run_id")
-  holidayDate     DateTime       @map("holiday_date")
-  baseEarnings    Decimal        @db.Decimal(10, 2) @map("base_earnings")
-  hours           Decimal?       @db.Decimal(8, 2)
-  amount          Decimal        @db.Decimal(10, 2)
-  description     String?        @map("description")
-  createdAt       DateTime       @default(now()) @map("created_at")
+  id              String   @id @default(cuid())
+  tenantId        String   @map("tenant_id")
+  employeeId      String   @map("employee_id")
+  holidayPolicyId String   @map("holiday_policy_id")
+  payrollRunId    String?  @map("payroll_run_id")
+  holidayDate     DateTime @map("holiday_date")
+  baseEarnings    Decimal  @map("base_earnings") @db.Decimal(10, 2)
+  hours           Decimal? @db.Decimal(8, 2)
+  amount          Decimal  @db.Decimal(10, 2)
+  description     String?  @map("description")
+  createdAt       DateTime @default(now()) @map("created_at")
 
-  employee        Employee       @relation(fields: [employeeId], references: [id])
-  holidayPolicy   HolidayPolicy  @relation(fields: [holidayPolicyId], references: [id])
-  payrollRun      PayrollRun?    @relation(fields: [payrollRunId], references: [id])
+  employee      Employee      @relation(fields: [employeeId], references: [id])
+  holidayPolicy HolidayPolicy @relation(fields: [holidayPolicyId], references: [id])
+  payrollRun    PayrollRun?   @relation(fields: [payrollRunId], references: [id])
 
   @@index([tenantId, employeeId, holidayDate])
   @@map("holiday_ledger")
 }
 
-model SeveranceRecord{
-  id String @id @default(cuid())
-  payRunId String @map("payroll_run_id")
-  employeeId String @map("employee_id")
-  severanceType String @map("severance_type")
-  grossAmount Decimal @db.Decimal(10, 2) @map("gross_amount")
-  taxWithheld Decimal @db.Decimal(10, 2) @map("tax_withheld")
-  t4BoxCode Int @map("t4_box_code")//e.g. 66 eligible or 67 non-eligible retiring allce.
-  createdAt DateTime @default(now()) @map("created_at")
-  employee Employee @relation(fields: [employeeId], references: [id])
-  payrollRun PayrollRun @relation(fields: [payRunId], references: [id])
+model SeveranceRecord {
+  id            String     @id @default(cuid())
+  payRunId      String     @map("payroll_run_id")
+  employeeId    String     @map("employee_id")
+  severanceType String     @map("severance_type")
+  grossAmount   Decimal    @map("gross_amount") @db.Decimal(10, 2)
+  taxWithheld   Decimal    @map("tax_withheld") @db.Decimal(10, 2)
+  t4BoxCode     Int        @map("t4_box_code") //e.g. 66 eligible or 67 non-eligible retiring allce.
+  createdAt     DateTime   @default(now()) @map("created_at")
+  employee      Employee   @relation(fields: [employeeId], references: [id])
+  payrollRun    PayrollRun @relation(fields: [payRunId], references: [id])
+
   @@map("severance_record")
 }
-
 
 // ==========================================
 // ===== ENUMS (Lowercase for Postgres) =====
@@ -1146,99 +1149,108 @@ model SeveranceRecord{
 
 enum TokenType {
   EMAIL_VERIFICATION @map("email_verification")
-  PASSWORD_RESET @map("password_reset")
-  EMAIL_CHANGE @map("email_change")
-	SETUP_PASSWORD @map("setup_password")
-	@@map("token_type")
+  PASSWORD_RESET     @map("password_reset")
+  EMAIL_CHANGE       @map("email_change")
+  SETUP_PASSWORD     @map("setup_password")
+
+  @@map("token_type")
 }
 
 enum UserRole {
-  OWNER   @map("owner")      // Full access + billing
-  ADMIN   @map("admin")         // Full payroll access
-  MANAGER @map("manager")       // Can view/approve their department only
-  ACCOUNTANT @map("accountant")    // Read-only access for tax/reports
-  EMPLOYEE @map("employee")      // Can only see their own paystubs/profile
-	@@map("user_role")
+  OWNER      @map("owner") // Full access + billing
+  ADMIN      @map("admin") // Full payroll access
+  MANAGER    @map("manager") // Can view/approve their department only
+  ACCOUNTANT @map("accountant") // Read-only access for tax/reports
+  EMPLOYEE   @map("employee") // Can only see their own paystubs/profile
+
+  @@map("user_role")
 }
 
 //Conflct resolution & precedence USER > SUPPORT > IMPORT > SYSTEM
 enum NameSource {
-  USER @map("user")
+  USER    @map("user")
   SUPPORT @map("support") //e.g. manual change by support agent
-  IMPORT @map("import") //sync from other services than contact management
-  SYSTEM @map("system")  //e.g., auto-generated based on rules such as first name variations plus last name etc.
-	@@map("conversational_name_source")
+  IMPORT  @map("import") //sync from other services than contact management
+  SYSTEM  @map("system") //e.g., auto-generated based on rules such as first name variations plus last name etc.
+
+  @@map("conversational_name_source")
 }
 
 enum PhoneType {
   MOBILE @map("mobile")
-  HOME @map("home")
-  WORK @map("work")
-	@@map("phone_type")
+  HOME   @map("home")
+  WORK   @map("work")
+
+  @@map("phone_type")
 }
 
 enum EmployeeStatus {
-  ACTIVE @map("active")
+  ACTIVE     @map("active")
   TERMINATED @map("terminated")
-  INACTIVE @map("inactive")
+  INACTIVE   @map("inactive")
 }
 
 enum TerminationReason {
-  ROE_A_SHORTAGE_OF_WORK @map("A") // A - Shortage of work / end of contract or season
-  ROE_B_STRIKE_OR_LOCKOUT @map("B") // B - Strike or lockout
-  ROE_C_RETURN_TO_SCHOOL @map("C") // C - Return to school
-  ROE_D_ILLNESS_OR_INJURY @map("D") // D - Illness or injury
-  ROE_E_QUIT @map("E") // E - Quit
-  ROE_F_MATERNITY @map("F") // F - Maternity
-  ROE_G_RETIREMENT @map("G") // G - Retirement
-  ROE_H_WORK_SHARING @map("H") // H - Work-sharing
-  ROE_J_APPRENTICE_TRAINING @map("J") // J - Apprentice training
-  ROE_K_OTHER @map("K") // K - Other
-  ROE_M_DISMISSAL @map("M") // M - Dismissal
-  ROE_N_LEAVE_OF_ABSENCE @map("N") // N - Leave of absence
-  ROE_P_PARENTAL @map("P") // P - Parental
+  ROE_A_SHORTAGE_OF_WORK                       @map("A") // A - Shortage of work / end of contract or season
+  ROE_B_STRIKE_OR_LOCKOUT                      @map("B") // B - Strike or lockout
+  ROE_C_RETURN_TO_SCHOOL                       @map("C") // C - Return to school
+  ROE_D_ILLNESS_OR_INJURY                      @map("D") // D - Illness or injury
+  ROE_E_QUIT                                   @map("E") // E - Quit
+  ROE_F_MATERNITY                              @map("F") // F - Maternity
+  ROE_G_RETIREMENT                             @map("G") // G - Retirement
+  ROE_H_WORK_SHARING                           @map("H") // H - Work-sharing
+  ROE_J_APPRENTICE_TRAINING                    @map("J") // J - Apprentice training
+  ROE_K_OTHER                                  @map("K") // K - Other
+  ROE_M_DISMISSAL                              @map("M") // M - Dismissal
+  ROE_N_LEAVE_OF_ABSENCE                       @map("N") // N - Leave of absence
+  ROE_P_PARENTAL                               @map("P") // P - Parental
   ROE_Z_COMPASSIONATE_CARE_OR_FAMILY_CAREGIVER @map("Z") // Z - Compassionate care / family caregiver
+
   @@map("termination_reason")
 }
 
 enum PayType {
   HOURLY @map("hourly")
   SALARY @map("salary")
-	@@map("pay_type")
+
+  @@map("pay_type")
 }
 
 enum EarningType {
-  REGULAR @map("regular")
-  OVERTIME @map("overtime")
-  HOLIDAY @map("holiday")
-  VACATION @map("vacation")
-  BONUS @map("bonus")
+  REGULAR    @map("regular")
+  OVERTIME   @map("overtime")
+  HOLIDAY    @map("holiday")
+  VACATION   @map("vacation")
+  BONUS      @map("bonus")
   COMMISSION @map("commission")
-  OTHER @map("other")
-	@@map("earning_type")
+  OTHER      @map("other")
+
+  @@map("earning_type")
 }
 
 enum PayrollRunStatus {
-  DRAFT @map("draft")
+  DRAFT     @map("draft")
   FINALIZED @map("finalized")
-  PAID @map("paid")
-	@@map("payroll_run_status")
+  PAID      @map("paid")
+
+  @@map("payroll_run_status")
 }
 
 enum DeductionType {
-  TAX @map("tax")
-  CPP @map("cpp")
-  EI @map("ei")
+  TAX     @map("tax")
+  CPP     @map("cpp")
+  EI      @map("ei")
   BENEFIT @map("benefit")
-  OTHER @map("other")
-	@@map("deduction_type")
+  OTHER   @map("other")
+
+  @@map("deduction_type")
 }
 
 //TODO: Distribution Validation: CREAT UNIQUE INDEX "OneRemainderAccountPerEmployee" ON "BankAccount"("employeeId) WHERE "type" = 'REMAINDER'; AND "isActive" = true;
 enum DistributionType {
   FIXED_AMOUNT @map("fixed_amount")
-  PERCENTAGE @map("percentage")
-  REMAINDER @map("remainder")
+  PERCENTAGE   @map("percentage")
+  REMAINDER    @map("remainder")
 }
 
 enum BankAccountVerificationStatus {
@@ -1246,145 +1258,155 @@ enum BankAccountVerificationStatus {
   PENDING    @map("pending")
   VERIFIED   @map("verified")
   FAILED     @map("failed")
+
   @@map("bank_account_verification_status")
 }
 
 enum DisbursementStatus {
-  PENDING @map("pending")
-  SENT @map("sent")
-  FAILED @map("failed")
+  PENDING    @map("pending")
+  SENT       @map("sent")
+  FAILED     @map("failed")
   RECONCILED @map("reconciled")
-	@@map("disbursement_status")
+
+  @@map("disbursement_status")
 }
 
 enum PayFrequency {
-  WEEKLY @map("weekly")
-  BIWEEKLY @map("biweekly")
+  MONTHLY     @map("monthly")
   SEMIMONTHLY @map("semimonthly")
-  MONTHLY @map("monthly")
-  ANNUALLY @map("annually")
-	@@map("pay_frequency")
-}
+  BIWEEKLY    @map("biweekly")
+  WEEKLY      @map("weekly")
 
-enum PeriodBoundaryType {
-  CALENDAR @map("calendar")
-  ANCHORED @map("anchored")
-  @@map("period_boundary_type")
+  @@map("pay_frequency")
 }
 
 enum Weekday {
-  MONDAY @map("monday")
-  TUESDAY @map("tuesday")
+  MONDAY    @map("monday")
+  TUESDAY   @map("tuesday")
   WEDNESDAY @map("wednesday")
-  THURSDAY @map("thursday")
-  FRIDAY @map("friday")
-  SATURDAY @map("saturday")
-  SUNDAY @map("sunday")
+  THURSDAY  @map("thursday")
+  FRIDAY    @map("friday")
+  SATURDAY  @map("saturday")
+  SUNDAY    @map("sunday")
+
   @@map("weekday")
 }
 
 enum AccountType {
-  ASSET @map("asset")
+  ASSET     @map("asset")
   LIABILITY @map("liability")
-  EQUITY @map("equity")
-  REVENUE @map("revenue")
-  EXPENSE @map("expense")
+  EQUITY    @map("equity")
+  REVENUE   @map("revenue")
+  EXPENSE   @map("expense")
+
   @@map("account_type")
 }
 
 enum AccountCategory {
-  CASH @map("cash")
+  CASH            @map("cash")
   PAYROLL_EXPENSE @map("payroll_expense")
-  TAX_PAYABLE @map("tax_payable")
+  TAX_PAYABLE     @map("tax_payable")
   BENEFIT_PAYABLE @map("benefit_payable")
-  WAGES_PAYABLE @map("wages_payable")
-  OTHER @map("other")
+  WAGES_PAYABLE   @map("wages_payable")
+  OTHER           @map("other")
+
   @@map("account_category")
 }
 
 enum MappingType {
-  EARNING @map("earning")
-  DEDUCTION @map("deduction")
-  EMPLOYER_TAX @map("employer_tax")
+  EARNING          @map("earning")
+  DEDUCTION        @map("deduction")
+  EMPLOYER_TAX     @map("employer_tax")
   NET_PAY_CLEARING @map("net_pay_clearing")
+
   @@map("mapping_type")
 }
 
 enum RemittanceStatus {
-  PENDING @map("pending")
-  REVIEWED @map("reviewed")
-  FILED @map("filed")
-  PAID @map("paid")
+  PENDING   @map("pending")
+  REVIEWED  @map("reviewed")
+  FILED     @map("filed")
+  PAID      @map("paid")
   CANCELLED @map("cancelled")
-	@@map("remittance_status")
+
+  @@map("remittance_status")
 }
 
 enum JournalStatus {
   PENDING @map("pending")
-  POSTED @map("posted")      // Successfully synced to accounting software
-  FAILED @map("failed")
-  VOIDED @map("voided")
-	@@map("journal_status")
+  POSTED  @map("posted") // Successfully synced to accounting software
+  FAILED  @map("failed")
+  VOIDED  @map("voided")
+
+  @@map("journal_status")
 }
 
 enum EntryType {
-  DEBIT @map("debit")
+  DEBIT  @map("debit")
   CREDIT @map("credit")
-	@@map("entry_type")
+
+  @@map("entry_type")
 }
 
 enum Subject {
   ORGANIZATION @map("organization")
-  INDIVIDUAL @map("individual")
-	@@map("subject")
+  INDIVIDUAL   @map("individual")
+
+  @@map("subject")
 }
 
 enum BillingInterval {
   MONTHLY @map("monthly")
   YEARLY  @map("yearly")
+
   @@map("billing_interval")
 }
 
 enum SubscriptionStatus {
-  TRIALING  @map("trialing")
-  ACTIVE    @map("active")
-  PAST_DUE  @map("past_due")
-  PAUSED    @map("paused")
-  CANCELED  @map("canceled")
-  EXPIRED   @map("expired")
+  TRIALING @map("trialing")
+  ACTIVE   @map("active")
+  PAST_DUE @map("past_due")
+  PAUSED   @map("paused")
+  CANCELED @map("canceled")
+  EXPIRED  @map("expired")
+
   @@map("subscription_status")
 }
 
 enum InvoiceStatus {
-  DRAFT   @map("draft")
-  OPEN    @map("open")
-  PAID    @map("paid")
-  OVERDUE @map("overdue")
-  VOID    @map("void")
+  DRAFT         @map("draft")
+  OPEN          @map("open")
+  PAID          @map("paid")
+  OVERDUE       @map("overdue")
+  VOID          @map("void")
   UNCOLLECTIBLE @map("uncollectible")
+
   @@map("invoice_status")
 }
 
 enum PaymentStatus {
-  PENDING  @map("pending")
+  PENDING   @map("pending")
   SUCCEEDED @map("succeeded")
-  FAILED   @map("failed")
-  REFUNDED @map("refunded")
-  REVERSED @map("reversed")
+  FAILED    @map("failed")
+  REFUNDED  @map("refunded")
+  REVERSED  @map("reversed")
+
   @@map("payment_status")
 }
 
 enum PaymentProvider {
-  STRIPE  @map("stripe")
-  PADDLE  @map("paddle")
-  MANUAL  @map("manual")
-  OTHER   @map("other")
+  STRIPE @map("stripe")
+  PADDLE @map("paddle")
+  MANUAL @map("manual")
+  OTHER  @map("other")
+
   @@map("payment_provider")
 }
 
 enum PaymentMethodType {
   CARD @map("card")
-  PAP @map("pap")
+  PAP  @map("pap")
+
   @@map("payment_method_type")
 }
 
@@ -1403,54 +1425,62 @@ enum ProvinceCode {
   SK @map("SK")
   YT @map("YT")
   CA @map("CA") // For federal rates
+
   @@map("province_code")
 }
 
 enum TaxCalculationMethod {
   REGULAR @map("regular") //standard tax tables based on annualized income
-  BONUS @map("bonus") //pass 1 regular annualized and pass 2 add bonus to get total annual tax and then subtract regular tax to get bonus tax only plus regular tax/26
-  FLAT @map("flat") //e.g., 10% of severance pay
-  EXEMPT @map("exempt")
+  BONUS   @map("bonus") //pass 1 regular annualized and pass 2 add bonus to get total annual tax and then subtract regular tax to get bonus tax only plus regular tax/26
+  FLAT    @map("flat") //e.g., 10% of severance pay
+  EXEMPT  @map("exempt")
+
   @@map("tax_calculation_method")
 }
 
 enum HolidayPayMethod {
   AVERAGE4WEEKS @map("statutory") // Statutory holiday pay based on average daily earnings over past 4 weeks
-  FIXED @map("fixed") // Fixed amount per statutory holiday AB 5% of gross wages in 4 weeks prior to statutory holiday.
+  FIXED         @map("fixed") // Fixed amount per statutory holiday AB 5% of gross wages in 4 weeks prior to statutory holiday.
+
   @@map("holiday_pay_method")
 }
 
 enum OvertimePeriodType {
-  DAILY @map("daily")
-  WEEKLY @map("weekly")
+  DAILY   @map("daily")
+  WEEKLY  @map("weekly")
   HOLIDAY @map("holiday")
+
   @@map("overtime_period_type")
 }
 
 enum OvertimeType {
   STANDARD @map("standard") // e.g., 1.5x for hours over 40/week
-  DOUBLE @map("double") // e.g., 2x for hours over 60/week
-  CUSTOM @map("custom") // e.g., 1.75x for hours over 50/week defined by user.
+  DOUBLE   @map("double") // e.g., 2x for hours over 60/week
+  CUSTOM   @map("custom") // e.g., 1.75x for hours over 50/week defined by user.
+
   @@map("overtime_type")
 }
 
 enum VacationBalanceUnit {
   AMOUNT @map("amount")
-  HOURS @map("hours")
+  HOURS  @map("hours")
+
   @@map("vacation_balance_unit")
 }
 
 enum VacationLedgerEntryType {
-  ACCRUAL @map("accrual")
-  USAGE @map("usage")
-  PAYOUT @map("payout")
+  ACCRUAL    @map("accrual")
+  USAGE      @map("usage")
+  PAYOUT     @map("payout")
   ADJUSTMENT @map("adjustment")
+
   @@map("vacation_ledger_entry_type")
 }
 
 enum SeveranceType {
-  RETIRING_DIRECT @map("retiring_direct") // paid 2 employee w/flat tax rate but w/o cpp/ei.
-  RETIRING_TRANSFER @map("retiring_transfer")//rollover to RRSP w/o the withheld.
-  SALARY_CONTINUATION @map("salary_continuation")//ordinary salary continuation w/regular tax tables, cpp, ei.
+  RETIRING_DIRECT     @map("retiring_direct") // paid 2 employee w/flat tax rate but w/o cpp/ei.
+  RETIRING_TRANSFER   @map("retiring_transfer") //rollover to RRSP w/o the withheld.
+  SALARY_CONTINUATION @map("salary_continuation") //ordinary salary continuation w/regular tax tables, cpp, ei.
+
   @@map("severance_type")
 }

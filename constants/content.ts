@@ -164,54 +164,48 @@ export const tenantFieldContent = {
     term: "Pay frequency",
     description: "How often employees in this unit are paid.",
   },
-  periodBoundaryType: {
-    term: "Pay period type",
-    description:
-      "Calendar follows normal calendar boundaries. Anchored uses your custom anchor day or weekday.",
+  periodEndDay: {
+    term: "Pay period end day",
+    description: "Day of month used for the pay period end.",
   },
-  firstBoundaryAnchorDay: {
-    term: "First period anchor day",
+  periodEndWeekday: {
+    term: "Pay period end weekday",
     description:
-      "Day of month to anchor the first period boundary when using anchored periods.",
+      "Weekday used for the pay period end on weekly or biweekly schedules.",
   },
-  firstBoundaryAnchorWeekday: {
-    term: "First period anchor weekday",
+  boundaryShift: {
+    term: "Pay period end shift",
     description:
-      "Weekday to anchor the first period boundary for weekly or biweekly anchored schedules.",
+      "Shift applied to the pay period end rule. Negative values move to earlier months or weeks based on schedule type.",
   },
-  firstPaydayOffsetDays: {
-    term: "Days from period end to payday",
+  payWeekday: {
+    term: "Payday weekday",
     description:
-      "Number of days from pay period end to payday when using anchored periods. Use 0 to pay on period end date.",
+      "Weekday used for payday on weekly, biweekly, or semi-monthly schedules.",
   },
-  firstPaydayWeekday: {
-    term: "First payday weekday",
-    description:
-      "Optional weekday rule for first payday on weekly, biweekly, or semi-monthly schedules.",
-  },
-  monthlyPaydayDay: {
+  payday: {
     term: "Payday",
     description:
       "For monthly schedules, choose the day of month to issue payroll (1-31). If a month has fewer days than selected, payday moves to the last banking day of that month.",
   },
-  calendarPeriodEndDay: {
+  payday2: {
+    term: "Second payday",
+    description:
+      "For semi-monthly schedules, choose the day of month for the second payday.",
+  },
+  periodEndDay2: {
+    term: "Pay period end",
+    description:
+      "For semi-monthly schedules, choose the day of month for the second pay period end.",
+  },
+  periodEndDayMonthly: {
     term: "Pay period end",
     description:
       "Pick a calendar day for period end. If a month has fewer days than selected, the last day is used.",
   },
-  secondBoundaryAnchorDay: {
-    term: "Second period anchor day",
-    description:
-      "For semi-monthly schedules, the anchor day for the second half of the month.",
-  },
-  secondPaydayOffsetDays: {
-    term: "Second payday offset (days)",
-    description:
-      "For semi-monthly schedules, number of days after the second period end to pay.",
-  },
-  secondPaydayWeekday: {
-    term: "Second payday weekday",
-    description: "Optional weekday rule for the second semi-monthly payday.",
+  boundaryShift2: {
+    term: "Second pay period end shift",
+    description: "Shift applied to the second pay period end rule.",
   },
   fundingMethod: {
     term: "Funding method",

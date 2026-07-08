@@ -84,15 +84,11 @@ export const tenantSchema = z.object({
       .nullable()
       .optional(),
   ),
-  periodBoundaryType: z.preprocess(
-    (val) => (val === "" ? null : val),
-    z.enum(["CALENDAR", "ANCHORED"]).nullable().optional(),
-  ),
-  firstBoundaryAnchorDay: z.preprocess(
+  periodEndDay: z.preprocess(
     (val) => (val === "" || val == null ? null : Number(val)),
-    z.number().int().min(1).max(31).nullable().optional(),
+    z.number().int().min(-3).max(28).nullable().optional(),
   ),
-  firstBoundaryAnchorWeekday: z.preprocess(
+  periodEndWeekday: z.preprocess(
     (val) => (val === "" ? null : val),
     z
       .enum([
@@ -107,11 +103,11 @@ export const tenantSchema = z.object({
       .nullable()
       .optional(),
   ),
-  firstPaydayOffsetDays: z.preprocess(
+  boundaryShift: z.preprocess(
     (val) => (val === "" || val == null ? null : Number(val)),
-    z.number().int().min(-31).max(31).nullable().optional(),
+    z.number().int().min(-50).max(2).nullable().optional(),
   ),
-  firstPaydayWeekday: z.preprocess(
+  payWeekday: z.preprocess(
     (val) => (val === "" ? null : val),
     z
       .enum([
@@ -126,36 +122,21 @@ export const tenantSchema = z.object({
       .nullable()
       .optional(),
   ),
-  monthlyPaydayDay: z.preprocess(
+  payday: z.preprocess(
     (val) => (val === "" || val == null ? null : Number(val)),
     z.number().int().min(1).max(31).nullable().optional(),
   ),
-  calendarPeriodEndDay: z.preprocess(
+  payday2: z.preprocess(
     (val) => (val === "" || val == null ? null : Number(val)),
     z.number().int().min(1).max(31).nullable().optional(),
   ),
-  secondBoundaryAnchorDay: z.preprocess(
+  periodEndDay2: z.preprocess(
     (val) => (val === "" || val == null ? null : Number(val)),
     z.number().int().min(1).max(31).nullable().optional(),
   ),
-  secondPaydayOffsetDays: z.preprocess(
+  boundaryShift2: z.preprocess(
     (val) => (val === "" || val == null ? null : Number(val)),
-    z.number().int().min(-31).max(31).nullable().optional(),
-  ),
-  secondPaydayWeekday: z.preprocess(
-    (val) => (val === "" ? null : val),
-    z
-      .enum([
-        "MONDAY",
-        "TUESDAY",
-        "WEDNESDAY",
-        "THURSDAY",
-        "FRIDAY",
-        "SATURDAY",
-        "SUNDAY",
-      ])
-      .nullable()
-      .optional(),
+    z.number().int().min(-50).max(2).nullable().optional(),
   ),
   fundingMethod: z.preprocess(
     (val) => (val === "" ? null : val),

@@ -6,6 +6,8 @@ export const ERRORS = {
   PASSWORDS_DO_NOT_MATCH: "Passwords do not match.",
   VERIFICATION_LINK_EXPIRED:
     "Verification link has expired; please request a new one.",
+  VERIFICATION_TOKEN_GONE:
+    "This verification link has already been used. Please log in directly.",
   ACCOUNT_EXISTS: "Account already exists for this email.",
   INTERNAL_SERVER_ERROR: "Internal server error.",
   TOO_MANY_ATTEMPTS: "Too many attempts. Please try again in an hour.",

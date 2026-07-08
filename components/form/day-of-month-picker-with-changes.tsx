@@ -14,7 +14,7 @@ interface DayOfMonthPickerWithChangesProps<TFormValues extends FieldValues> {
   error?: string;
   placeholder?: string;
   defaultDay?: number | null;
-  relativeName?: Path<TFormValues>;
+  monthShiftName?: Path<TFormValues>;
 }
 
 function startOfMonth(date: Date): Date {
@@ -29,16 +29,17 @@ export default function DayOfMonthPickerWithChanges<
   error,
   placeholder = "Choose a day (1-31)",
   defaultDay = 31,
-  relativeName,
+  monthShiftName,
 }: DayOfMonthPickerWithChangesProps<TFormValues>) {
   const { changes, showChanges, register } =
     useFormChangeContext<TFormValues>();
   const change = changes.find(
-    (c) => c.name === name || (relativeName != null && c.name === relativeName),
+    (c) =>
+      c.name === name || (monthShiftName != null && c.name === monthShiftName),
   );
 
   const registration = register(name);
-  const relativeRegistration = relativeName ? register(relativeName) : null;
+  const relativeRegistration = monthShiftName ? register(monthShiftName) : null;
   const hiddenInputRef = useRef<HTMLInputElement | null>(null);
   const hiddenRelativeInputRef = useRef<HTMLInputElement | null>(null);
   const initializedRef = useRef(false);
@@ -59,8 +60,20 @@ export default function DayOfMonthPickerWithChanges<
     const initialRelative = hiddenRelativeInputRef.current?.value ?? "";
 
     if (initialRelative) {
+      const initialMonthShift = Number(initialRelative);
+      const clampedMonthShift = Number.isNaN(initialMonthShift)
+        ? 0
+        : Math.max(-1, Math.min(1, initialMonthShift));
       initializedRef.current = true;
       setRelativeValue(initialRelative);
+      setVisibleMonth(
+        new Date(
+          paydayMonth.getFullYear(),
+          paydayMonth.getMonth() + clampedMonthShift,
+          1,
+        ),
+      );
+      setPickedMonthOffset(clampedMonthShift);
       return;
     }
 
@@ -136,22 +149,8 @@ export default function DayOfMonthPickerWithChanges<
       </>
     );
 
-  const clearRelativeSelection = () => {
-    if (!relativeRegistration) return;
-    setRelativeValue("");
-    relativeRegistration.onChange({
-      target: { name: relativeRegistration.name, value: "" },
-      type: "change",
-    });
-    relativeRegistration.onBlur({
-      target: { name: relativeRegistration.name, value: "" },
-      type: "blur",
-    });
-  };
-
   const onSelectDay = (day: number) => {
     const nextValue = String(day);
-    clearRelativeSelection();
     setValue(nextValue);
     setPickedMonthOffset(monthOffsetFromPayday);
 
@@ -165,17 +164,27 @@ export default function DayOfMonthPickerWithChanges<
       type: "blur",
     });
 
+    if (relativeRegistration) {
+      const monthShiftValue = String(monthOffsetFromPayday);
+      setRelativeValue(monthShiftValue);
+      relativeRegistration.onChange({
+        target: { name: relativeRegistration.name, value: monthShiftValue },
+        type: "change",
+      });
+      relativeRegistration.onBlur({
+        target: { name: relativeRegistration.name, value: monthShiftValue },
+        type: "blur",
+      });
+    }
+
     setIsOpen(false);
   };
 
-  const displayValue =
-    relativeValue !== ""
-      ? `${relativeValue} day${relativeValue === "1" || relativeValue === "-1" ? "" : "s"} to payday`
-      : value
-        ? showCalendarNavigation
-          ? `${getDaySentenceText(value)} in ${getMonthRelationSentenceText(pickedMonthOffset)}`
-          : `${getDaySentenceText(value)} in a month`
-        : placeholder;
+  const displayValue = value
+    ? showCalendarNavigation
+      ? `${getDaySentenceText(value)} in ${getMonthRelationSentenceText(pickedMonthOffset)}`
+      : `${getDaySentenceText(value)} in a month`
+    : placeholder;
 
   return (
     <div className={inputWithChangesStyles.wrapper} ref={rootRef}>

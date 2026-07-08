@@ -15,7 +15,7 @@ interface DayOfWeekPickerWithChangesProps<TFormValues extends FieldValues> {
   placeholder?: string;
   defaultWeekday?: string | null;
   relativeWeekName?: Path<TFormValues>;
-  defaultRelativeWeekOffsetDays?: number;
+  defaultRelativeWeekShift?: number;
 }
 
 type WeekOffset = number;
@@ -38,14 +38,14 @@ function clampWeekOffset(value: number): WeekOffset {
   return Math.max(MIN_WEEK_OFFSET, Math.min(MAX_WEEK_OFFSET, value));
 }
 
-function getOffsetFromDays(value: string): WeekOffset {
+function getWeekOffset(value: string): WeekOffset {
   const numeric = Number(value);
   if (Number.isNaN(numeric)) return 0;
-  return clampWeekOffset(Math.round(numeric / 7));
+  return clampWeekOffset(numeric);
 }
 
-function getOffsetDaysFromIndex(index: WeekOffset): string {
-  return String(index * 7);
+function getWeekShiftValue(index: WeekOffset): string {
+  return String(index);
 }
 
 function formatWeekOffset(offset: WeekOffset): string {
@@ -69,8 +69,8 @@ function formatRelativeWeekdaySelection(
   weekday: string,
   offset: WeekOffset,
 ): string {
-  if (offset === 0) return `${weekday} of this week`;
-  if (offset === -1) return `${weekday} of last week`;
+  if (offset === 0) return `${weekday} of the week`;
+  if (offset === -1) return `${weekday} before the week`;
   if (offset === 1) return `Next ${weekday}`;
   if (offset === 2) return `${weekday} after next`;
 
@@ -95,7 +95,7 @@ export default function DayOfWeekPickerWithChanges<
   placeholder = "Choose weekday",
   defaultWeekday = "MONDAY",
   relativeWeekName,
-  defaultRelativeWeekOffsetDays = -7,
+  defaultRelativeWeekShift = -1,
 }: DayOfWeekPickerWithChangesProps<TFormValues>) {
   const { changes, showChanges, register } =
     useFormChangeContext<TFormValues>();
@@ -118,10 +118,10 @@ export default function DayOfWeekPickerWithChanges<
   const [value, setValue] = useState("");
   const [relativeValue, setRelativeValue] = useState("");
   const [visibleWeekOffset, setVisibleWeekOffset] = useState<WeekOffset>(
-    clampWeekOffset(Math.round(defaultRelativeWeekOffsetDays / 7)),
+    clampWeekOffset(defaultRelativeWeekShift),
   );
   const [pickedWeekOffset, setPickedWeekOffset] = useState<WeekOffset>(
-    clampWeekOffset(Math.round(defaultRelativeWeekOffsetDays / 7)),
+    clampWeekOffset(defaultRelativeWeekShift),
   );
   const weekListOffsets = getWeekListOffsets(visibleWeekOffset);
 
@@ -142,17 +142,14 @@ export default function DayOfWeekPickerWithChanges<
 
     if (relativeRegistration) {
       const nextRelative =
-        initialRelative ||
-        String(
-          clampWeekOffset(Math.round(defaultRelativeWeekOffsetDays / 7)) * 7,
-        );
+        initialRelative || String(clampWeekOffset(defaultRelativeWeekShift));
       setRelativeValue(nextRelative);
       relativeRegistration.onChange({
         target: { name: relativeRegistration.name, value: nextRelative },
         type: "change",
       });
 
-      const offset = getOffsetFromDays(nextRelative);
+      const offset = getWeekOffset(nextRelative);
       setVisibleWeekOffset(offset);
       setPickedWeekOffset(offset);
     }
@@ -195,14 +192,14 @@ export default function DayOfWeekPickerWithChanges<
     });
 
     if (relativeRegistration) {
-      const offsetDays = getOffsetDaysFromIndex(effectiveOffset);
-      setRelativeValue(offsetDays);
+      const weekShiftValue = getWeekShiftValue(effectiveOffset);
+      setRelativeValue(weekShiftValue);
       relativeRegistration.onChange({
-        target: { name: relativeRegistration.name, value: offsetDays },
+        target: { name: relativeRegistration.name, value: weekShiftValue },
         type: "change",
       });
       relativeRegistration.onBlur({
-        target: { name: relativeRegistration.name, value: offsetDays },
+        target: { name: relativeRegistration.name, value: weekShiftValue },
         type: "blur",
       });
     }
@@ -356,36 +353,26 @@ export default function DayOfWeekPickerWithChanges<
             )}
 
             {!relativeRegistration && (
-              <>
-                <div className="mb-2 grid w-full grid-cols-7 gap-1 px-1 text-center text-xs font-semibold text-slate-500">
-                  {WEEKDAY_OPTIONS.map((option) => (
-                    <div key={option.value} className="py-1">
+              <div className="grid w-full grid-cols-7 gap-1 px-1">
+                {WEEKDAY_OPTIONS.map((option) => {
+                  const selected = option.value === value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => onSelectWeekday(option.value)}
+                      className={cn(
+                        "h-8 w-full rounded-md text-xs font-medium",
+                        selected
+                          ? "bg-slate-900 text-white"
+                          : "text-slate-700 hover:bg-slate-100",
+                      )}
+                    >
                       {option.short}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="grid w-full grid-cols-7 gap-1 px-1">
-                  {WEEKDAY_OPTIONS.map((option) => {
-                    const selected = option.value === value;
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => onSelectWeekday(option.value)}
-                        className={cn(
-                          "h-8 w-full rounded-md text-xs font-medium",
-                          selected
-                            ? "bg-slate-900 text-white"
-                            : "text-slate-700 hover:bg-slate-100",
-                        )}
-                      >
-                        {option.short}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
         )}
