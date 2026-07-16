@@ -6,6 +6,7 @@ import { getTenants } from "@/lib/api";
 import type { TenantSummaryDto } from "@/lib/dto/tenant";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
+import { Clarification } from "@/components/clarification";
 
 export default function TenantsPage() {
   const [tenants, setTenants] = useState<TenantSummaryDto[]>([]);
@@ -54,15 +55,60 @@ export default function TenantsPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <Link
-                      href={`/payroll?tenantId=${tenant.id}`}
+                      href={`/tenants/${tenant.id}`}
                       className="text-xl font-semibold text-slate-900 hover:text-emerald-700 transition-colors"
                     >
                       {tenant.displayName}
                     </Link>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {tenant.displayBusinessNumber ||
-                        "Valid business no. is required in remitting and reporting."}
-                    </p>
+                    <dl className="mt-3 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
+                      <div>
+                        <dt className="text-xs uppercase tracking-wide text-slate-500">
+                          <Clarification
+                            term="Business number"
+                            description="Shows BN9 only (up to 9 digits). CRA payroll account format is BN9 + RP + 4-digit reference number, for example 123456789 RP0001."
+                          />
+                        </dt>
+                        <dd className="mt-1 font-medium text-slate-800">
+                          {tenant.displayBusinessBn9 || "Not set"}
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt className="text-xs uppercase tracking-wide text-slate-500">
+                          <Clarification
+                            term="Postal code"
+                            description="Primary mailing postal code used for payroll reporting correspondence."
+                          />
+                        </dt>
+                        <dd className="mt-1 font-medium text-slate-800">
+                          {tenant.postalCode || "Not set"}
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt className="text-xs uppercase tracking-wide text-slate-500">
+                          <Clarification
+                            term="Payroll frequency"
+                            description="How often employees under this employer are paid."
+                          />
+                        </dt>
+                        <dd className="mt-1 font-medium text-slate-800">
+                          {tenant.payrollFrequency || "Not set"}
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt className="text-xs uppercase tracking-wide text-slate-500">
+                          <Clarification
+                            term="Pay period end"
+                            description="Current pay period end configuration from the active pay schedule."
+                          />
+                        </dt>
+                        <dd className="mt-1 font-medium text-slate-800">
+                          {tenant.payPeriodEnd || "Not set"}
+                        </dd>
+                      </div>
+                    </dl>
                   </div>
                   <Link
                     href={`/tenants/${tenant.id}/edit`}

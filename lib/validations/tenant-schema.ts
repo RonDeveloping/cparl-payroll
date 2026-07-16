@@ -1,6 +1,7 @@
 // lib/validations/tenant-schema.ts
 import { z } from "zod";
 import { isValidCanadianPostalCode } from "@/utils/validators/postalCode";
+import { CANADA_PROVINCE_TERRITORY_CODES } from "@/constants/canada-provinces";
 
 /**
  * CRA Business Number check digit validation using the Luhn algorithm.
@@ -20,6 +21,16 @@ function isValidCRABusinessNumber(nineDigits: string): boolean {
     sum += digit;
   }
   return sum % 10 === 0;
+}
+
+function normalizeMonthEndDayInput(val: unknown): number | null {
+  if (val === "" || val == null) return null;
+  const numericValue = Number(val);
+  if (Number.isNaN(numericValue)) return numericValue;
+  if (numericValue === 29) return -3;
+  if (numericValue === 30) return -2;
+  if (numericValue === 31) return -1;
+  return numericValue;
 }
 
 export const tenantSchema = z.object({
@@ -59,7 +70,26 @@ export const tenantSchema = z.object({
     .object({
       street: z.string().optional().nullable(),
       city: z.string().optional().nullable(),
-      province: z.string().optional().nullable(),
+      province: z
+        .preprocess(
+          (val) => {
+            if (typeof val !== "string") return val;
+            const normalized = val.trim().toUpperCase();
+            return normalized === "" ? null : normalized;
+          },
+          z
+            .string()
+            .refine(
+              (val) => CANADA_PROVINCE_TERRITORY_CODES.includes(val as never),
+              {
+                message: "Select a valid Canadian province or territory",
+              },
+            )
+            .nullable()
+            .optional(),
+        )
+        .optional()
+        .nullable(),
       postalCode: z
         .string()
         .transform((val) => val.trim().toUpperCase())
@@ -84,8 +114,9 @@ export const tenantSchema = z.object({
       .nullable()
       .optional(),
   ),
+  timingDays: z.coerce.number().int().optional().nullable(),
   periodEndDay: z.preprocess(
-    (val) => (val === "" || val == null ? null : Number(val)),
+    (val) => normalizeMonthEndDayInput(val),
     z.number().int().min(-3).max(28).nullable().optional(),
   ),
   periodEndWeekday: z.preprocess(
@@ -123,16 +154,16 @@ export const tenantSchema = z.object({
       .optional(),
   ),
   payday: z.preprocess(
-    (val) => (val === "" || val == null ? null : Number(val)),
-    z.number().int().min(1).max(31).nullable().optional(),
+    (val) => normalizeMonthEndDayInput(val),
+    z.number().int().min(-3).max(28).nullable().optional(),
   ),
   payday2: z.preprocess(
-    (val) => (val === "" || val == null ? null : Number(val)),
-    z.number().int().min(1).max(31).nullable().optional(),
+    (val) => normalizeMonthEndDayInput(val),
+    z.number().int().min(-3).max(28).nullable().optional(),
   ),
   periodEndDay2: z.preprocess(
-    (val) => (val === "" || val == null ? null : Number(val)),
-    z.number().int().min(1).max(31).nullable().optional(),
+    (val) => normalizeMonthEndDayInput(val),
+    z.number().int().min(-3).max(28).nullable().optional(),
   ),
   boundaryShift2: z.preprocess(
     (val) => (val === "" || val == null ? null : Number(val)),

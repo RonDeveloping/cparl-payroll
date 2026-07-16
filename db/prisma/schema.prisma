@@ -467,13 +467,14 @@ model Department {
 model PaySchedule {
   id       String  @id @default(cuid())
   tenantId String  @map("tenant_id")
+  payrollUnitId String @map("payroll_unit_id")
   code     String
   name     String
   isActive Boolean @default(true) @map("is_active")
 
   frequency PayFrequency @map("frequency")
 
-  fundingLeadDays         Int      @default(2) @map("funding_lead_days")
+  timingDays         Int      @default(2) @map("timing_days")
 
   // Period 1 (all frequencies; for SEMIMONTHLY this covers the first half of the month)
   payday        Int?     @map("pay_day")
@@ -490,33 +491,32 @@ model PaySchedule {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  tenant       Tenant        @relation(fields: [tenantId], references: [id])
-  payrollUnits PayrollUnit[]
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  payrollUnit PayrollUnit @relation(fields: [payrollUnitId], references: [id])
 
   @@unique([tenantId, code])
+  @@index([payrollUnitId])
   @@index([tenantId, isActive])
   @@map("pay_schedule")
 }
 
 model PayrollUnit {
-  id            String  @id @default(cuid())
-  tenantId      String  @map("tenant_id")
-  payScheduleId String  @map("pay_schedule_id")
-  code          String
-  name          String
-  isActive      Boolean @default(true) @map("is_active")
+  id       String  @id @default(cuid())
+  tenantId String  @map("tenant_id")
+  code     String
+  name     String
+  isActive Boolean @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   tenant              Tenant                @relation(fields: [tenantId], references: [id])
-  paySchedule         PaySchedule           @relation(fields: [payScheduleId], references: [id])
+  paySchedules        PaySchedule[]
   employeeAssignments PayrollUnitEmployee[]
   payrollRuns         PayrollRun[]
   glMatrix            PayrollGLMatrix[]
 
   @@unique([tenantId, code])
-  @@index([payScheduleId])
   @@index([tenantId, isActive])
   @@map("payroll_unit")
 }

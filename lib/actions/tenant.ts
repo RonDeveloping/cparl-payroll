@@ -37,6 +37,9 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
     .split(/[,;\n]/)
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean);
+  const normalizedPayrollUnitName = data.payrollUnitName?.trim() || null;
+  const normalizedPayScheduleCode =
+    data.payScheduleCode?.trim().toUpperCase() || null;
 
   return await safe(
     prisma.$transaction(async (tx) => {
@@ -316,6 +319,87 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
         },
       });
 
+      if (data.payFrequency) {
+        const [existingPayrollUnit, existingPaySchedule] = await Promise.all([
+          tx.payrollUnit.findFirst({
+            where: {
+              tenantId: tenant.id,
+              isActive: true,
+            },
+            orderBy: { createdAt: "asc" },
+          }),
+          tx.paySchedule.findFirst({
+            where: {
+              tenantId: tenant.id,
+              isActive: true,
+            },
+            orderBy: { updatedAt: "desc" },
+          }),
+        ]);
+
+        const payScheduleCode =
+          existingPaySchedule?.code ?? normalizedPayScheduleCode ?? "MAIN";
+        const payrollUnitCode = existingPayrollUnit?.code ?? "MAIN";
+        const payrollUnitName = normalizedPayrollUnitName ?? "Main Payroll";
+        const timingDays =
+          data.timingDays ?? existingPaySchedule?.timingDays ?? 2;
+
+        const paySchedulePayload = {
+          frequency: data.payFrequency,
+          timingDays,
+          payday: data.payday ?? null,
+          payWeekday: data.payWeekday ?? null,
+          boundaryShift: data.boundaryShift ?? 0,
+          periodEndDay: data.periodEndDay ?? -1,
+          periodEndWeekday: data.periodEndWeekday ?? null,
+          payday2: data.payday2 ?? null,
+          periodEndDay2: data.periodEndDay2 ?? null,
+          boundaryShift2: data.boundaryShift2 ?? null,
+        };
+
+        const payrollUnitId = existingPayrollUnit
+          ? existingPayrollUnit.id
+          : (
+              await tx.payrollUnit.create({
+                data: {
+                  tenantId: tenant.id,
+                  code: payrollUnitCode,
+                  name: payrollUnitName,
+                  isActive: true,
+                },
+              })
+            ).id;
+
+        if (existingPayrollUnit) {
+          await tx.payrollUnit.update({
+            where: { id: existingPayrollUnit.id },
+            data: {
+              name: payrollUnitName,
+            },
+          });
+        }
+
+        const payScheduleData = {
+          ...paySchedulePayload,
+          tenantId: tenant.id,
+          payrollUnitId,
+          code: payScheduleCode,
+          name: payScheduleCode,
+          isActive: true,
+        };
+
+        if (existingPaySchedule) {
+          await tx.paySchedule.update({
+            where: { id: existingPaySchedule.id },
+            data: payScheduleData,
+          });
+        } else {
+          await tx.paySchedule.create({
+            data: payScheduleData,
+          });
+        }
+      }
+
       if (!id || id === "new") {
         await tx.tenantUser.upsert({
           where: {
@@ -418,10 +502,65 @@ export async function deleteTenant(tenantId: string) {
 
       try {
         return await prisma.$transaction(async (tx) => {
+          // Check if there are any payroll runs or employees
+          const payrollRunCount = await tx.payrollRun.count({
+            where: { tenantId },
+          });
+
+          if (payrollRunCount > 0) {
+            throw new Error(
+              "This employer can't be deleted because it has payroll records. Set it inactive instead.",
+            );
+          }
+
+          const employeeCount = await tx.employee.count({
+            where: { tenantId },
+          });
+
+          if (employeeCount > 0) {
+            throw new Error(
+              "This employer can't be deleted because it has employees. Set it inactive instead.",
+            );
+          }
+
+          // Delete all tenant-related records in correct dependency order
+          await tx.billingInvoice.deleteMany({
+            where: { tenantId },
+          });
+          await tx.paymentTransaction.deleteMany({
+            where: { tenantId },
+          });
+          await tx.billingCustomer.deleteMany({
+            where: { tenantId },
+          });
+          await tx.paySlip.deleteMany({
+            where: { tenantId },
+          });
+          await tx.remittance.deleteMany({
+            where: { tenantId },
+          });
           await tx.tenantSettings.deleteMany({
             where: { tenantId },
           });
           await tx.tenantUser.deleteMany({
+            where: { tenantId },
+          });
+          await tx.tenantSubscription.deleteMany({
+            where: { tenantId },
+          });
+          await tx.department.deleteMany({
+            where: { tenantId },
+          });
+          await tx.overtimeConfig.deleteMany({
+            where: { tenantId },
+          });
+          await tx.holidayPolicy.deleteMany({
+            where: { tenantId },
+          });
+          await tx.paySchedule.deleteMany({
+            where: { tenantId },
+          });
+          await tx.payrollUnit.deleteMany({
             where: { tenantId },
           });
 
@@ -430,7 +569,16 @@ export async function deleteTenant(tenantId: string) {
             select: { id: true },
           });
         });
-      } catch {
+      } catch (error) {
+        console.error("Delete tenant error:", error);
+
+        if (
+          error instanceof Error &&
+          error.message.includes("This employer can't be deleted")
+        ) {
+          throw error;
+        }
+
         throw new Error(
           "This employer can't be deleted because it has related records. Set it inactive instead.",
         );

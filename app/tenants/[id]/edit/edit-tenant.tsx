@@ -10,6 +10,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { tenantSchema, TenantFormInput } from "@/lib/validations/tenant-schema";
 import { upsertTenant } from "@/lib/actions/tenant";
 import { getFieldChanges, ChangeEntry } from "@/utils/formChanges";
+import { computeTimingDaysFromTenantInput } from "@/lib/utils/timing-days";
 
 import FormLayout from "@/components/form/form-layout";
 import { SmartFormProvider } from "@/components/form/form-change-context";
@@ -83,7 +84,7 @@ export default function EditTenantForm({
     } catch {
       // Ignore storage access or parsing errors.
     }
-  }, [draftStorageKey, initialValues, reset]);
+  }, [draftStorageKey, initialData.operatingName, initialValues, reset]);
 
   const currentValues = getValues();
   const watchedValues = useWatch({ control });
@@ -122,6 +123,7 @@ export default function EditTenantForm({
     setValue,
     watchedCoreName,
     watchedOperatingName,
+    initialData.operatingName,
   ]);
 
   useEffect(() => {
@@ -145,7 +147,12 @@ export default function EditTenantForm({
 
   const onSave = async (data: TenantFormInput) => {
     try {
-      const result = await upsertTenant(data, params.id);
+      const payload: TenantFormInput = {
+        ...data,
+        timingDays: computeTimingDaysFromTenantInput(data) ?? null,
+      };
+
+      const result = await upsertTenant(payload, params.id);
       if (result.success && result.data?.id) {
         try {
           window.sessionStorage.removeItem(draftStorageKey);
@@ -193,7 +200,6 @@ export default function EditTenantForm({
         >
           <TenantForm
             errors={errors}
-            showMembership={isNew}
             payFrequency={watchedPayFrequency}
             getFieldValue={(fieldName) => getValues(fieldName)}
             setFieldValue={(fieldName, value) =>

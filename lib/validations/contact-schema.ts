@@ -1,5 +1,6 @@
 // lib/validations/contact-schema.ts
 import { z } from "zod";
+import { CANADA_PROVINCE_TERRITORY_CODES } from "@/constants/canada-provinces";
 import { isValidCanadianPostalCode } from "../../utils/validators/postalCode";
 import { isValidSINLuhn } from "../../utils/formatters/sin";
 import { isValidInstitutionCode } from "@/constants/financial-institutions";
@@ -202,9 +203,13 @@ export const contactSchema = z
       .trim()
       .toUpperCase()
       .optional()
-      .refine((val) => !val || /^[A-Z]{2}$/.test(val), {
-        message: "Employment province code must be 2 letters (e.g., ON)",
-      }),
+      .refine(
+        (val) =>
+          !val || CANADA_PROVINCE_TERRITORY_CODES.includes(val as never),
+        {
+          message: "Employment province code must be a valid code (e.g., ON)",
+        },
+      ),
     terminationReason: z.preprocess(
       (val) => (val === "" ? undefined : val),
       z
@@ -271,7 +276,22 @@ export const contactSchema = z
       ),
     street: z.string().optional(),
     city: z.string().optional(), //min(1, "City is required"),
-    province: z.string().optional(),
+    province: z.preprocess(
+      (val) => {
+        if (typeof val !== "string") return val;
+        const normalized = val.trim().toUpperCase();
+        return normalized === "" ? undefined : normalized;
+      },
+      z
+        .string()
+        .refine(
+          (val) => CANADA_PROVINCE_TERRITORY_CODES.includes(val as never),
+          {
+            message: "Province must be a valid Canadian code (e.g., ON)",
+          },
+        )
+        .optional(),
+    ),
     country: z.string().optional(),
     postalCode: z
       .preprocess(

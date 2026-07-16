@@ -27,7 +27,6 @@ import { tenantFieldContent } from "@/constants/content";
 
 interface TenantFormProps {
   errors: FieldErrors<TenantFormInput>;
-  showMembership?: boolean;
   payFrequency?: TenantFormInput["payFrequency"];
   getFieldValue: (fieldName: Path<TenantFormInput>) => unknown;
   setFieldValue: (fieldName: Path<TenantFormInput>, value: string) => void;
@@ -59,7 +58,6 @@ const TENANT_ADDRESS_FIELDS: MailingAddressField<TenantFormInput>[] = [
 
 export function TenantForm({
   errors,
-  showMembership,
   payFrequency,
   getFieldValue,
   setFieldValue,
@@ -257,18 +255,6 @@ export function TenantForm({
         </FormGrid>
       </FormSection>
 
-      {showMembership && (
-        <FormSection title="Membership">
-          <FormGrid>
-            <InputWithChanges<TenantFormInput>
-              label="Invite members (emails)"
-              name="memberEmails"
-              error={errors.memberEmails?.message}
-            />
-          </FormGrid>
-        </FormSection>
-      )}
-
       <FormSection title="Payroll Unit">
         <FormGrid>
           <SelectWithChanges<TenantFormInput>
@@ -321,15 +307,13 @@ export function TenantForm({
                 <DayOfMonthPickerWithChanges<TenantFormInput>
                   label={
                     <Clarification
-                      term={tenantFieldContent.periodEndDayMonthly.term}
-                      description={
-                        tenantFieldContent.periodEndDayMonthly.description
-                      }
+                      term={tenantFieldContent.periodEndDay.term}
+                      description={tenantFieldContent.periodEndDay.description}
                     />
                   }
                   name="periodEndDay"
                   error={errors.periodEndDay?.message}
-                  placeholder="Choose a day (1-28, or -1 to -3 for month-end days)"
+                  placeholder="Choose a day (1-28, or 3rd-to-last / 2nd-to-last / last day)"
                   defaultDay={null}
                   monthShiftName="boundaryShift"
                 />
@@ -341,7 +325,7 @@ export function TenantForm({
                     label={
                       <Clarification
                         term="Payday"
-                        description={tenantFieldContent.payWeekday.description}
+                        description={tenantFieldContent.payday.description}
                       />
                     }
                     name="payWeekday"
@@ -353,7 +337,9 @@ export function TenantForm({
                     label={
                       <Clarification
                         term="Pay period end"
-                        description="Pick a weekday and a relative week (prior, same, or next) compared with payday week."
+                        description={
+                          tenantFieldContent.periodEndDay.description
+                        }
                       />
                     }
                     name="periodEndWeekday"
@@ -417,12 +403,12 @@ export function TenantForm({
                       <Clarification
                         term="Second pay period end"
                         description={
-                          tenantFieldContent.periodEndDay2.description
+                          tenantFieldContent.periodEndDay.description
                         }
                       />
                     }
                     name="periodEndDay2"
-                    error={errors.periodEndDay2?.message}
+                    error={errors.periodEndDay?.message}
                     placeholder="Choose a day (1-31)"
                     defaultDay={29}
                     monthShiftName="boundaryShift2"

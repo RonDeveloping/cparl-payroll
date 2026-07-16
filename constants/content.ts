@@ -155,68 +155,26 @@ export const tenantFieldContent = {
     description:
       "Groups employees under a shared pay schedule and GL configuration.",
   },
-  scheduleCode: {
-    term: "Schedule code",
-    description:
-      "Stable identifier for the pay schedule (e.g., BIWEEKLY_HQ). Used in reporting and integrations.",
-  },
   frequency: {
     term: "Pay frequency",
     description: "How often employees in this unit are paid.",
   },
   periodEndDay: {
     term: "Pay period end day",
-    description: "Day of month used for the pay period end.",
-  },
-  periodEndWeekday: {
-    term: "Pay period end weekday",
     description:
-      "Weekday used for the pay period end on weekly or biweekly schedules.",
-  },
-  boundaryShift: {
-    term: "Pay period end shift",
-    description:
-      "Shift applied to the pay period end rule. Negative values move to earlier months or weeks based on schedule type.",
-  },
-  payWeekday: {
-    term: "Payday weekday",
-    description:
-      "Weekday used for payday on weekly, biweekly, or semi-monthly schedules.",
+      "If the gap between your period end and payday is less than three banking days (due to weekends or holidays), the system automatically pulls the period end date backward. This ensures you can submit actual hours and still meet the bank's processing deadline for Direct Deposit. If you pay solely by cheque (with no direct deposit employees on the run), this adjustment does not apply.",
   },
   payday: {
     term: "Payday",
     description:
-      "For monthly schedules, choose the day of month to issue payroll (1-31). If a month has fewer days than selected, payday moves to the last banking day of that month.",
+      "If payday falls on a weekend or holiday, payments are processed on the prior banking day. Direct deposits require submission at least 3 business days prior to payday.",
   },
   payday2: {
     term: "Second payday",
     description:
-      "For semi-monthly schedules, choose the day of month for the second payday.",
+      "If payday falls on a weekend or holiday, payments are processed on the prior banking day. Direct deposits require submission at least 3 business days prior to payday.",
   },
-  periodEndDay2: {
-    term: "Pay period end",
-    description:
-      "For semi-monthly schedules, choose the day of month for the second pay period end.",
-  },
-  periodEndDayMonthly: {
-    term: "Pay period end",
-    description:
-      "Pick a calendar day for period end. If a month has fewer days than selected, the last day is used.",
-  },
-  boundaryShift2: {
-    term: "Second pay period end shift",
-    description: "Shift applied to the second pay period end rule.",
-  },
-  fundingMethod: {
-    term: "Funding method",
-    description:
-      "PAP: pre-authorized debit from your bank. Wire: manual bank transfer. Manual: you handle funding outside the system.",
-  },
-  fundingLeadDays: {
-    term: "Funding lead days",
-    description:
-      "How many business days before payday to initiate the funding transfer (typically 2–3 for PAP).",
-  },
+
   expenseAccountCode: {
     term: "Wages expense account",
     description: "GL account debited for gross payroll expense (e.g., 5100).",

@@ -20,6 +20,29 @@ CREATE TYPE "vacation_ledger_entry_type" AS ENUM ('accrual', 'usage', 'payout', 
 -- CreateEnum
 CREATE TYPE "severance_type" AS ENUM ('retiring_direct', 'retiring_transfer', 'salary_continuation');
 
+-- CreateEnum
+DO $$
+BEGIN
+    CREATE TYPE "province_code" AS ENUM (
+        'AB',
+        'BC',
+        'MB',
+        'NB',
+        'NL',
+        'NS',
+        'NT',
+        'NU',
+        'ON',
+        'PE',
+        'QC',
+        'SK',
+        'YT',
+        'CA'
+    );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
+
 -- AlterTable
 ALTER TABLE "payroll_line"
 ADD COLUMN     "counts_toward_holiday_pay" BOOLEAN NOT NULL DEFAULT true,

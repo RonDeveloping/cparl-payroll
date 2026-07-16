@@ -21,6 +21,20 @@ function startOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1);
 }
 
+function mapCalendarDayToStoredValue(day: number): number {
+  if (day === 29) return -3;
+  if (day === 30) return -2;
+  if (day === 31) return -1;
+  return day;
+}
+
+function mapStoredValueToCalendarDay(value: number): number {
+  if (value === -3) return 29;
+  if (value === -2) return 30;
+  if (value === -1) return 31;
+  return value;
+}
+
 export default function DayOfMonthPickerWithChanges<
   TFormValues extends FieldValues,
 >({
@@ -66,6 +80,19 @@ export default function DayOfMonthPickerWithChanges<
         : Math.max(-1, Math.min(1, initialMonthShift));
       initializedRef.current = true;
       setRelativeValue(initialRelative);
+      if (initial) {
+        const normalizedInitial = String(
+          mapCalendarDayToStoredValue(Number(initial)),
+        );
+        setValue(normalizedInitial);
+
+        if (normalizedInitial !== initial) {
+          registration.onChange({
+            target: { name: registration.name, value: normalizedInitial },
+            type: "change",
+          });
+        }
+      }
       setVisibleMonth(
         new Date(
           paydayMonth.getFullYear(),
@@ -78,8 +105,19 @@ export default function DayOfMonthPickerWithChanges<
     }
 
     if (initial) {
+      const normalizedInitial = String(
+        mapCalendarDayToStoredValue(Number(initial)),
+      );
       initializedRef.current = true;
-      setValue(initial);
+      setValue(normalizedInitial);
+
+      if (normalizedInitial !== initial) {
+        registration.onChange({
+          target: { name: registration.name, value: normalizedInitial },
+          type: "change",
+        });
+      }
+
       return;
     }
 
@@ -88,7 +126,7 @@ export default function DayOfMonthPickerWithChanges<
       return;
     }
 
-    const nextDefault = String(defaultDay);
+    const nextDefault = String(mapCalendarDayToStoredValue(defaultDay));
     initializedRef.current = true;
     setValue(nextDefault);
     registration.onChange({
@@ -109,7 +147,7 @@ export default function DayOfMonthPickerWithChanges<
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
-  const selectedDay = Number(value);
+  const selectedDay = mapStoredValueToCalendarDay(Number(value));
   const showCalendarNavigation = Boolean(relativeRegistration);
   const monthOffsetFromPayday =
     (visibleMonth.getFullYear() - paydayMonth.getFullYear()) * 12 +
@@ -121,16 +159,16 @@ export default function DayOfMonthPickerWithChanges<
     offset < 0 ? "prior month" : offset > 0 ? "next month" : "the month";
 
   const getDayLabel = (day: number) => {
-    if (day === 29) return "-3";
-    if (day === 30) return "-2";
-    if (day === 31) return "-1";
+    if (day === 29) return "3rd-last";
+    if (day === 30) return "2nd-last";
+    if (day === 31) return "last";
     return String(day);
   };
 
   const getDaySentenceText = (dayValue: string) => {
-    if (dayValue === "31") return "Last day";
-    if (dayValue === "30") return "2nd-to-last day";
-    if (dayValue === "29") return "3rd-to-last day";
+    if (dayValue === "-1" || dayValue === "31") return "Last day";
+    if (dayValue === "-2" || dayValue === "30") return "2nd-to-last day";
+    if (dayValue === "-3" || dayValue === "29") return "3rd-to-last day";
     return `Day ${dayValue}`;
   };
 
@@ -150,7 +188,7 @@ export default function DayOfMonthPickerWithChanges<
     );
 
   const onSelectDay = (day: number) => {
-    const nextValue = String(day);
+    const nextValue = String(mapCalendarDayToStoredValue(day));
     setValue(nextValue);
     setPickedMonthOffset(monthOffsetFromPayday);
 
@@ -293,7 +331,7 @@ export default function DayOfMonthPickerWithChanges<
             <div className={cn("grid w-full gap-0 px-1", "grid-cols-8")}>
               {Array.from({ length: 31 }).map((_, index) => {
                 const day = index + 1;
-                const selected = relativeValue === "" && day === selectedDay;
+                const selected = day === selectedDay;
 
                 return (
                   <button

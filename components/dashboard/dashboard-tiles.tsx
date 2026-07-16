@@ -50,6 +50,48 @@ type OrganizationSort =
   | "operating-as-asc"
   | "operating-as-desc";
 
+function normalizedScheduleValue(value: string | null): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (trimmed.toLowerCase().includes("not set")) return null;
+  return trimmed;
+}
+
+function toSentenceCase(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return "";
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
+
+function formatFullBusinessNumber(tenant: OrganizationTenant): string | null {
+  const bn9 = (tenant.businessBn9 || "").replace(/\D/g, "").slice(0, 9);
+  const programId = (tenant.businessProgramId || "").trim().toUpperCase();
+  const accountRef = (tenant.programRefNum || "")
+    .replace(/\D/g, "")
+    .slice(0, 4)
+    .padStart(4, "0");
+
+  if (bn9.length !== 9 || programId.length !== 2 || accountRef.length !== 4) {
+    return null;
+  }
+
+  return `${bn9} ${programId}${accountRef}`;
+}
+
+function buildOrganizationFlow(tenant: OrganizationTenant): string {
+  const payrollFrequency = toSentenceCase(
+    normalizedScheduleValue(tenant.payrollFrequency) || "Schedule unavailable",
+  );
+  const payday = toSentenceCase(
+    normalizedScheduleValue(tenant.paydaySummary) ||
+      normalizedScheduleValue(tenant.payPeriodEnd) ||
+      "Payday unavailable",
+  );
+
+  return `${payrollFrequency} pays on ${payday}`;
+}
+
 const toneStyles: Record<DashboardTile["tone"], string> = {
   emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
   blue: "border-blue-200 bg-blue-50 text-blue-700",
@@ -353,12 +395,7 @@ export default function DashboardTiles({
       ];
     }
 
-    return filteredTenants.map((tenant) => ({
-      ...tenant,
-      businessNumber:
-        tenant.displayBusinessNumber ||
-        "Valid business no. is required in remitting and reporting.",
-    }));
+    return filteredTenants;
   }, [
     organizationFilter,
     organizationSort,
@@ -732,6 +769,8 @@ export default function DashboardTiles({
                           `${tenant.id}:toggle-active`;
                         const isDeleting =
                           pendingOrganizationAction === `${tenant.id}:delete`;
+                        const fullBusinessNumber =
+                          formatFullBusinessNumber(tenant);
 
                         return (
                           <div
@@ -742,19 +781,24 @@ export default function DashboardTiles({
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <Link
-                                    href={`/payroll?tenantId=${tenant.id}`}
+                                    href={`/tenants/${tenant.id}`}
                                     className="font-semibold text-slate-900 transition hover:text-violet-700"
                                   >
                                     {tenant.displayName}
                                   </Link>
+                                  {fullBusinessNumber && (
+                                    <span className="text-xs text-slate-600">
+                                      ({fullBusinessNumber})
+                                    </span>
+                                  )}
                                   {!tenant.isActive && (
                                     <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
                                       Inactive
                                     </span>
                                   )}
                                 </div>
-                                <p className="mt-1 text-xs text-slate-500">
-                                  {tenant.businessNumber}
+                                <p className="mt-2 text-xs text-slate-600">
+                                  {buildOrganizationFlow(tenant)}
                                 </p>
                               </div>
                               <div

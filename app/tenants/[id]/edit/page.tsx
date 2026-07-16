@@ -22,6 +22,18 @@ export default async function EditTenantPage({
       businessNumber: null,
       isActive: true,
       memberEmails: "",
+      payrollUnitName: null,
+      payScheduleCode: null,
+      payFrequency: null,
+      timingDays: null,
+      periodEndDay: null,
+      periodEndWeekday: null,
+      boundaryShift: null,
+      payWeekday: null,
+      payday: null,
+      payday2: null,
+      periodEndDay2: null,
+      boundaryShift2: null,
       contactFirstName: null,
       contactLastName: null,
       email: null,
@@ -47,6 +59,18 @@ export default async function EditTenantPage({
     where: { id },
     include: {
       settings: true,
+      payrollUnits: {
+        where: { isActive: true },
+        orderBy: { createdAt: "asc" },
+        take: 1,
+        include: {
+          paySchedules: {
+            where: { isActive: true },
+            orderBy: { updatedAt: "desc" },
+            take: 1,
+          },
+        },
+      },
     },
   });
 
@@ -128,6 +152,8 @@ export default async function EditTenantPage({
     .businessProgramId;
   const programRefNum = (tenant as { programRefNum?: string | null })
     .programRefNum;
+  const activePayrollUnit = tenant.payrollUnits[0] ?? null;
+  const activePaySchedule = activePayrollUnit?.paySchedules[0] ?? null;
 
   const initialData: TenantFormInput = {
     coreName: nameCached?.coreName || "",
@@ -152,6 +178,18 @@ export default async function EditTenantPage({
       ) || null,
     isActive: tenant.isActive,
     memberEmails: "",
+    payrollUnitName: activePayrollUnit?.name ?? null,
+    payScheduleCode: activePaySchedule?.code ?? null,
+    payFrequency: activePaySchedule?.frequency ?? null,
+    timingDays: activePaySchedule?.timingDays ?? null,
+    periodEndDay: activePaySchedule?.periodEndDay ?? null,
+    periodEndWeekday: activePaySchedule?.periodEndWeekday ?? null,
+    boundaryShift: activePaySchedule?.boundaryShift ?? null,
+    payWeekday: activePaySchedule?.payWeekday ?? null,
+    payday: activePaySchedule?.payday ?? null,
+    payday2: activePaySchedule?.payday2 ?? null,
+    periodEndDay2: activePaySchedule?.periodEndDay2 ?? null,
+    boundaryShift2: activePaySchedule?.boundaryShift2 ?? null,
     contactFirstName,
     contactLastName,
     email,
