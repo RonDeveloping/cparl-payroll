@@ -709,17 +709,19 @@ model Employment {
 model JobAssignment {
   id           String    @id @default(cuid())
   employmentId String    @map("employment_id")
+  earningCodeId String   @map("earning_code_id")
   startDate    DateTime  @map("start_date")
   endDate      DateTime? @map("end_date")
   hoursPerWeek Decimal?  @map("hours_per_week") @db.Decimal(6, 2)
   payRate      Decimal   @map("pay_rate") @db.Decimal(10, 2)
-  payType      PayType   @map("pay_type")
 
   employment   Employment    @relation(fields: [employmentId], references: [id])
+  earningCode  EarningCode   @relation(fields: [earningCodeId], references: [id])
   timeEntries  TimeEntry[]
   payrollLines PayrollLine[]
 
   @@index([employmentId, startDate])
+  @@index([earningCodeId])
   @@map("job_assignment")
 }
 
@@ -1035,13 +1037,16 @@ model EarningCode {
   code           String      @map("code") //e.g. "REG" for regular pay, "OT" for overtime, "BONUS" for bonus, etc.
   description    String      @map("description")
   earningType    EarningType @map("earning_type")
+  isHourly       Boolean     @default(true) @map("is_hourly")
   isTaxable      Boolean     @default(true) @map("is_taxable")
-  isKindBenefit  Boolean     @default(false) @map("is_kind_benefit") //e.g. company car, health insurance premiums paid by employer, etc. add to tax not net pay.
+  isInKind  Boolean     @default(false) @map("is_in_kind") //e.g. company car, health insurance premiums paid by employer, etc. add to tax not net pay.
   isSubjectToCPP Boolean     @default(true) @map("is_subject_to_cpp")
   isSubjectToEI  Boolean     @default(true) @map("is_subject_to_ei")
   t4BoxNumber    Int?        @map("t4_box_number") //e.g. 14 for regular pay, 71 for taxable benefits, etc.
   createdAt      DateTime    @default(now()) @map("created_at")
   updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  jobAssignments JobAssignment[]
 
   @@unique([code, tenantId], name: "unique_earning_codes_per_tenant")
   @@map("earning_codes")
@@ -1209,21 +1214,17 @@ enum TerminationReason {
   @@map("termination_reason")
 }
 
-enum PayType {
-  HOURLY @map("hourly")
-  SALARY @map("salary")
-
-  @@map("pay_type")
-}
-
 enum EarningType {
-  REGULAR    @map("regular")
-  OVERTIME   @map("overtime")
-  HOLIDAY    @map("holiday")
-  VACATION   @map("vacation")
-  BONUS      @map("bonus")
-  COMMISSION @map("commission")
-  OTHER      @map("other")
+  REGULAR    @map("regular") //standard pay for hours worked, salary, etc.
+  OVERTIME   @map("overtime") //1.5x, 2x, etc. based on overtime config
+  SICK       @map("sick") //statutory sick pay, short-term disability, etc.
+  HOLIDAY    @map("holiday") //statutory holiday pay, paid time off for holidays, etc.
+  VACATION   @map("vacation") //paid time off for vacation
+  BONUS      @map("bonus") //Discretionary bonus, performance bonus, etc.
+  COMMISSION @map("commission") //sales commission, referral bonus, etc.
+  TAXABLE_BENEFIT     @map("taxable_benefit") //e.g., company car, health insurance premiums paid by employer, etc. add to tax not net pay as in-kind.
+  REASONABLE_ALLOWANCE @map("reasonable_allowance") //e.g., meal allowance, travel allowance, etc. add to net pay not tax as reasonable under CRA guidelines.
+  OTHER      @map("other")//e.g., severance, retroactive pay, etc.
 
   @@map("earning_type")
 }

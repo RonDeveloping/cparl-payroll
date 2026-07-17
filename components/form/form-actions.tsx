@@ -1,7 +1,6 @@
 "use client";
 // components/form/form-actions.tsx
 
-
 import { Save, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { formActionsStyles } from "@/constants/styles";
@@ -25,6 +24,8 @@ interface FormActionsProps {
   showB4Change?: boolean;
   onEyeToggle?: () => void;
   changeCount?: number;
+  changeSuffix?: string;
+  changeSuffixHref?: string;
 }
 
 export function FormActions({
@@ -40,6 +41,8 @@ export function FormActions({
   showB4Change: showB4Change = false,
   onEyeToggle,
   changeCount = 0,
+  changeSuffix,
+  changeSuffixHref,
 }: FormActionsProps) {
   const saveActiveStyles = formActionsStyles.saveActive;
   const saveLockedStyles = formActionsStyles.saveLocked;
@@ -93,30 +96,46 @@ export function FormActions({
 
   const ShowChangesToggle =
     changeLabel && onEyeToggle ? (
-      <button
-        type="button"
-        onClick={onEyeToggle}
-        aria-expanded={showB4Change}
-        className={formActionsStyles.showChangesButton}
-      >
-        <span className={formActionsStyles.showChangesCount}>
-          {changeLabel} (
-          {showB4Change ? (
-            <EyeOff
-              size={14}
-              className={formActionsStyles.showChangesIcon}
-              aria-hidden="true"
-            />
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={onEyeToggle}
+          aria-expanded={showB4Change}
+          className={formActionsStyles.showChangesButton}
+        >
+          <span className={formActionsStyles.showChangesCount}>
+            {changeLabel} (
+            {showB4Change ? (
+              <EyeOff
+                size={14}
+                className={formActionsStyles.showChangesIcon}
+                aria-hidden="true"
+              />
+            ) : (
+              <Eye
+                size={14}
+                className={formActionsStyles.showChangesIcon}
+                aria-hidden="true"
+              />
+            )}{" "}
+            {changeCount} {changeWord})
+          </span>
+        </button>
+        {changeSuffix ? (
+          changeSuffixHref ? (
+            <Link
+              href={changeSuffixHref}
+              className="text-sm font-medium text-slate-700 hover:text-emerald-700 hover:underline"
+            >
+              {changeSuffix}
+            </Link>
           ) : (
-            <Eye
-              size={14}
-              className={formActionsStyles.showChangesIcon}
-              aria-hidden="true"
-            />
-          )}{" "}
-          {changeCount} {changeWord})
-        </span>
-      </button>
+            <span className="text-sm font-medium text-slate-700">
+              {changeSuffix}
+            </span>
+          )
+        ) : null}
+      </div>
     ) : null;
 
   return (

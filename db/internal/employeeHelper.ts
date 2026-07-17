@@ -23,6 +23,54 @@ function parseIsoDate(value: string): Date | null {
   return parsed;
 }
 
+async function ensureDefaultSalaryEarningCode(
+  tx: PrismaTransaction,
+  tenantId: string,
+): Promise<string> {
+  await tx.earningCode.createMany({
+    data: [
+      {
+        tenantId,
+        code: "SAL",
+        description: "For salaried employees exempt from overtime protection.",
+        earningType: "REGULAR",
+        isHourly: false,
+        isTaxable: true,
+        isInKind: false,
+        isSubjectToCPP: true,
+        isSubjectToEI: true,
+      },
+      {
+        tenantId,
+        code: "REG",
+        description:
+          "For hourly employees, and salaried employees who are entitled to overtime pay.",
+        earningType: "REGULAR",
+        isHourly: true,
+        isTaxable: true,
+        isInKind: false,
+        isSubjectToCPP: true,
+        isSubjectToEI: true,
+      },
+    ],
+    skipDuplicates: true,
+  });
+
+  const sal = await tx.earningCode.findFirst({
+    where: {
+      tenantId,
+      code: "SAL",
+    },
+    select: { id: true },
+  });
+
+  if (!sal) {
+    throw new Error("Failed to ensure default SAL earning code");
+  }
+
+  return sal.id;
+}
+
 export async function upsertEmployeePEAInternal(
   data: ContactFormInput,
   contactId: string,
@@ -41,12 +89,14 @@ export async function upsertEmployeePEAInternal(
     .toUpperCase();
   const employmentTitle = data.employmentTitle?.trim() || null;
   const employmentDepartment = data.employmentDepartment?.trim() || null;
+  const jobEarningCodeId = data.jobEarningCodeId?.trim() || null;
   const jobPayRate = data.jobPayRate?.trim() || null;
   const jobHoursPerWeek = data.jobHoursPerWeek?.trim() || null;
   const parsedJobStartDate = parseIsoDate(data.jobStartDate ?? "");
   const parsedJobEndDate = parseIsoDate(data.jobEndDate ?? "");
   const effectiveJobEndDate = parsedJobEndDate ?? parsedEmploymentEndDate;
-  const hasJobAssignmentData = Boolean(data.jobPayType && jobPayRate);
+  const hasJobAssignmentData = Boolean(jobEarningCodeId && jobPayRate);
+  let effectiveJobEarningCodeId = jobEarningCodeId;
 
   const employee = await tx.employee.upsert({
     where: {
@@ -142,6 +192,25 @@ export async function upsertEmployeePEAInternal(
         },
       });
 
+  await ensureDefaultSalaryEarningCode(tx, tenantId);
+
+  if (effectiveJobEarningCodeId) {
+    const selectedEarningCode = await tx.earningCode.findFirst({
+      where: {
+        id: effectiveJobEarningCodeId,
+        tenantId,
+      },
+      select: { id: true },
+    });
+
+    if (!selectedEarningCode) {
+      effectiveJobEarningCodeId = await ensureDefaultSalaryEarningCode(
+        tx,
+        tenantId,
+      );
+    }
+  }
+
   if (hasJobAssignmentData && jobPayRate) {
     const latestJobAssignment = await tx.jobAssignment.findFirst({
       where: { employmentId: employment.id },
@@ -157,7 +226,7 @@ export async function upsertEmployeePEAInternal(
             : parsedHireDate
               ? { startDate: parsedHireDate }
               : {}),
-          payType: data.jobPayType!,
+          earningCodeId: effectiveJobEarningCodeId!,
           payRate: jobPayRate,
           hoursPerWeek: jobHoursPerWeek,
           endDate: effectiveJobEndDate ?? null,
@@ -169,7 +238,7 @@ export async function upsertEmployeePEAInternal(
           employmentId: employment.id,
           startDate:
             parsedJobStartDate ?? parsedHireDate ?? employment.startDate,
-          payType: data.jobPayType!,
+          earningCodeId: effectiveJobEarningCodeId!,
           payRate: jobPayRate,
           hoursPerWeek: jobHoursPerWeek,
           endDate: effectiveJobEndDate ?? null,

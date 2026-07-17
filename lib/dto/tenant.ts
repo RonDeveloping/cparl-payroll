@@ -1,4 +1,11 @@
 // lib/dto/tenant.ts
+
+/**
+ * Tenant DTO (Data Transfer Object) helpers for presentation-ready data by carrying data between layers of DB & UI/API without embedding business logic.
+ *
+ * This module converts tenant rows into UI-friendly summaries
+ * (display names, business number formatting, and payroll text).
+ */
 import formatBusinessNumber, {
   composeBusinessNumberFromParts,
 } from "@/utils/formatters/businessNumber";

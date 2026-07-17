@@ -18,8 +18,19 @@ export default function SmartEditLink({
 }: SmartEditLinkProps) {
   const searchParams = useSearchParams();
 
-  //append fromList=true and preserve existing filters/pagination
-  const smartHref = `${href}?fromList=true&${searchParams.toString()}`;
+  // Append fromList=true and preserve existing filters/pagination
+  // while correctly handling href values that already contain query params.
+  const [basePath, hrefQuery = ""] = href.split("?");
+  const mergedParams = new URLSearchParams(searchParams.toString());
+  const hrefParams = new URLSearchParams(hrefQuery);
+
+  hrefParams.forEach((value, key) => {
+    mergedParams.set(key, value);
+  });
+  mergedParams.set("fromList", "true");
+
+  const query = mergedParams.toString();
+  const smartHref = query ? `${basePath}?${query}` : basePath;
 
   return (
     <Link href={smartHref} className={className}>

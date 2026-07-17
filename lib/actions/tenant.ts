@@ -1,6 +1,16 @@
 "use server";
 // lib/actions/tenant.ts
 
+/**
+ * Tenant server actions for employer lifecycle management.
+ *
+ * This module handles:
+ * - Creating/updating tenants, related contact records, and address data
+ * - Initial payroll setup (payroll unit and pay schedule)
+ * - Owner/member assignment during onboarding
+ * - Owner-gated activation/deactivation and safe deletion checks
+ */
+
 import { TenantFormInput } from "@/lib/validations/tenant-schema";
 import prisma from "@/db/prismaDrizzle";
 import { safe } from "@/utils/validators/safe";
@@ -319,6 +329,38 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
         },
       });
 
+      if (!id || id === "new") {
+        await tx.earningCode.createMany({
+          data: [
+            {
+              tenantId: tenant.id,
+              code: "SAL",
+              description:
+                "For salaried employees exempt from overtime protection.",
+              earningType: "REGULAR",
+              isHourly: false,
+              isTaxable: true,
+              isInKind: false,
+              isSubjectToCPP: true,
+              isSubjectToEI: true,
+            },
+            {
+              tenantId: tenant.id,
+              code: "REG",
+              description:
+                "For hourly employees, and salaried employees who are entitled to overtime pay.",
+              earningType: "REGULAR",
+              isHourly: true,
+              isTaxable: true,
+              isInKind: false,
+              isSubjectToCPP: true,
+              isSubjectToEI: true,
+            },
+          ],
+          skipDuplicates: true,
+        });
+      }
+
       if (data.payFrequency) {
         const [existingPayrollUnit, existingPaySchedule] = await Promise.all([
           tx.payrollUnit.findFirst({
@@ -523,6 +565,10 @@ export async function deleteTenant(tenantId: string) {
             );
           }
 
+          const earningCodeCount = await tx.earningCode.count({
+            where: { tenantId },
+          });
+
           // Delete all tenant-related records in correct dependency order
           await tx.billingInvoice.deleteMany({
             where: { tenantId },
@@ -563,6 +609,11 @@ export async function deleteTenant(tenantId: string) {
           await tx.payrollUnit.deleteMany({
             where: { tenantId },
           });
+          if (earningCodeCount <= 2) {
+            await tx.earningCode.deleteMany({
+              where: { tenantId },
+            });
+          }
 
           return tx.tenant.delete({
             where: { id: tenantId },

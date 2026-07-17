@@ -1,7 +1,6 @@
 "use client";
 // components/dashboard/dashboard-tiles.tsx
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -20,8 +19,10 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { contactProfileStyles } from "@/constants/styles";
+import { homeStyles } from "@/constants/styles";
 import { useTenant } from "@/app/tenants/context/TenantContext";
 import PaymentMethodDetails from "@/components/payments/payment-method-details";
+import SmartEditLink from "@/components/smart-edit-link";
 import { deleteTenant, setTenantActiveState } from "@/lib/actions/tenant";
 import type { TenantSummaryDto } from "@/lib/dto/tenant";
 import type { ContactFormInput } from "@/lib/validations/contact-schema";
@@ -780,12 +781,14 @@ export default function DashboardTiles({
                             <div className="flex items-start justify-between gap-4">
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                  <Link
-                                    href={`/tenants/${tenant.id}`}
-                                    className="font-semibold text-slate-900 transition hover:text-violet-700"
-                                  >
-                                    {tenant.displayName}
-                                  </Link>
+                                  <span>
+                                    <SmartEditLink
+                                      href={`/payroll?tenantId=${tenant.id}`}
+                                      className={homeStyles.heroLink}
+                                    >
+                                      {tenant.displayName}
+                                    </SmartEditLink>
+                                  </span>
                                   {fullBusinessNumber && (
                                     <span className="text-xs text-slate-600">
                                       ({fullBusinessNumber})

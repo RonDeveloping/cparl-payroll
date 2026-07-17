@@ -25,18 +25,33 @@ interface EditEmployeeFormProps {
   paramsPromise: Promise<{ id: string }>;
   initialData: ContactFormInput;
   bankAccountStatuses: readonly string[];
+  earningCodeOptions: readonly {
+    id: string;
+    code: string;
+    description: string;
+    isHourly: boolean;
+  }[];
   tenantId?: string;
+  employerName?: string;
 }
 
 export default function EditEmployeeForm({
   paramsPromise,
   initialData,
   bankAccountStatuses,
+  earningCodeOptions,
   tenantId,
+  employerName,
 }: EditEmployeeFormProps) {
   const params = use(paramsPromise);
   const router = useRouter();
   const draftStorageKey = `employee-form-draft:${params.id}:${tenantId ?? "none"}`;
+  const changeSuffix =
+    params.id === "new" && employerName ? `of ${employerName}` : undefined;
+  const changeSuffixHref =
+    params.id === "new" && tenantId
+      ? `/payroll?tenantId=${tenantId}`
+      : undefined;
 
   const form = useForm<ContactFormInput>({
     resolver: zodResolver(contactSchema) as never,
@@ -139,6 +154,8 @@ export default function EditEmployeeForm({
       isSubmitting={isSubmitting}
       changeLabel="Employee Info"
       changeCount={changeCount}
+      changeSuffix={changeSuffix}
+      changeSuffixHref={changeSuffixHref}
       showChanges={showChanges}
       onEyeToggle={() => setShowChanges((v) => !v)}
     >
@@ -158,6 +175,7 @@ export default function EditEmployeeForm({
             <EmployeeForm
               errors={errors}
               bankAccountStatuses={bankAccountStatuses}
+              earningCodeOptions={earningCodeOptions}
             />
           </form>
         </SmartFormProvider>

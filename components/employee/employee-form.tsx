@@ -41,6 +41,12 @@ import {
 interface EmployeeFormProps {
   errors: FieldErrors<ContactFormInput>;
   bankAccountStatuses?: readonly string[];
+  earningCodeOptions: readonly {
+    id: string;
+    code: string;
+    description: string;
+    isHourly: boolean;
+  }[];
 }
 
 const MAX_BANK_ACCOUNTS = 10;
@@ -321,6 +327,7 @@ function BankAccountRow({
 export function EmployeeForm({
   errors,
   bankAccountStatuses = [],
+  earningCodeOptions,
 }: EmployeeFormProps) {
   const { register, setValue, getValues } = useFormContext<ContactFormInput>();
   const [postalProgress, setPostalProgress] = useState<{
@@ -702,13 +709,15 @@ export function EmployeeForm({
             error={errors.employmentProvinceCode?.message}
           />
           <SelectWithChanges<ContactFormInput>
-            label="Pay type"
-            name="jobPayType"
-            error={errors.jobPayType?.message}
+            label="Earning code"
+            name="jobEarningCodeId"
+            error={errors.jobEarningCodeId?.message}
             options={[
               { label: "Not set", value: "" },
-              { label: "Hourly", value: "HOURLY" },
-              { label: "Salary", value: "SALARY" },
+              ...earningCodeOptions.map((option) => ({
+                label: `${option.code} - ${option.description}${option.isHourly ? " (Hourly)" : " (Salary/Amount)"}`,
+                value: option.id,
+              })),
             ]}
           />
           <InputWithChanges<ContactFormInput>

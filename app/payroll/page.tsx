@@ -69,15 +69,19 @@ export default async function PayrollOverviewPage({
   searchParams: Promise<{ tenantId?: string }>;
 }) {
   const { tenantId } = await searchParams;
+  const normalizedTenantId = (tenantId || "").split("?")[0].trim();
   const tenants = await getUserTenants();
   const activeTenants = tenants.filter((tenant) => tenant.isActive);
-  const selectedTenant = tenantId
-    ? (tenants.find((tenant) => tenant.id === tenantId) ?? null)
+  const selectedTenant = normalizedTenantId
+    ? (tenants.find((tenant) => tenant.id === normalizedTenantId) ?? null)
     : null;
-  const hasInvalidTenantSelection = Boolean(tenantId) && !selectedTenant;
-  const preferredTenant = hasInvalidTenantSelection
-    ? null
-    : (selectedTenant ?? activeTenants[0] ?? tenants[0] ?? null);
+  const hasInvalidTenantSelection = Boolean(normalizedTenantId) && !selectedTenant;
+  const preferredTenant = normalizedTenantId
+    ? selectedTenant
+    : (activeTenants[0] ?? tenants[0] ?? null);
+  const showTenantDebugInfo =
+    process.env.NODE_ENV !== "production" && hasInvalidTenantSelection;
+
   const employerName = preferredTenant
     ? getEmployerDisplayName(preferredTenant.nameCached)
     : "No employer selected";
@@ -86,7 +90,9 @@ export default async function PayrollOverviewPage({
     ? `/payroll?tenantId=${selectedTenantId}`
     : "/payroll";
   const startPayrollHref = `${payrollHref}#upcoming-payroll-calendar`;
-  const reviewDraftsHref = `${payrollHref}#payroll-activity`;
+  const earningTypeHref = selectedTenantId
+    ? `/payroll/earning-type?tenantId=${selectedTenantId}`
+    : "/payroll/earning-type";
   const viewEmployeesHref = selectedTenantId
     ? `/employees?tenantId=${selectedTenantId}`
     : "/employees";
@@ -108,29 +114,25 @@ export default async function PayrollOverviewPage({
       })
     : [];
 
-  if (hasInvalidTenantSelection) {
-    return (
-      <div className="min-h-[calc(100vh-70px)] bg-slate-50 px-6 py-10">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
-          <h1 className="text-xl font-semibold">Employer context not found</h1>
-          <p className="mt-2 text-sm">
-            The selected employer no longer exists or is unavailable. Choose an
-            employer to continue to payroll.
-          </p>
-          <Link
-            href="/tenants"
-            className="mt-4 inline-flex items-center rounded-md bg-amber-700 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-800"
-          >
-            Go to Employers
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-[calc(100vh-70px)] bg-slate-50 px-6 py-10">
       <div className="mx-auto max-w-6xl space-y-8">
+        {showTenantDebugInfo ? (
+          <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <p className="font-semibold">Tenant lookup mismatch (dev only)</p>
+            <p className="mt-1">Requested tenantId: {tenantId}</p>
+            <p className="mt-1">Normalized tenantId: {normalizedTenantId}</p>
+            <p className="mt-1">Matched in accessible tenants: no</p>
+            <p className="mt-1">
+              Accessible tenant ids (first 3):{" "}
+              {tenants
+                .slice(0, 3)
+                .map((tenant) => tenant.id)
+                .join(", ") || "none"}
+            </p>
+          </section>
+        ) : null}
+
         <header className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -147,13 +149,13 @@ export default async function PayrollOverviewPage({
                 href={startPayrollHref}
                 className="rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
               >
-                Start Payroll Run
+                Payroll Run
               </Link>
               <Link
-                href={reviewDraftsHref}
+                href={earningTypeHref}
                 className="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:text-emerald-700"
               >
-                Review Drafts
+                EarningType
               </Link>
             </div>
           </div>

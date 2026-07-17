@@ -17,6 +17,8 @@ interface FormLayoutProps {
   // optionalExpanded?: boolean;
   showChanges?: boolean;
   onEyeToggle?: () => void;
+  changeSuffix?: string;
+  changeSuffixHref?: string;
 }
 
 export default function FormLayout({
@@ -31,6 +33,8 @@ export default function FormLayout({
   // optionalExpanded,
   showChanges,
   onEyeToggle: onEyeToggle,
+  changeSuffix,
+  changeSuffixHref,
 }: FormLayoutProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -57,6 +61,8 @@ export default function FormLayout({
         saveLabel={saveLabel}
         changeLabel={changeLabel}
         changeCount={changeCount}
+        changeSuffix={changeSuffix}
+        changeSuffixHref={changeSuffixHref}
         showB4Change={showChanges}
         onEyeToggle={onEyeToggle}
       />

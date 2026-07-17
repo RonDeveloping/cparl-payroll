@@ -204,8 +204,7 @@ export const contactSchema = z
       .toUpperCase()
       .optional()
       .refine(
-        (val) =>
-          !val || CANADA_PROVINCE_TERRITORY_CODES.includes(val as never),
+        (val) => !val || CANADA_PROVINCE_TERRITORY_CODES.includes(val as never),
         {
           message: "Employment province code must be a valid code (e.g., ON)",
         },
@@ -231,9 +230,9 @@ export const contactSchema = z
         ])
         .optional(),
     ),
-    jobPayType: z.preprocess(
+    jobEarningCodeId: z.preprocess(
       (val) => (val === "" ? undefined : val),
-      z.enum(["HOURLY", "SALARY"]).optional(),
+      z.string().trim().min(1).optional(),
     ),
     jobStartDate: z
       .string()
@@ -356,13 +355,13 @@ export const contactSchema = z
     }
 
     if (
-      (val.jobPayType && !val.jobPayRate) ||
-      (val.jobPayRate && !val.jobPayType)
+      (val.jobEarningCodeId && !val.jobPayRate) ||
+      (val.jobPayRate && !val.jobEarningCodeId)
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: [val.jobPayType ? "jobPayRate" : "jobPayType"],
-        message: "Pay type and pay rate must be provided together",
+        path: [val.jobEarningCodeId ? "jobPayRate" : "jobEarningCodeId"],
+        message: "Earning code and pay rate must be provided together",
       });
     }
 

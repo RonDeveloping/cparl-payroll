@@ -5,6 +5,34 @@ import { ContactFormInput } from "@/lib/validations/contact-schema";
 import formatPhone from "@/utils/formatters/phone";
 import formatPostalCode from "@/utils/formatters/postalCode";
 
+function getEmployerDisplayName(nameCached: unknown): string {
+  const fallback = "Employer";
+  if (!nameCached || typeof nameCached !== "object") return fallback;
+
+  const record = nameCached as {
+    coreName?: unknown;
+    kindName?: unknown;
+    aliasName?: unknown;
+    displayName?: unknown;
+  };
+
+  const displayName =
+    typeof record.displayName === "string" ? record.displayName.trim() : "";
+  const aliasName =
+    typeof record.aliasName === "string" ? record.aliasName.trim() : "";
+  const coreName =
+    typeof record.coreName === "string" ? record.coreName.trim() : "";
+  const kindName =
+    typeof record.kindName === "string" ? record.kindName.trim() : "";
+  const legalName = [coreName, kindName].filter(Boolean).join(" ").trim();
+
+  if (legalName) return legalName;
+  if (displayName) return displayName;
+  if (aliasName) return aliasName;
+
+  return fallback;
+}
+
 export default async function EditEmployeePage({
   params,
   searchParams,
@@ -14,6 +42,31 @@ export default async function EditEmployeePage({
 }) {
   const { id } = await params;
   const { tenantId } = await searchParams;
+  const earningCodeOptions = tenantId
+    ? await prisma.earningCode.findMany({
+        where: { tenantId },
+        select: {
+          id: true,
+          code: true,
+          description: true,
+          isHourly: true,
+        },
+        orderBy: [{ code: "asc" }],
+      })
+    : [];
+  const defaultSalaryEarningCode =
+    earningCodeOptions.find((earningCode) => earningCode.code === "SAL") ??
+    null;
+  const employerName = tenantId
+    ? await prisma.tenant
+        .findUnique({
+          where: { id: tenantId },
+          select: { nameCached: true },
+        })
+        .then((tenant) =>
+          tenant ? getEmployerDisplayName(tenant.nameCached) : undefined,
+        )
+    : undefined;
   const todayIso = new Date().toISOString().slice(0, 10);
 
   const blankBankAccount = {
@@ -61,7 +114,7 @@ export default async function EditEmployeePage({
       employmentEndDate: "",
       employmentProvinceCode: "ON",
       terminationReason: undefined,
-      jobPayType: undefined,
+      jobEarningCodeId: defaultSalaryEarningCode?.id,
       jobStartDate: "",
       jobPayRate: "",
       jobHoursPerWeek: "",
@@ -87,7 +140,9 @@ export default async function EditEmployeePage({
         paramsPromise={params}
         initialData={emptyData}
         bankAccountStatuses={["UNVERIFIED"]}
+        earningCodeOptions={earningCodeOptions}
         tenantId={tenantId}
+        employerName={employerName}
       />
     );
   }
@@ -137,7 +192,7 @@ export default async function EditEmployeePage({
         where: { employmentId: employment.id },
         select: {
           startDate: true,
-          payType: true,
+          earningCodeId: true,
           payRate: true,
           hoursPerWeek: true,
           endDate: true,
@@ -207,7 +262,7 @@ export default async function EditEmployeePage({
       : "",
     employmentProvinceCode: employment?.provinceCode || "ON",
     terminationReason: employment?.terminationReason || undefined,
-    jobPayType: jobAssignment?.payType || undefined,
+    jobEarningCodeId: jobAssignment?.earningCodeId || undefined,
     jobStartDate: jobAssignment?.startDate
       ? jobAssignment.startDate.toISOString().slice(0, 10)
       : "",
@@ -263,7 +318,9 @@ export default async function EditEmployeePage({
       paramsPromise={params}
       initialData={initialData}
       bankAccountStatuses={bankAccountStatuses}
+      earningCodeOptions={earningCodeOptions}
       tenantId={tenantId}
+      employerName={employerName}
     />
   );
 }

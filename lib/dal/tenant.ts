@@ -1,4 +1,11 @@
 // lib/dal/tenant.ts
+
+/**
+ * Tenant data-access queries.
+ *
+ * This module provides read-only tenant fetchers scoped to the
+ * authenticated user, with React cache for request-level reuse.
+ */
 import { cache } from "react";
 import prisma from "@/db/prismaDrizzle";
 import { getSession } from "@/lib/session";
