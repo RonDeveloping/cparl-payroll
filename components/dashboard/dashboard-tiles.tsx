@@ -151,6 +151,8 @@ export default function DashboardTiles({
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [showProfileChanges, setShowProfileChanges] = useState(false);
   const [profileChangeCount, setProfileChangeCount] = useState(0);
+  const isOrganizationFilterActive = organizationFilter !== "all";
+  const isOrganizationSortActive = organizationSort !== "name-asc";
 
   useEffect(() => {
     try {
@@ -611,7 +613,25 @@ export default function DashboardTiles({
                     className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
                   >
                     <SlidersHorizontal className="h-3.5 w-3.5" />
-                    Sort / Filter
+                    <span
+                      className={
+                        isOrganizationSortActive
+                          ? "underline decoration-dotted underline-offset-4"
+                          : undefined
+                      }
+                    >
+                      Sort
+                    </span>
+                    <span>/</span>
+                    <span
+                      className={
+                        isOrganizationFilterActive
+                          ? "underline decoration-dotted underline-offset-4"
+                          : undefined
+                      }
+                    >
+                      Filter
+                    </span>
                   </button>
                   {isOrganizationListMenuOpen && (
                     <div className="absolute right-0 top-10 z-20 min-w-52 rounded-xl border border-slate-200 bg-white p-2 shadow-lg">

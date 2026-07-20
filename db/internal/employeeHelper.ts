@@ -1,6 +1,7 @@
 "use server";
 // db/internal/employeeHelper.ts
 
+import { DEFAULT_EARNING_CODES } from "@/constants/earning-types";
 import { ContactFormInput } from "@/lib/validations/contact-schema";
 import { PrismaClient } from "@prisma/client";
 
@@ -23,54 +24,6 @@ function parseIsoDate(value: string): Date | null {
   return parsed;
 }
 
-async function ensureDefaultSalaryEarningCode(
-  tx: PrismaTransaction,
-  tenantId: string,
-): Promise<string> {
-  await tx.earningCode.createMany({
-    data: [
-      {
-        tenantId,
-        code: "SAL",
-        description: "For salaried employees exempt from overtime protection.",
-        earningType: "REGULAR",
-        isHourly: false,
-        isTaxable: true,
-        isInKind: false,
-        isSubjectToCPP: true,
-        isSubjectToEI: true,
-      },
-      {
-        tenantId,
-        code: "REG",
-        description:
-          "For hourly employees, and salaried employees who are entitled to overtime pay.",
-        earningType: "REGULAR",
-        isHourly: true,
-        isTaxable: true,
-        isInKind: false,
-        isSubjectToCPP: true,
-        isSubjectToEI: true,
-      },
-    ],
-    skipDuplicates: true,
-  });
-
-  const sal = await tx.earningCode.findFirst({
-    where: {
-      tenantId,
-      code: "SAL",
-    },
-    select: { id: true },
-  });
-
-  if (!sal) {
-    throw new Error("Failed to ensure default SAL earning code");
-  }
-
-  return sal.id;
-}
-
 export async function upsertEmployeePEAInternal(
   data: ContactFormInput,
   contactId: string,
@@ -87,16 +40,38 @@ export async function upsertEmployeePEAInternal(
   )
     .trim()
     .toUpperCase();
+  const payrollUnitId = data.payrollUnitId?.trim() || null;
   const employmentTitle = data.employmentTitle?.trim() || null;
   const employmentDepartment = data.employmentDepartment?.trim() || null;
   const jobEarningCodeId = data.jobEarningCodeId?.trim() || null;
   const jobPayRate = data.jobPayRate?.trim() || null;
   const jobHoursPerWeek = data.jobHoursPerWeek?.trim() || null;
+  const additionalEarnings = (data.additionalEarnings || [])
+    .map((earning) => ({
+      jobEarningCodeId: earning.jobEarningCodeId?.trim() || null,
+      jobPayRate: earning.jobPayRate?.trim() || null,
+      jobHoursPerWeek: earning.jobHoursPerWeek?.trim() || null,
+    }))
+    .filter((earning) => earning.jobEarningCodeId && earning.jobPayRate);
   const parsedJobStartDate = parseIsoDate(data.jobStartDate ?? "");
   const parsedJobEndDate = parseIsoDate(data.jobEndDate ?? "");
   const effectiveJobEndDate = parsedJobEndDate ?? parsedEmploymentEndDate;
   const hasJobAssignmentData = Boolean(jobEarningCodeId && jobPayRate);
   let effectiveJobEarningCodeId = jobEarningCodeId;
+
+  if (payrollUnitId) {
+    const selectedPayrollUnit = await tx.payrollUnit.findFirst({
+      where: {
+        id: payrollUnitId,
+        tenantId,
+      },
+      select: { id: true },
+    });
+
+    if (!selectedPayrollUnit) {
+      throw new Error("Selected payroll unit is invalid for this tenant");
+    }
+  }
 
   const employee = await tx.employee.upsert({
     where: {
@@ -192,7 +167,25 @@ export async function upsertEmployeePEAInternal(
         },
       });
 
-  await ensureDefaultSalaryEarningCode(tx, tenantId);
+  await tx.earningCode.createMany({
+    data: DEFAULT_EARNING_CODES.map((definition) => ({
+      tenantId,
+      ...definition,
+    })),
+    skipDuplicates: true,
+  });
+
+  const defaultSalaryEarningCode = await tx.earningCode.findFirst({
+    where: {
+      tenantId,
+      code: "SAL",
+    },
+    select: { id: true },
+  });
+
+  if (!defaultSalaryEarningCode) {
+    throw new Error("Failed to ensure default SAL earning code");
+  }
 
   if (effectiveJobEarningCodeId) {
     const selectedEarningCode = await tx.earningCode.findFirst({
@@ -204,45 +197,105 @@ export async function upsertEmployeePEAInternal(
     });
 
     if (!selectedEarningCode) {
-      effectiveJobEarningCodeId = await ensureDefaultSalaryEarningCode(
-        tx,
-        tenantId,
-      );
+      effectiveJobEarningCodeId = defaultSalaryEarningCode.id;
     }
   }
 
+  const submittedAssignments: {
+    earningCodeId: string;
+    payRate: string;
+    hoursPerWeek: string | null;
+    startDate: Date;
+    endDate: Date | null;
+  }[] = [];
+
   if (hasJobAssignmentData && jobPayRate) {
-    const latestJobAssignment = await tx.jobAssignment.findFirst({
-      where: { employmentId: employment.id },
+    submittedAssignments.push({
+      earningCodeId: effectiveJobEarningCodeId!,
+      payRate: jobPayRate,
+      hoursPerWeek: jobHoursPerWeek,
+      startDate: parsedJobStartDate ?? parsedHireDate ?? employment.startDate,
+      endDate: effectiveJobEndDate ?? null,
+    });
+  }
+
+  for (const additionalEarning of additionalEarnings) {
+    const selectedEarningCode = await tx.earningCode.findFirst({
+      where: {
+        id: additionalEarning.jobEarningCodeId!,
+        tenantId,
+      },
+      select: { id: true },
+    });
+
+    submittedAssignments.push({
+      earningCodeId: selectedEarningCode?.id || defaultSalaryEarningCode.id,
+      payRate: additionalEarning.jobPayRate!,
+      hoursPerWeek: additionalEarning.jobHoursPerWeek,
+      startDate: parsedJobStartDate ?? parsedHireDate ?? employment.startDate,
+      endDate: effectiveJobEndDate ?? null,
+    });
+  }
+
+  await tx.jobAssignment.deleteMany({
+    where: { employmentId: employment.id },
+  });
+
+  if (submittedAssignments.length > 0) {
+    await tx.jobAssignment.createMany({
+      data: submittedAssignments.map((assignment) => ({
+        employmentId: employment.id,
+        startDate: assignment.startDate,
+        earningCodeId: assignment.earningCodeId,
+        payRate: assignment.payRate,
+        hoursPerWeek: assignment.hoursPerWeek,
+        endDate: assignment.endDate,
+      })),
+    });
+  }
+
+  if (payrollUnitId) {
+    const effectiveAssignmentStartDate = parsedHireDate ?? now;
+
+    await tx.payrollUnitEmployee.updateMany({
+      where: {
+        tenantId,
+        employeeId: employee.id,
+        endDate: null,
+        payrollUnitId: { not: payrollUnitId },
+      },
+      data: {
+        endDate: effectiveAssignmentStartDate,
+        isPrimary: false,
+      },
+    });
+
+    const matchingActiveAssignment = await tx.payrollUnitEmployee.findFirst({
+      where: {
+        tenantId,
+        employeeId: employee.id,
+        payrollUnitId,
+        endDate: null,
+      },
+      select: { id: true },
       orderBy: { startDate: "desc" },
     });
 
-    if (latestJobAssignment) {
-      await tx.jobAssignment.update({
-        where: { id: latestJobAssignment.id },
+    if (!matchingActiveAssignment) {
+      await tx.payrollUnitEmployee.create({
         data: {
-          ...(parsedJobStartDate
-            ? { startDate: parsedJobStartDate }
-            : parsedHireDate
-              ? { startDate: parsedHireDate }
-              : {}),
-          earningCodeId: effectiveJobEarningCodeId!,
-          payRate: jobPayRate,
-          hoursPerWeek: jobHoursPerWeek,
-          endDate: effectiveJobEndDate ?? null,
+          tenantId,
+          employeeId: employee.id,
+          payrollUnitId,
+          startDate: effectiveAssignmentStartDate,
+          endDate: null,
+          isPrimary: true,
         },
       });
     } else {
-      await tx.jobAssignment.create({
-        data: {
-          employmentId: employment.id,
-          startDate:
-            parsedJobStartDate ?? parsedHireDate ?? employment.startDate,
-          earningCodeId: effectiveJobEarningCodeId!,
-          payRate: jobPayRate,
-          hoursPerWeek: jobHoursPerWeek,
-          endDate: effectiveJobEndDate ?? null,
-        },
+      await tx.payrollUnitEmployee.update({
+        where: { id: matchingActiveAssignment.id },
+        data: { isPrimary: true },
       });
     }
   }

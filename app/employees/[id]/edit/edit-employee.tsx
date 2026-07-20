@@ -31,6 +31,11 @@ interface EditEmployeeFormProps {
     description: string;
     isHourly: boolean;
   }[];
+  payrollUnitOptions: readonly {
+    id: string;
+    code: string;
+    name: string;
+  }[];
   tenantId?: string;
   employerName?: string;
 }
@@ -40,6 +45,7 @@ export default function EditEmployeeForm({
   initialData,
   bankAccountStatuses,
   earningCodeOptions,
+  payrollUnitOptions,
   tenantId,
   employerName,
 }: EditEmployeeFormProps) {
@@ -176,6 +182,7 @@ export default function EditEmployeeForm({
               errors={errors}
               bankAccountStatuses={bankAccountStatuses}
               earningCodeOptions={earningCodeOptions}
+              payrollUnitOptions={payrollUnitOptions}
             />
           </form>
         </SmartFormProvider>

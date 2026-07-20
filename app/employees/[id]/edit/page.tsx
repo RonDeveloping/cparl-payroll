@@ -2,6 +2,7 @@
 import prisma from "@/db/prismaDrizzle";
 import EditEmployeeForm from "./edit-employee";
 import { ContactFormInput } from "@/lib/validations/contact-schema";
+import { getEarningCodeDescription } from "@/lib/earning-code-display";
 import formatPhone from "@/utils/formatters/phone";
 import formatPostalCode from "@/utils/formatters/postalCode";
 
@@ -43,13 +44,29 @@ export default async function EditEmployeePage({
   const { id } = await params;
   const { tenantId } = await searchParams;
   const earningCodeOptions = tenantId
-    ? await prisma.earningCode.findMany({
-        where: { tenantId },
+    ? (
+        await prisma.earningCode.findMany({
+          where: { tenantId, isActive: true },
+          select: {
+            id: true,
+            code: true,
+            description: true,
+            isHourly: true,
+          },
+          orderBy: [{ code: "asc" }],
+        })
+      ).map((earningCode) => ({
+        ...earningCode,
+        description: getEarningCodeDescription(earningCode),
+      }))
+    : [];
+  const payrollUnitOptions = tenantId
+    ? await prisma.payrollUnit.findMany({
+        where: { tenantId, isActive: true },
         select: {
           id: true,
           code: true,
-          description: true,
-          isHourly: true,
+          name: true,
         },
         orderBy: [{ code: "asc" }],
       })
@@ -110,6 +127,7 @@ export default async function EditEmployeePage({
       employeeNumber: "",
       employmentTitle: "",
       employmentDepartment: "",
+      payrollUnitId: payrollUnitOptions[0]?.id,
       hireDate: todayIso,
       employmentEndDate: "",
       employmentProvinceCode: "ON",
@@ -119,6 +137,7 @@ export default async function EditEmployeePage({
       jobPayRate: "",
       jobHoursPerWeek: "",
       jobEndDate: "",
+      additionalEarnings: [],
       status: "ACTIVE",
       email: "",
       phone: "",
@@ -141,6 +160,7 @@ export default async function EditEmployeePage({
         initialData={emptyData}
         bankAccountStatuses={["UNVERIFIED"]}
         earningCodeOptions={earningCodeOptions}
+        payrollUnitOptions={payrollUnitOptions}
         tenantId={tenantId}
         employerName={employerName}
       />
@@ -186,11 +206,24 @@ export default async function EditEmployeePage({
         orderBy: { startDate: "desc" },
       })
     : null;
+  const payrollUnitAssignment = employee?.id
+    ? await prisma.payrollUnitEmployee.findFirst({
+        where: tenantId
+          ? { employeeId: employee.id, tenantId, endDate: null }
+          : { employeeId: employee.id, endDate: null },
+        select: {
+          payrollUnitId: true,
+          startDate: true,
+        },
+        orderBy: { startDate: "desc" },
+      })
+    : null;
 
-  const jobAssignment = employment?.id
-    ? await prisma.jobAssignment.findFirst({
+  const jobAssignments = employment?.id
+    ? await prisma.jobAssignment.findMany({
         where: { employmentId: employment.id },
         select: {
+          id: true,
           startDate: true,
           earningCodeId: true,
           payRate: true,
@@ -199,10 +232,14 @@ export default async function EditEmployeePage({
         },
         orderBy: { startDate: "desc" },
       })
-    : null;
-  const jobAssignmentHoursPerWeek = (
-    jobAssignment as { hoursPerWeek?: { toString(): string } | null } | null
+    : [];
+  const primaryJobAssignment = jobAssignments[0] || null;
+  const primaryJobAssignmentHoursPerWeek = (
+    primaryJobAssignment as {
+      hoursPerWeek?: { toString(): string } | null;
+    } | null
   )?.hoursPerWeek;
+  const additionalJobAssignments = jobAssignments.slice(1);
 
   const bankAccounts = employee?.id
     ? await prisma.bankAccount.findMany({
@@ -254,6 +291,7 @@ export default async function EditEmployeePage({
     employeeNumber: employee?.employeeNumber || "",
     employmentTitle: employment?.title || "",
     employmentDepartment: employment?.department || "",
+    payrollUnitId: payrollUnitAssignment?.payrollUnitId || undefined,
     hireDate: employee?.hireDate
       ? employee.hireDate.toISOString().slice(0, 10)
       : "",
@@ -262,15 +300,20 @@ export default async function EditEmployeePage({
       : "",
     employmentProvinceCode: employment?.provinceCode || "ON",
     terminationReason: employment?.terminationReason || undefined,
-    jobEarningCodeId: jobAssignment?.earningCodeId || undefined,
-    jobStartDate: jobAssignment?.startDate
-      ? jobAssignment.startDate.toISOString().slice(0, 10)
+    jobEarningCodeId: primaryJobAssignment?.earningCodeId || undefined,
+    jobStartDate: primaryJobAssignment?.startDate
+      ? primaryJobAssignment.startDate.toISOString().slice(0, 10)
       : "",
-    jobPayRate: jobAssignment?.payRate?.toString() || "",
-    jobHoursPerWeek: jobAssignmentHoursPerWeek?.toString() || "",
-    jobEndDate: jobAssignment?.endDate
-      ? jobAssignment.endDate.toISOString().slice(0, 10)
+    jobPayRate: primaryJobAssignment?.payRate?.toString() || "",
+    jobHoursPerWeek: primaryJobAssignmentHoursPerWeek?.toString() || "",
+    jobEndDate: primaryJobAssignment?.endDate
+      ? primaryJobAssignment.endDate.toISOString().slice(0, 10)
       : "",
+    additionalEarnings: additionalJobAssignments.map((assignment) => ({
+      jobEarningCodeId: assignment.earningCodeId,
+      jobPayRate: assignment.payRate?.toString() || "",
+      jobHoursPerWeek: assignment.hoursPerWeek?.toString() || "",
+    })),
     status: employee?.status || "ACTIVE",
     email: contact.emails[0]?.emailAddress || "",
     phone: formatPhone(contact.phones[0]?.number) || "",
@@ -319,6 +362,7 @@ export default async function EditEmployeePage({
       initialData={initialData}
       bankAccountStatuses={bankAccountStatuses}
       earningCodeOptions={earningCodeOptions}
+      payrollUnitOptions={payrollUnitOptions}
       tenantId={tenantId}
       employerName={employerName}
     />

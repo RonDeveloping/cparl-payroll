@@ -142,7 +142,37 @@ export const employeeFieldContent = {
     term: "Suffix",
     description: "Designation after name (e.g., Jr., Sr., III, PhD, MD)",
   },
+  payrollUnit: {
+    term: "Payroll unit",
+    description:
+      "Assigns this employee to the payroll unit used for pay schedule and payroll-run grouping.",
+  },
 } as const;
+
+export const earningCodeContent = {
+  earningType: {
+    term: "Pick an Earning Type",
+    description:
+      "It comes with standard payroll treatment, such as taxability and CPP/EI settings, and maps to the appropriate G/L accounts.",
+  },
+  code: {
+    term: "Name an Earning Code",
+    description:
+      "Use a recognizable abbreviation (2-10 characters) for easy-to-read pay stubs and reports. It can use customized payroll treatment like taxability.",
+  },
+  description: {
+    term: "Code Description",
+    description:
+      "Short text shown on pay stubs and payroll reports to spell out the code in a way employees can recognize.",
+  },
+  SAL: {
+    description: "Salary exempt from overtime pay, e.g. executives.",
+  },
+  REG: {
+    description: "Regular wage or salary, overtime-eligible.",
+  },
+} as const;
+//SAL is for PEA: Professional (like lawyers, CPA, or engineers); Executive (managing people), and Administrative (business operations, high-level decision making)
 
 export const tenantFieldContent = {
   mailingAddress: {

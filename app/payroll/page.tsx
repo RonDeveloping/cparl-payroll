@@ -155,7 +155,7 @@ export default async function PayrollOverviewPage({
                 href={earningTypeHref}
                 className="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:text-emerald-700"
               >
-                EarningType
+                Earning Codes
               </Link>
             </div>
           </div>

@@ -1,7 +1,17 @@
 // app/employees/page.tsx
 import Link from "next/link";
 
-export default function EmployeesPage() {
+export default async function EmployeesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tenantId?: string }>;
+}) {
+  const { tenantId } = await searchParams;
+  const normalizedTenantId = (tenantId || "").split("?")[0].trim();
+  const createEmployeeHref = normalizedTenantId
+    ? `/employees/new/edit?tenantId=${normalizedTenantId}`
+    : "/employees/new/edit";
+
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
@@ -12,7 +22,7 @@ export default function EmployeesPage() {
         </p>
         <div className="mt-6">
           <Link
-            href="/employees/new/edit"
+            href={createEmployeeHref}
             className="inline-flex items-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
           >
             Create New Employee

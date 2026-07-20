@@ -22,6 +22,7 @@ import {
 import { upsertAddress } from "@/lib/utils/address-hash";
 import { splitBusinessNumber } from "@/utils/formatters/businessNumber";
 import { ERRORS } from "@/constants/errors";
+import { DEFAULT_EARNING_CODES } from "@/constants/earning-types";
 
 /**
  * Updates an existing tenant or creates a new one.
@@ -331,32 +332,10 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
 
       if (!id || id === "new") {
         await tx.earningCode.createMany({
-          data: [
-            {
-              tenantId: tenant.id,
-              code: "SAL",
-              description:
-                "For salaried employees exempt from overtime protection.",
-              earningType: "REGULAR",
-              isHourly: false,
-              isTaxable: true,
-              isInKind: false,
-              isSubjectToCPP: true,
-              isSubjectToEI: true,
-            },
-            {
-              tenantId: tenant.id,
-              code: "REG",
-              description:
-                "For hourly employees, and salaried employees who are entitled to overtime pay.",
-              earningType: "REGULAR",
-              isHourly: true,
-              isTaxable: true,
-              isInKind: false,
-              isSubjectToCPP: true,
-              isSubjectToEI: true,
-            },
-          ],
+          data: DEFAULT_EARNING_CODES.map((definition) => ({
+            tenantId: tenant.id,
+            ...definition,
+          })),
           skipDuplicates: true,
         });
       }
@@ -569,6 +548,12 @@ export async function deleteTenant(tenantId: string) {
             where: { tenantId },
           });
 
+          if (earningCodeCount > 2) {
+            throw new Error(
+              "This employer can't be deleted because it has earning codes. Delete those earning codes first or set the employer inactive instead.",
+            );
+          }
+
           // Delete all tenant-related records in correct dependency order
           await tx.billingInvoice.deleteMany({
             where: { tenantId },
@@ -609,11 +594,10 @@ export async function deleteTenant(tenantId: string) {
           await tx.payrollUnit.deleteMany({
             where: { tenantId },
           });
-          if (earningCodeCount <= 2) {
-            await tx.earningCode.deleteMany({
-              where: { tenantId },
-            });
-          }
+
+          await tx.earningCode.deleteMany({
+            where: { tenantId },
+          });
 
           return tx.tenant.delete({
             where: { id: tenantId },

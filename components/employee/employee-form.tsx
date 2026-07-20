@@ -47,6 +47,11 @@ interface EmployeeFormProps {
     description: string;
     isHourly: boolean;
   }[];
+  payrollUnitOptions: readonly {
+    id: string;
+    code: string;
+    name: string;
+  }[];
 }
 
 const MAX_BANK_ACCOUNTS = 10;
@@ -328,6 +333,7 @@ export function EmployeeForm({
   errors,
   bankAccountStatuses = [],
   earningCodeOptions,
+  payrollUnitOptions,
 }: EmployeeFormProps) {
   const { register, setValue, getValues } = useFormContext<ContactFormInput>();
   const [postalProgress, setPostalProgress] = useState<{
@@ -342,6 +348,9 @@ export function EmployeeForm({
   const [showOptionalEmployment, setShowOptionalEmployment] = useState(false);
   const bankAccounts = (useWatch({ name: "bankAccounts" as const }) ||
     []) as ContactFormInput["bankAccounts"];
+  const additionalEarnings = (useWatch({
+    name: "additionalEarnings" as const,
+  }) || []) as ContactFormInput["additionalEarnings"];
   const statusValue = useWatch({ name: "status" as const });
   const [
     middleNameValue,
@@ -354,7 +363,6 @@ export function EmployeeForm({
     employmentDepartmentValue,
     jobStartDateValue,
     jobEndDateValue,
-    jobHoursPerWeekValue,
   ] = useWatch({
     name: [
       "middleName",
@@ -367,7 +375,6 @@ export function EmployeeForm({
       "employmentDepartment",
       "jobStartDate",
       "jobEndDate",
-      "jobHoursPerWeek",
     ],
   });
   const optionalIdentityFieldsExpanded = Boolean(
@@ -393,13 +400,11 @@ export function EmployeeForm({
       errors.employmentDepartment?.message ||
       errors.jobStartDate?.message ||
       errors.jobEndDate?.message ||
-      errors.jobHoursPerWeek?.message ||
       String(employeeNumberValue || "").trim() ||
       String(employmentTitleValue || "").trim() ||
       String(employmentDepartmentValue || "").trim() ||
       String(jobStartDateValue || "").trim() ||
-      String(jobEndDateValue || "").trim() ||
-      String(jobHoursPerWeekValue || "").trim(),
+      String(jobEndDateValue || "").trim(),
     );
 
   const addBankAccountRow = () => {
@@ -416,6 +421,22 @@ export function EmployeeForm({
           bankDetails: "",
           distributionType: undefined,
           distributionValue: "",
+        },
+      ],
+      { shouldDirty: true },
+    );
+  };
+
+  const addAdditionalEarningRow = () => {
+    const currentAdditionalEarnings = getValues("additionalEarnings") || [];
+    setValue(
+      "additionalEarnings",
+      [
+        ...currentAdditionalEarnings,
+        {
+          jobEarningCodeId: "",
+          jobPayRate: "",
+          jobHoursPerWeek: "",
         },
       ],
       { shouldDirty: true },
@@ -708,42 +729,6 @@ export function EmployeeForm({
             options={[...CANADA_PROVINCE_TERRITORY_OPTIONS]}
             error={errors.employmentProvinceCode?.message}
           />
-          <SelectWithChanges<ContactFormInput>
-            label="Earning code"
-            name="jobEarningCodeId"
-            error={errors.jobEarningCodeId?.message}
-            options={[
-              { label: "Not set", value: "" },
-              ...earningCodeOptions.map((option) => ({
-                label: `${option.code} - ${option.description}${option.isHourly ? " (Hourly)" : " (Salary/Amount)"}`,
-                value: option.id,
-              })),
-            ]}
-          />
-          <InputWithChanges<ContactFormInput>
-            label={
-              <Clarification
-                term={employeeFieldContent.jobPayRate.term}
-                description={employeeFieldContent.jobPayRate.description}
-              />
-            }
-            name="jobPayRate"
-            placeholder="25.00"
-            rules={{}}
-            error={errors.jobPayRate?.message}
-          />
-          <InputWithChanges<ContactFormInput>
-            label={
-              <Clarification
-                term={employeeFieldContent.jobHoursPerWeek.term}
-                description={employeeFieldContent.jobHoursPerWeek.description}
-              />
-            }
-            name="jobHoursPerWeek"
-            placeholder="37.50"
-            rules={{}}
-            error={errors.jobHoursPerWeek?.message}
-          />
         </FormGrid>
 
         <SectionDisclosure
@@ -809,6 +794,201 @@ export function EmployeeForm({
               error={errors.jobEndDate?.message}
             />
           </FormGrid>
+        </div>
+      </FormSection>
+
+      <FormSection title="Compensation Setup">
+        <FormGrid>
+          <SelectWithChanges<ContactFormInput>
+            label={
+              <Clarification
+                term={employeeFieldContent.payrollUnit.term}
+                description={employeeFieldContent.payrollUnit.description}
+              />
+            }
+            name="payrollUnitId"
+            error={errors.payrollUnitId?.message}
+            options={[
+              { label: "Not set", value: "" },
+              ...payrollUnitOptions.map((option) => ({
+                label: `${option.code} - ${option.name}`,
+                value: option.id,
+              })),
+            ]}
+          />
+        </FormGrid>
+        <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="grid w-full grid-cols-[2rem_1fr_8rem_8rem] gap-2 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-600">
+            <div className="text-center normal-case">Seq.</div>
+            <div className="normal-case">Earning code</div>
+            <div className="text-center normal-case">Pay rate</div>
+            <div className="text-center normal-case">Hours/week</div>
+          </div>
+
+          <div className="divide-y divide-slate-100">
+            <div className="grid w-full grid-cols-[2rem_1fr_8rem_8rem] items-start gap-2 px-3 py-2">
+              <div className="flex h-10 items-center justify-center text-sm font-semibold text-slate-400">
+                1
+              </div>
+
+              <div>
+                <select
+                  {...register("jobEarningCodeId")}
+                  className={cn(
+                    "w-full rounded-md border px-3 py-2 text-sm",
+                    errors.jobEarningCodeId?.message
+                      ? "border-red-500 focus-visible:ring-2 focus-visible:ring-red-100"
+                      : "border-slate-300",
+                  )}
+                >
+                  <option value="">Not set</option>
+                  {earningCodeOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {`${option.code} - ${option.description}`}
+                    </option>
+                  ))}
+                </select>
+                {errors.jobEarningCodeId?.message && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {errors.jobEarningCodeId?.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <input
+                  {...register("jobPayRate")}
+                  placeholder="25.00"
+                  className={cn(
+                    "w-full rounded-md border px-3 py-2 text-center text-sm placeholder:text-slate-400",
+                    errors.jobPayRate?.message
+                      ? "border-red-500 focus-visible:ring-2 focus-visible:ring-red-100"
+                      : "border-slate-300",
+                  )}
+                />
+                {errors.jobPayRate?.message && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {errors.jobPayRate?.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <input
+                  {...register("jobHoursPerWeek")}
+                  placeholder="37.50"
+                  className={cn(
+                    "w-full rounded-md border px-3 py-2 text-center text-sm placeholder:text-slate-400",
+                    errors.jobHoursPerWeek?.message
+                      ? "border-red-500 focus-visible:ring-2 focus-visible:ring-red-100"
+                      : "border-slate-300",
+                  )}
+                />
+                {errors.jobHoursPerWeek?.message && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {errors.jobHoursPerWeek?.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {additionalEarnings.map((_, index) => (
+              <div
+                key={`additional-earning-${index}`}
+                className="grid w-full grid-cols-[2rem_1fr_8rem_8rem] items-start gap-2 px-3 py-2"
+              >
+                <div className="flex h-10 items-center justify-center text-sm font-semibold text-slate-400">
+                  {index + 2}
+                </div>
+
+                <div>
+                  <select
+                    {...register(
+                      `additionalEarnings.${index}.jobEarningCodeId` as const,
+                    )}
+                    className={cn(
+                      "w-full rounded-md border px-3 py-2 text-sm",
+                      errors.additionalEarnings?.[index]?.jobEarningCodeId
+                        ?.message
+                        ? "border-red-500 focus-visible:ring-2 focus-visible:ring-red-100"
+                        : "border-slate-300",
+                    )}
+                  >
+                    <option value="">Not set</option>
+                    {earningCodeOptions.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {`${option.code} - ${option.description}`}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.additionalEarnings?.[index]?.jobEarningCodeId
+                    ?.message && (
+                    <p className="mt-1 text-xs text-red-600">
+                      {
+                        errors.additionalEarnings?.[index]?.jobEarningCodeId
+                          ?.message
+                      }
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <input
+                    {...register(
+                      `additionalEarnings.${index}.jobPayRate` as const,
+                    )}
+                    placeholder="25.00"
+                    className={cn(
+                      "w-full rounded-md border px-3 py-2 text-center text-sm placeholder:text-slate-400",
+                      errors.additionalEarnings?.[index]?.jobPayRate?.message
+                        ? "border-red-500 focus-visible:ring-2 focus-visible:ring-red-100"
+                        : "border-slate-300",
+                    )}
+                  />
+                  {errors.additionalEarnings?.[index]?.jobPayRate?.message && (
+                    <p className="mt-1 text-xs text-red-600">
+                      {errors.additionalEarnings?.[index]?.jobPayRate?.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <input
+                    {...register(
+                      `additionalEarnings.${index}.jobHoursPerWeek` as const,
+                    )}
+                    placeholder="37.50"
+                    className={cn(
+                      "w-full rounded-md border px-3 py-2 text-center text-sm placeholder:text-slate-400",
+                      errors.additionalEarnings?.[index]?.jobHoursPerWeek
+                        ?.message
+                        ? "border-red-500 focus-visible:ring-2 focus-visible:ring-red-100"
+                        : "border-slate-300",
+                    )}
+                  />
+                  {errors.additionalEarnings?.[index]?.jobHoursPerWeek
+                    ?.message && (
+                    <p className="mt-1 text-xs text-red-600">
+                      {
+                        errors.additionalEarnings?.[index]?.jobHoursPerWeek
+                          ?.message
+                      }
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t border-slate-100 px-3 py-2">
+            <button
+              type="button"
+              onClick={addAdditionalEarningRow}
+              className="inline-flex items-center rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              + Add earning code details
+            </button>
+          </div>
         </div>
       </FormSection>
 

@@ -35,6 +35,27 @@ const bankAccountInputSchema = z.object({
     }),
 });
 
+const additionalEarningInputSchema = z.object({
+  jobEarningCodeId: z.preprocess(
+    (val) => (val === "" ? undefined : val),
+    z.string().trim().min(1).optional(),
+  ),
+  jobPayRate: z
+    .string()
+    .trim()
+    .optional()
+    .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
+      message: "Pay rate must be a valid amount with up to 2 decimals",
+    }),
+  jobHoursPerWeek: z
+    .string()
+    .trim()
+    .optional()
+    .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
+      message: "Hours per week must be a valid amount with up to 2 decimals",
+    }),
+});
+
 function parseIsoDateUtc(value: string): Date | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return null;
@@ -185,6 +206,10 @@ export const contactSchema = z
     employeeNumber: z.string().trim().optional(),
     employmentTitle: z.string().trim().optional(),
     employmentDepartment: z.string().trim().optional(),
+    payrollUnitId: z.preprocess(
+      (val) => (val === "" ? undefined : val),
+      z.string().trim().min(1).optional(),
+    ),
     hireDate: z
       .string()
       .optional()
@@ -311,6 +336,7 @@ export const contactSchema = z
       )
       .optional(),
     bankAccounts: z.array(bankAccountInputSchema).default([]),
+    additionalEarnings: z.array(additionalEarningInputSchema).default([]),
   })
   .superRefine((val, ctx) => {
     const hireDate = val.hireDate ? parseIsoDateUtc(val.hireDate) : null;
@@ -364,6 +390,23 @@ export const contactSchema = z
         message: "Earning code and pay rate must be provided together",
       });
     }
+
+    val.additionalEarnings.forEach((earning, index) => {
+      if (
+        (earning.jobEarningCodeId && !earning.jobPayRate) ||
+        (earning.jobPayRate && !earning.jobEarningCodeId)
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [
+            "additionalEarnings",
+            index,
+            earning.jobEarningCodeId ? "jobPayRate" : "jobEarningCodeId",
+          ],
+          message: "Earning code and pay rate must be provided together",
+        });
+      }
+    });
 
     if (val.bankAccounts.length > 10) {
       ctx.addIssue({
