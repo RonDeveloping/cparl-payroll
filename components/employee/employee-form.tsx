@@ -1,7 +1,7 @@
 "use client";
 // components/employee/employee-form.tsx
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   FieldErrors,
   Path,
@@ -19,6 +19,7 @@ import SelectWithChanges from "@/components/form/select-with-changes";
 import SectionDisclosure from "@/components/section-disclosure";
 import { FormGrid } from "@/components/form/form-grid";
 import { Clarification } from "@/components/clarification";
+import { CapLabel } from "@/components/shared/cap-label";
 import formatSIN from "@/utils/formatters/sin";
 import formatPostalCode from "@/utils/formatters/postalCode";
 import { IDENTITY_FIELDS } from "@/constants/contact-fields";
@@ -29,6 +30,7 @@ import {
 import { cn } from "@/lib/utils";
 import { CANADA_PROVINCE_TERRITORY_OPTIONS } from "@/constants/canada-provinces";
 import { employeeFieldContent } from "@/constants/content";
+import { inputWithChangesStyles } from "@/constants/styles";
 import {
   getPostalCodeProgress,
   type PostalCodeProgressTone,
@@ -51,6 +53,8 @@ interface EmployeeFormProps {
     id: string;
     code: string;
     name: string;
+    paydaySummary: string;
+    periodEndSummary: string;
   }[];
 }
 
@@ -140,6 +144,158 @@ const VERIFICATION_BADGE: Record<string, { label: string; className: string }> =
     },
     FAILED: { label: "Failed", className: "bg-red-100 text-red-600" },
   };
+
+const WITHHOLDING_EXEMPTION_OPTIONS = [
+  { value: "tax", label: "Tax" },
+  { value: "cpp", label: "CPP" },
+  { value: "ei", label: "EI" },
+] as const;
+
+const BENEFIT_ROWS = [
+  {
+    code: "DENT",
+    description: "Dental",
+    deductionName: "dentalDeduction" as const,
+    contributionName: "dentalContribution" as const,
+    taxName: "dentalTax" as const,
+    eiName: "dentalEi" as const,
+  },
+  {
+    code: "MED",
+    description: "Medical",
+    deductionName: "medicalDeduction" as const,
+    contributionName: "medicalContribution" as const,
+    taxName: "medicalTax" as const,
+    eiName: "medicalEi" as const,
+  },
+  {
+    code: "OTH",
+    description: "Other voluntary deduction",
+    deductionName: "otherVoluntaryDeduction" as const,
+    contributionName: "otherVoluntaryContribution" as const,
+    taxName: "otherVoluntaryTax" as const,
+    eiName: "otherVoluntaryEi" as const,
+  },
+  {
+    code: "WSIB",
+    description: "WSIB",
+    deductionName: "wsibDeduction" as const,
+    contributionName: "wsibContribution" as const,
+    taxName: "wsibTax" as const,
+    eiName: "wsibEi" as const,
+  },
+] as const;
+
+const TIME_OFF_ROWS = [
+  { policy: "Vacation", accrualRateName: "vacationTimeOff" as const },
+  { policy: "Sick", accrualRateName: "sickTimeOff" as const },
+  { policy: "Unpaid", accrualRateName: "personalTimeOff" as const },
+] as const;
+
+const ACCRUAL_FREQUENCY_OPTIONS = [
+  "Per hour worked",
+  "Each pay period",
+  "Beginning of year",
+  "Anniversary date",
+] as const;
+
+const VACATION_POLICY_CLARIFICATION =
+  "If vacation is to be paid out each pay, please choose Per hour worked and input Accrual rate % e.g. 4, then keep Annual allowance as blank or input zero.";
+
+const HOUR_CAP_CLARIFICATION =
+  "Hour cap is the maximum allowed at any time, so it must be no less than Annual allowance.";
+
+const ACCRUAL_RATE_CLARIFICATION =
+  "Input hours/period x 100 when the frequency is set to Each pay period.";
+
+const parseOptionalTimeOffNumber = (value: string) => {
+  const normalized = value.replace(/,/g, "").trim();
+  if (!normalized) {
+    return null;
+  }
+
+  const numeric = Number.parseFloat(normalized);
+  return Number.isFinite(numeric) ? numeric : null;
+};
+
+function parseWithholdingExemptions(value: string | undefined) {
+  if (!value) {
+    return new Set<string>();
+  }
+
+  return new Set(
+    value
+      .split(/[\s,;|/]+/)
+      .map((token) => token.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
+function BenefitRow({
+  code,
+  description,
+  deductionName,
+  contributionName,
+  taxName,
+  eiName,
+  errors,
+}: {
+  code: string;
+  description: string;
+  deductionName: Path<ContactFormInput>;
+  contributionName: Path<ContactFormInput>;
+  taxName: Path<ContactFormInput>;
+  eiName: Path<ContactFormInput>;
+  errors: FieldErrors<ContactFormInput>;
+}) {
+  const { register } = useFormContext<ContactFormInput>();
+  const fieldErrors = errors as Partial<Record<string, { message?: string }>>;
+
+  return (
+    <div className="grid w-full grid-cols-[minmax(0,1fr)_7rem_7rem_4rem_4rem] items-start gap-2 px-3 py-2">
+      <div className="flex h-10 items-center text-sm text-slate-700">
+        <span className="font-semibold text-slate-900">{code}</span>
+        <span className="ml-2 text-slate-500">{description}</span>
+      </div>
+      <div>
+        <InputWithChanges<ContactFormInput>
+          label=""
+          name={deductionName}
+          placeholder="0.00"
+          rules={{}}
+          inputClassName="text-center"
+          error={fieldErrors[deductionName]?.message}
+        />
+      </div>
+      <div>
+        <InputWithChanges<ContactFormInput>
+          label=""
+          name={contributionName}
+          placeholder="0.00"
+          rules={{}}
+          inputClassName="text-center"
+          error={fieldErrors[contributionName]?.message}
+        />
+      </div>
+      <div className="flex h-10 items-center justify-center pt-3">
+        <input
+          {...register(taxName)}
+          type="checkbox"
+          aria-label={`${code} tax`}
+          className="h-4 w-4 rounded border-slate-300 text-slate-700 focus:ring-slate-400"
+        />
+      </div>
+      <div className="flex h-10 items-center justify-center pt-3">
+        <input
+          {...register(eiName)}
+          type="checkbox"
+          aria-label={`${code} EI`}
+          className="h-4 w-4 rounded border-slate-300 text-slate-700 focus:ring-slate-400"
+        />
+      </div>
+    </div>
+  );
+}
 
 function BankAccountRow({
   index,
@@ -335,7 +491,13 @@ export function EmployeeForm({
   earningCodeOptions,
   payrollUnitOptions,
 }: EmployeeFormProps) {
-  const { register, setValue, getValues } = useFormContext<ContactFormInput>();
+  const {
+    register,
+    setValue,
+    getValues,
+    formState: { submitCount },
+  } = useFormContext<ContactFormInput>();
+  const shouldRunTimeOffValidation = submitCount > 0;
   const [postalProgress, setPostalProgress] = useState<{
     text: string;
     tone: PostalCodeProgressTone;
@@ -346,13 +508,50 @@ export function EmployeeForm({
   const [showOptionalIdentification, setShowOptionalIdentification] =
     useState(false);
   const [showOptionalEmployment, setShowOptionalEmployment] = useState(false);
+  const [timeOffAccrualFrequency, setTimeOffAccrualFrequency] = useState<
+    Record<(typeof TIME_OFF_ROWS)[number]["accrualRateName"], string>
+  >({
+    vacationTimeOff: "",
+    sickTimeOff: "",
+    personalTimeOff: "",
+  });
+  const [timeOffHoursPerYear, setTimeOffHoursPerYear] = useState<
+    Record<(typeof TIME_OFF_ROWS)[number]["accrualRateName"], string>
+  >({
+    vacationTimeOff: "",
+    sickTimeOff: "",
+    personalTimeOff: "",
+  });
+  const [timeOffCappedAtHours, setTimeOffCappedAtHours] = useState<
+    Record<(typeof TIME_OFF_ROWS)[number]["accrualRateName"], string>
+  >({
+    vacationTimeOff: "",
+    sickTimeOff: "",
+    personalTimeOff: "",
+  });
   const bankAccounts = (useWatch({ name: "bankAccounts" as const }) ||
     []) as ContactFormInput["bankAccounts"];
   const additionalEarnings = (useWatch({
     name: "additionalEarnings" as const,
   }) || []) as ContactFormInput["additionalEarnings"];
+  const exemptionsValue = useWatch({ name: "exemptions" as const });
+  const selectedExemptions = useMemo(
+    () => parseWithholdingExemptions(exemptionsValue),
+    [exemptionsValue],
+  );
   const statusValue = useWatch({ name: "status" as const });
+  const payrollUnitIdValue = useWatch({ name: "payrollUnitId" as const });
+  const selectedPayrollUnitOption = useMemo(
+    () =>
+      payrollUnitOptions.find((option) => option.id === payrollUnitIdValue) ||
+      payrollUnitOptions[0] ||
+      null,
+    [payrollUnitIdValue, payrollUnitOptions],
+  );
   const [
+    vacationTimeOffValue,
+    sickTimeOffValue,
+    personalTimeOffValue,
     middleNameValue,
     nickNameValue,
     prefixValue,
@@ -365,6 +564,9 @@ export function EmployeeForm({
     jobEndDateValue,
   ] = useWatch({
     name: [
+      "vacationTimeOff",
+      "sickTimeOff",
+      "personalTimeOff",
       "middleName",
       "nickName",
       "prefix",
@@ -392,6 +594,14 @@ export function EmployeeForm({
   const optionalIdentificationExpanded =
     showOptionalIdentification || optionalIdentityFieldsExpanded;
   const showTerminationDetails = statusValue === "TERMINATED";
+  const timeOffAccrualRateValues: Record<
+    (typeof TIME_OFF_ROWS)[number]["accrualRateName"],
+    string
+  > = {
+    vacationTimeOff: String(vacationTimeOffValue || ""),
+    sickTimeOff: String(sickTimeOffValue || ""),
+    personalTimeOff: String(personalTimeOffValue || ""),
+  };
   const optionalEmploymentExpanded =
     showOptionalEmployment ||
     Boolean(
@@ -549,6 +759,7 @@ export function EmployeeForm({
       </FormSection>
 
       <MailingAddressSection<ContactFormInput>
+        title="Address"
         fields={EMPLOYEE_ADDRESS_FIELDS}
         errors={errors}
         getFieldError={(fieldName: Path<ContactFormInput>) => {
@@ -797,40 +1008,57 @@ export function EmployeeForm({
         </div>
       </FormSection>
 
-      <FormSection title="Compensation Setup">
-        <FormGrid>
-          <SelectWithChanges<ContactFormInput>
-            label={
+      <FormSection title="Compensation">
+        <div className="grid grid-cols-[16rem_1fr] items-end gap-4 px-1">
+          <div>
+            <SelectWithChanges<ContactFormInput>
+              label={
+                <Clarification
+                  term={employeeFieldContent.payrollUnit.term}
+                  description={employeeFieldContent.payrollUnit.description}
+                />
+              }
+              name="payrollUnitId"
+              error={errors.payrollUnitId?.message}
+              options={[
+                { label: "Not set", value: "" },
+                ...payrollUnitOptions.map((option) => ({
+                  label: option.name,
+                  value: option.id,
+                })),
+              ]}
+            />
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+            <div className="flex items-center gap-6">
+              <span>Payday:</span>{" "}
+              {selectedPayrollUnitOption?.paydaySummary || "Not set"}
+              <span>Period end:</span>{" "}
+              {selectedPayrollUnitOption?.periodEndSummary || "Not set"}
+            </div>
+          </div>
+        </div>
+        <div className="mt-3 overflow-visible rounded-xl border border-slate-200 bg-white">
+          <div className="relative z-10 grid w-full grid-cols-[1fr_8rem_8rem] gap-2 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-600">
+            <div className="text-center normal-case">
+              Earning code and its description
+            </div>
+            <div className="flex justify-center normal-case">
               <Clarification
-                term={employeeFieldContent.payrollUnit.term}
-                description={employeeFieldContent.payrollUnit.description}
+                term={employeeFieldContent.jobPayRate.term}
+                description={employeeFieldContent.jobPayRate.description}
               />
-            }
-            name="payrollUnitId"
-            error={errors.payrollUnitId?.message}
-            options={[
-              { label: "Not set", value: "" },
-              ...payrollUnitOptions.map((option) => ({
-                label: `${option.code} - ${option.name}`,
-                value: option.id,
-              })),
-            ]}
-          />
-        </FormGrid>
-        <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
-          <div className="grid w-full grid-cols-[2rem_1fr_8rem_8rem] gap-2 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-600">
-            <div className="text-center normal-case">Seq.</div>
-            <div className="normal-case">Earning code</div>
-            <div className="text-center normal-case">Pay rate</div>
-            <div className="text-center normal-case">Hours/week</div>
+            </div>
+            <div className="flex justify-center normal-case">
+              <Clarification
+                term="Hours per week"
+                description={employeeFieldContent.jobHoursPerWeek.description}
+              />
+            </div>
           </div>
 
           <div className="divide-y divide-slate-100">
-            <div className="grid w-full grid-cols-[2rem_1fr_8rem_8rem] items-start gap-2 px-3 py-2">
-              <div className="flex h-10 items-center justify-center text-sm font-semibold text-slate-400">
-                1
-              </div>
-
+            <div className="grid w-full grid-cols-[1fr_8rem_8rem] items-start gap-2 px-3 py-2">
               <div>
                 <select
                   {...register("jobEarningCodeId")}
@@ -895,12 +1123,8 @@ export function EmployeeForm({
             {additionalEarnings.map((_, index) => (
               <div
                 key={`additional-earning-${index}`}
-                className="grid w-full grid-cols-[2rem_1fr_8rem_8rem] items-start gap-2 px-3 py-2"
+                className="grid w-full grid-cols-[1fr_8rem_8rem] items-start gap-2 px-3 py-2"
               >
-                <div className="flex h-10 items-center justify-center text-sm font-semibold text-slate-400">
-                  {index + 2}
-                </div>
-
                 <div>
                   <select
                     {...register(
@@ -986,13 +1210,350 @@ export function EmployeeForm({
               onClick={addAdditionalEarningRow}
               className="inline-flex items-center rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
             >
-              + Add earning code details
+              + Add earning
             </button>
           </div>
         </div>
       </FormSection>
 
-      <FormSection title="Bank accounts for direct deposit">
+      <FormSection title="Withholdings">
+        <FormGrid>
+          <InputWithChanges<ContactFormInput>
+            label="Federal claim"
+            name="federalClaim"
+            placeholder="e.g. 0.00"
+            rules={{}}
+            error={errors.federalClaim?.message}
+          />
+          <InputWithChanges<ContactFormInput>
+            label="Provincial claim"
+            name="provincialClaim"
+            placeholder="e.g. 0.00"
+            rules={{}}
+            error={errors.provincialClaim?.message}
+          />
+          <InputWithChanges<ContactFormInput>
+            label="Additional tax"
+            name="additionalTax"
+            placeholder="e.g. 0.00"
+            rules={{}}
+            error={errors.additionalTax?.message}
+          />
+          <div
+            className={cn(inputWithChangesStyles.wrapper, "relative -top-0.5")}
+          >
+            <div className={inputWithChangesStyles.headerRow}>
+              <CapLabel>Exemption</CapLabel>
+            </div>
+            <div className={inputWithChangesStyles.inputWrapper}>
+              <div className="flex min-h-10 flex-wrap items-center gap-4 rounded-lg border border-slate-200 px-5 py-2">
+                {WITHHOLDING_EXEMPTION_OPTIONS.map((option) => {
+                  const checked = selectedExemptions.has(option.value);
+
+                  return (
+                    <label
+                      key={option.value}
+                      className="inline-flex items-center gap-2 text-sm text-slate-700"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          const nextSelections = new Set(selectedExemptions);
+
+                          if (e.target.checked) {
+                            nextSelections.add(option.value);
+                          } else {
+                            nextSelections.delete(option.value);
+                          }
+
+                          const serializedValue =
+                            WITHHOLDING_EXEMPTION_OPTIONS.map(
+                              (entry) => entry.value,
+                            )
+                              .filter((value) => nextSelections.has(value))
+                              .map((value) => value.toUpperCase())
+                              .join(", ");
+
+                          setValue("exemptions", serializedValue, {
+                            shouldDirty: true,
+                            shouldTouch: true,
+                            shouldValidate: true,
+                          });
+                        }}
+                        className="h-4 w-4 rounded border-slate-300 text-slate-700 focus:ring-slate-400"
+                      />
+                      <span>{option.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            {errors.exemptions?.message && (
+              <p className="text-xs text-red-600">
+                {errors.exemptions.message}
+              </p>
+            )}
+          </div>
+        </FormGrid>
+      </FormSection>
+
+      <FormSection title="Contributory">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="grid w-full grid-cols-[minmax(0,1fr)_7rem_7rem_4rem_4rem] gap-2 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-600">
+            <div className="text-left normal-case">
+              Contribution code and its description
+            </div>
+            <div className="mx-auto max-w-[7rem] text-center normal-case leading-tight">
+              Deducting from compensation
+            </div>
+            <div className="mx-auto max-w-[7rem] text-center normal-case leading-tight">
+              Matching by employer
+            </div>
+            <div className="text-center normal-case">Tax</div>
+            <div className="text-center normal-case">EI</div>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {BENEFIT_ROWS.map((row) => (
+              <BenefitRow
+                key={row.code}
+                code={row.code}
+                description={row.description}
+                deductionName={row.deductionName}
+                contributionName={row.contributionName}
+                taxName={row.taxName}
+                eiName={row.eiName}
+                errors={errors}
+              />
+            ))}
+          </div>
+        </div>
+      </FormSection>
+
+      <FormSection title="Time-Off">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="grid w-full grid-cols-[minmax(0,1fr)_9rem_7rem_10rem_6rem] gap-2 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-600">
+            <div className="text-left normal-case">Policy</div>
+            <div className="text-center normal-case">Accrual frequency</div>
+            <div className="flex justify-center text-center normal-case">
+              <Clarification
+                term="Accrual rate %"
+                description={ACCRUAL_RATE_CLARIFICATION}
+              />
+            </div>
+            <div className="text-center normal-case">
+              Annual allowance (hrs)
+            </div>
+            <div className="flex justify-center text-center normal-case">
+              <Clarification
+                term="Hour cap"
+                description={HOUR_CAP_CLARIFICATION}
+              />
+            </div>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {TIME_OFF_ROWS.map((row) => {
+              const fieldError = errors[row.accrualRateName]?.message;
+              const accrualRateValue =
+                timeOffAccrualRateValues[row.accrualRateName].trim();
+              const accrualFrequencyValue =
+                timeOffAccrualFrequency[row.accrualRateName];
+              const annualAllowanceRaw =
+                timeOffHoursPerYear[row.accrualRateName] || "";
+              const hourCapRaw =
+                timeOffCappedAtHours[row.accrualRateName] || "";
+
+              const annualAllowanceValue =
+                parseOptionalTimeOffNumber(annualAllowanceRaw);
+              const hourCapValue = parseOptionalTimeOffNumber(hourCapRaw);
+              const hasNonZeroAnnualAllowance =
+                annualAllowanceValue !== null && annualAllowanceValue !== 0;
+
+              const isVacation = row.accrualRateName === "vacationTimeOff";
+              const isPerHourWorked =
+                accrualFrequencyValue === "Per hour worked";
+
+              const localAccrualRateError =
+                shouldRunTimeOffValidation &&
+                isVacation &&
+                isPerHourWorked &&
+                !accrualRateValue
+                  ? "Accrual rate is required when frequency is Per hour worked."
+                  : undefined;
+
+              const annualAllowanceError =
+                shouldRunTimeOffValidation &&
+                annualAllowanceRaw.trim() &&
+                annualAllowanceValue === null
+                  ? "Annual allowance must be a valid number."
+                  : shouldRunTimeOffValidation &&
+                      isVacation &&
+                      isPerHourWorked &&
+                      annualAllowanceValue !== null &&
+                      annualAllowanceValue !== 0
+                    ? "For Vacation with Per hour worked, Annual allowance must be blank or 0."
+                    : undefined;
+
+              const hourCapError =
+                shouldRunTimeOffValidation &&
+                hourCapRaw.trim() &&
+                hourCapValue === null
+                  ? "Hour cap must be a valid number."
+                  : shouldRunTimeOffValidation &&
+                      hasNonZeroAnnualAllowance &&
+                      !hourCapRaw.trim()
+                    ? "Hour cap is required when Annual allowance is non-zero."
+                    : shouldRunTimeOffValidation &&
+                        hasNonZeroAnnualAllowance &&
+                        hourCapValue !== null &&
+                        hourCapValue < annualAllowanceValue
+                      ? "Hour cap must be no less than Annual allowance."
+                      : shouldRunTimeOffValidation &&
+                          isVacation &&
+                          isPerHourWorked &&
+                          hourCapValue !== null &&
+                          hourCapValue !== 0
+                        ? "For Vacation with Per hour worked, Hour cap must be blank or 0."
+                        : undefined;
+
+              return (
+                <div
+                  key={row.accrualRateName}
+                  className="grid w-full grid-cols-[minmax(0,1fr)_9rem_7rem_10rem_6rem] items-start gap-2 px-3 py-2"
+                >
+                  <div className="flex h-10 items-center text-sm text-slate-700">
+                    {row.accrualRateName === "vacationTimeOff" ? (
+                      <Clarification
+                        term={row.policy}
+                        description={VACATION_POLICY_CLARIFICATION}
+                      />
+                    ) : (
+                      row.policy
+                    )}
+                  </div>
+                  <div>
+                    <select
+                      value={timeOffAccrualFrequency[row.accrualRateName]}
+                      onChange={(event) => {
+                        setTimeOffAccrualFrequency((current) => ({
+                          ...current,
+                          [row.accrualRateName]: event.target.value,
+                        }));
+                      }}
+                      aria-label={`${row.policy} accrual frequency`}
+                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    >
+                      <option value=""></option>
+                      {ACCRUAL_FREQUENCY_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <input
+                      {...register(row.accrualRateName, {
+                        validate: {
+                          annualAllowanceHourCapRule: () => {
+                            if (!shouldRunTimeOffValidation) {
+                              return true;
+                            }
+
+                            if (hasNonZeroAnnualAllowance) {
+                              if (hourCapValue === null) {
+                                return "Hour cap is required when Annual allowance is non-zero.";
+                              }
+
+                              if (hourCapValue < annualAllowanceValue) {
+                                return "Hour cap must be no less than Annual allowance.";
+                              }
+                            }
+
+                            return true;
+                          },
+                        },
+                      })}
+                      placeholder="0.00"
+                      className={cn(
+                        "w-full rounded-md border px-3 py-2 text-center text-sm placeholder:text-slate-400",
+                        fieldError || localAccrualRateError
+                          ? "border-red-500 focus-visible:ring-2 focus-visible:ring-red-100"
+                          : "border-slate-300",
+                      )}
+                    />
+                    {fieldError && (
+                      <p className="mt-1 text-xs text-red-600">{fieldError}</p>
+                    )}
+                    {!fieldError && localAccrualRateError && (
+                      <p className="mt-1 text-xs text-red-600">
+                        {localAccrualRateError}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <input
+                      value={timeOffHoursPerYear[row.accrualRateName]}
+                      onChange={(event) => {
+                        setTimeOffHoursPerYear((current) => ({
+                          ...current,
+                          [row.accrualRateName]: event.target.value,
+                        }));
+                      }}
+                      placeholder="0.00"
+                      aria-label={`${row.policy} hours per year`}
+                      className={cn(
+                        "w-full rounded-md border px-3 py-2 text-center text-sm placeholder:text-slate-400",
+                        annualAllowanceError
+                          ? "border-red-500 focus-visible:ring-2 focus-visible:ring-red-100"
+                          : "border-slate-300",
+                      )}
+                    />
+                    {annualAllowanceError && (
+                      <p className="mt-1 text-xs text-red-600">
+                        {annualAllowanceError}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <input
+                      value={timeOffCappedAtHours[row.accrualRateName]}
+                      onChange={(event) => {
+                        setTimeOffCappedAtHours((current) => ({
+                          ...current,
+                          [row.accrualRateName]: event.target.value,
+                        }));
+                      }}
+                      placeholder="0.00"
+                      aria-label={`${row.policy} capped at hours`}
+                      className={cn(
+                        "w-full rounded-md border px-3 py-2 text-center text-sm placeholder:text-slate-400",
+                        hourCapError
+                          ? "border-red-500 focus-visible:ring-2 focus-visible:ring-red-100"
+                          : "border-slate-300",
+                      )}
+                    />
+                    {hourCapError && (
+                      <p className="mt-1 text-xs text-red-600">
+                        {hourCapError}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </FormSection>
+
+      <FormSection
+        title={
+          <Clarification
+            term={employeeFieldContent.deposit.term}
+            description={employeeFieldContent.deposit.description}
+          />
+        }
+      >
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
           <div className="grid w-full grid-cols-[2rem_6rem_12rem_8rem_6rem_6rem] gap-2 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-600">
             <div className="text-center normal-case">Seq.</div>
@@ -1032,14 +1593,32 @@ export function EmployeeForm({
         </div>
       </FormSection>
 
-      <FormSection title="Contact">
+      <FormSection title="Emergency">
         <FormGrid>
           <InputWithChanges<ContactFormInput>
+            label="Given name"
+            name="emergencyContactGivenName"
+            rules={{}}
+            error={errors.emergencyContactGivenName?.message}
+          />
+          <InputWithChanges<ContactFormInput>
+            label="Family name"
+            name="emergencyContactFamilyName"
+            rules={{}}
+            error={errors.emergencyContactFamilyName?.message}
+          />
+          <InputWithChanges<ContactFormInput>
+            label="Relationship"
+            name="emergencyContactName"
+            rules={{}}
+            error={errors.emergencyContactName?.message}
+          />
+          <InputWithChanges<ContactFormInput>
             label="Phone"
-            name="phone"
+            name="emergencyContactPhone"
             type="tel"
             rules={{}}
-            error={errors.phone?.message}
+            error={errors.emergencyContactPhone?.message}
           />
         </FormGrid>
       </FormSection>

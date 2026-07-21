@@ -111,4 +111,15 @@ describe("contactSchema postalCode", () => {
       );
     }
   });
+
+  it("accepts an optional emergency contact name and phone", () => {
+    const result = contactSchema.safeParse({
+      givenName: "John",
+      familyName: "Doe",
+      email: "john@example.com",
+      emergencyContactName: "Jane Doe",
+      emergencyContactPhone: "613-555-0101",
+    });
+    expect(result.success).toBe(true);
+  });
 });

@@ -285,9 +285,140 @@ export const contactSchema = z
       .refine((val) => !val || isValidIsoDate(val), {
         message: "Job end date must be a valid date in YYYY-MM-DD format",
       }),
+    federalClaim: z
+      .string()
+      .trim()
+      .optional()
+      .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
+        message: "Federal claim must be a valid amount with up to 2 decimals",
+      }),
+    provincialClaim: z
+      .string()
+      .trim()
+      .optional()
+      .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
+        message:
+          "Provincial claim must be a valid amount with up to 2 decimals",
+      }),
+    additionalTax: z
+      .string()
+      .trim()
+      .optional()
+      .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
+        message: "Additional tax must be a valid amount with up to 2 decimals",
+      }),
+    dentalDeduction: z
+      .string()
+      .trim()
+      .optional()
+      .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
+        message:
+          "Dental deduction must be a valid amount with up to 2 decimals",
+      }),
+    medicalDeduction: z
+      .string()
+      .trim()
+      .optional()
+      .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
+        message:
+          "Medical deduction must be a valid amount with up to 2 decimals",
+      }),
+    otherVoluntaryDeduction: z
+      .string()
+      .trim()
+      .optional()
+      .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
+        message:
+          "Other voluntary deduction must be a valid amount with up to 2 decimals",
+      }),
+    wsibDeduction: z
+      .string()
+      .trim()
+      .optional()
+      .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
+        message: "WSIB must be a valid amount with up to 2 decimals",
+      }),
+    dentalContribution: z
+      .string()
+      .trim()
+      .optional()
+      .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
+        message:
+          "Dental contribution must be a valid amount with up to 2 decimals",
+      }),
+    medicalContribution: z
+      .string()
+      .trim()
+      .optional()
+      .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
+        message:
+          "Medical contribution must be a valid amount with up to 2 decimals",
+      }),
+    otherVoluntaryContribution: z
+      .string()
+      .trim()
+      .optional()
+      .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
+        message:
+          "Other voluntary contribution must be a valid amount with up to 2 decimals",
+      }),
+    wsibContribution: z
+      .string()
+      .trim()
+      .optional()
+      .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
+        message:
+          "WSIB contribution must be a valid amount with up to 2 decimals",
+      }),
+    dentalTax: z.boolean().optional(),
+    dentalEi: z.boolean().optional(),
+    medicalTax: z.boolean().optional(),
+    medicalEi: z.boolean().optional(),
+    otherVoluntaryTax: z.boolean().optional(),
+    otherVoluntaryEi: z.boolean().optional(),
+    wsibTax: z.boolean().optional(),
+    wsibEi: z.boolean().optional(),
+    vacationTimeOff: z
+      .string()
+      .trim()
+      .optional()
+      .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
+        message:
+          "Vacation time-off must be a valid amount with up to 2 decimals",
+      }),
+    sickTimeOff: z
+      .string()
+      .trim()
+      .optional()
+      .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
+        message: "Sick time-off must be a valid amount with up to 2 decimals",
+      }),
+    personalTimeOff: z
+      .string()
+      .trim()
+      .optional()
+      .refine((val) => !val || /^\d+(\.\d{1,2})?$/.test(val), {
+        message:
+          "Personal time-off must be a valid amount with up to 2 decimals",
+      }),
+    exemptions: z.string().trim().optional(),
     status: z.enum(["ACTIVE", "TERMINATED", "INACTIVE"]).optional(),
     email: z.string().trim().email("Invalid email address"),
     phone: z
+      .string()
+      .optional()
+      .refine(
+        (val) => {
+          if (!val) return true;
+          const digits = val.replace(/\D/g, "");
+          return digits.length == 10;
+        },
+        { message: "Phone number must contain 10 digits" },
+      ),
+    emergencyContactName: z.string().trim().optional(),
+    emergencyContactGivenName: z.string().trim().optional(),
+    emergencyContactFamilyName: z.string().trim().optional(),
+    emergencyContactPhone: z
       .string()
       .optional()
       .refine(

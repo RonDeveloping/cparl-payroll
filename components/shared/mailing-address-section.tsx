@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { FieldErrors, FieldValues, Path } from "react-hook-form";
 import FormSection from "@/components/form/form-section";
 import InputWithChanges from "@/components/form/input-with-changes";
@@ -19,6 +20,7 @@ export type MailingAddressField<TFormValues extends FieldValues> = {
 };
 
 interface MailingAddressSectionProps<TFormValues extends FieldValues> {
+  title?: ReactNode;
   fields: readonly MailingAddressField<TFormValues>[];
   errors: FieldErrors<TFormValues>;
   getFieldError: (fieldName: Path<TFormValues>) => string | undefined;
@@ -40,6 +42,7 @@ interface MailingAddressSectionProps<TFormValues extends FieldValues> {
 }
 
 export function MailingAddressSection<TFormValues extends FieldValues>({
+  title,
   fields,
   getFieldError,
   isProvinceField,
@@ -85,10 +88,12 @@ export function MailingAddressSection<TFormValues extends FieldValues>({
   return (
     <FormSection
       title={
-        <Clarification
-          term={tenantFieldContent.mailingAddress.term}
-          description={tenantFieldContent.mailingAddress.description}
-        />
+        title ?? (
+          <Clarification
+            term={tenantFieldContent.mailingAddress.term}
+            description={tenantFieldContent.mailingAddress.description}
+          />
+        )
       }
     >
       <FormGrid>

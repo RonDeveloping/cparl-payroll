@@ -91,6 +91,15 @@ export async function upsertEmployeePEAInternal(
         aliasName: data.nickName ?? null,
         displayName: data.displayName ?? null,
       },
+      phoneCached: {
+        primaryPhone: data.phone?.trim() || null,
+        emergencyContactName: data.emergencyContactName?.trim() || null,
+        emergencyContactGivenName:
+          data.emergencyContactGivenName?.trim() || null,
+        emergencyContactFamilyName:
+          data.emergencyContactFamilyName?.trim() || null,
+        emergencyContactPhone: data.emergencyContactPhone?.trim() || null,
+      },
       addressCached: {
         street: data.street ?? "",
         city: data.city ?? "",
@@ -121,6 +130,15 @@ export async function upsertEmployeePEAInternal(
         suffix: data.suffix ?? null,
         aliasName: data.nickName ?? null,
         displayName: data.displayName ?? null,
+      },
+      phoneCached: {
+        primaryPhone: data.phone?.trim() || null,
+        emergencyContactName: data.emergencyContactName?.trim() || null,
+        emergencyContactGivenName:
+          data.emergencyContactGivenName?.trim() || null,
+        emergencyContactFamilyName:
+          data.emergencyContactFamilyName?.trim() || null,
+        emergencyContactPhone: data.emergencyContactPhone?.trim() || null,
       },
       addressCached: {
         street: data.street ?? "",

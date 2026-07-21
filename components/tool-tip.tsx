@@ -1,6 +1,7 @@
 "use client";
 // components/tool-tip.tsx
 import React from "react";
+import { createPortal } from "react-dom";
 
 type TooltipProps = {
   content: React.ReactNode;
@@ -21,8 +22,14 @@ export default function Tooltip({
 }: TooltipProps) {
   const [visible, setVisible] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
+  const [tooltipStyle, setTooltipStyle] = React.useState<React.CSSProperties>({
+    left: -9999,
+    top: -9999,
+  });
   const timerRef = React.useRef<number | null>(null);
   const fadeTimerRef = React.useRef<number | null>(null);
+  const wrapperRef = React.useRef<HTMLSpanElement | null>(null);
+  const tooltipRef = React.useRef<HTMLSpanElement | null>(null);
 
   const onEnter = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -54,23 +61,84 @@ export default function Tooltip({
     };
   }, []);
 
-  const alignClasses =
-    align === "start" ? "left-0" : "left-1/2 -translate-x-1/2";
+  React.useLayoutEffect(() => {
+    if (!mounted) return;
+
+    const updateTooltipPosition = () => {
+      const wrapper = wrapperRef.current;
+      const tooltip = tooltipRef.current;
+      if (!wrapper || !tooltip) return;
+
+      const viewportPadding = 8;
+      const tooltipGap = 8;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const triggerRect = wrapper.getBoundingClientRect();
+      const tooltipRect = tooltip.getBoundingClientRect();
+
+      let left =
+        align === "start"
+          ? triggerRect.left
+          : triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2;
+      left = Math.max(
+        viewportPadding,
+        Math.min(left, viewportWidth - viewportPadding - tooltipRect.width),
+      );
+
+      const preferredTop =
+        placement === "bottom"
+          ? triggerRect.bottom + tooltipGap
+          : bottomAnchor
+            ? triggerRect.bottom - tooltipRect.height
+            : triggerRect.top - tooltipGap - tooltipRect.height;
+
+      const alternateTop =
+        placement === "bottom"
+          ? triggerRect.top - tooltipGap - tooltipRect.height
+          : triggerRect.bottom + tooltipGap;
+
+      const preferredFits =
+        preferredTop >= viewportPadding &&
+        preferredTop + tooltipRect.height <= viewportHeight - viewportPadding;
+      const alternateFits =
+        alternateTop >= viewportPadding &&
+        alternateTop + tooltipRect.height <= viewportHeight - viewportPadding;
+
+      let top = preferredTop;
+      if (!preferredFits && alternateFits) {
+        top = alternateTop;
+      }
+      if (!preferredFits && !alternateFits) {
+        top = Math.max(
+          viewportPadding,
+          Math.min(
+            preferredTop,
+            viewportHeight - viewportPadding - tooltipRect.height,
+          ),
+        );
+      }
+
+      setTooltipStyle({ left, top });
+    };
+
+    updateTooltipPosition();
+    window.addEventListener("resize", updateTooltipPosition);
+    window.addEventListener("scroll", updateTooltipPosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updateTooltipPosition);
+      window.removeEventListener("scroll", updateTooltipPosition, true);
+    };
+  }, [align, bottomAnchor, mounted, placement, visible]);
 
   const tooltipClasses =
-    `absolute ${alignClasses} z-50 w-max max-w-[min(36rem,calc(100vw-2rem))] whitespace-normal break-words rounded px-3 py-2 text-xs leading-relaxed shadow-lg transition-opacity duration-200` +
+    `fixed z-[1000] w-max max-w-[min(36rem,calc(100vw-2rem))] whitespace-normal break-words rounded px-3 py-2 text-xs leading-relaxed shadow-lg transition-opacity duration-200` +
     (visible ? " opacity-100" : " opacity-0") +
     " bg-blue-50/62 text-sky-900 dark:bg-blue-900/62 dark:text-white normal-case tracking-normal font-normal";
 
-  const positionClasses =
-    placement === "bottom"
-      ? "top-full mt-2"
-      : bottomAnchor
-        ? "bottom-0"
-        : "bottom-full mb-2";
-
   return (
     <span
+      ref={wrapperRef}
       className="relative inline-block"
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
@@ -79,11 +147,19 @@ export default function Tooltip({
     >
       {children}
 
-      {mounted && (
-        <span role="status" className={`${tooltipClasses} ${positionClasses}`}>
-          {content}
-        </span>
-      )}
+      {mounted
+        ? createPortal(
+            <span
+              ref={tooltipRef}
+              role="status"
+              className={tooltipClasses}
+              style={tooltipStyle}
+            >
+              {content}
+            </span>,
+            document.body,
+          )
+        : null}
     </span>
   );
 }

@@ -24,6 +24,47 @@ import { splitBusinessNumber } from "@/utils/formatters/businessNumber";
 import { ERRORS } from "@/constants/errors";
 import { DEFAULT_EARNING_CODES } from "@/constants/earning-types";
 
+function formatPayFrequencyName(
+  frequency: TenantFormInput["payFrequency"],
+): string | null {
+  switch (frequency) {
+    case "MONTHLY":
+      return "Monthly";
+    case "SEMIMONTHLY":
+      return "Semi-monthly";
+    case "BIWEEKLY":
+      return "Biweekly";
+    case "WEEKLY":
+      return "Weekly";
+    default:
+      return null;
+  }
+}
+
+function normalizePayrollUnitName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+function buildUniquePayrollUnitName(
+  baseName: string,
+  existingNames: string[],
+): string {
+  const trimmedBaseName = baseName.trim();
+  const normalizedNames = new Set(
+    existingNames.map((existingName) => normalizePayrollUnitName(existingName)),
+  );
+
+  let suffix = 0;
+  let candidateName = trimmedBaseName;
+
+  while (normalizedNames.has(normalizePayrollUnitName(candidateName))) {
+    suffix += 1;
+    candidateName = `${trimmedBaseName} ${suffix}`;
+  }
+
+  return candidateName;
+}
+
 /**
  * Updates an existing tenant or creates a new one.
  */
@@ -48,7 +89,6 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
     .split(/[,;\n]/)
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean);
-  const normalizedPayrollUnitName = data.payrollUnitName?.trim() || null;
   const normalizedPayScheduleCode =
     data.payScheduleCode?.trim().toUpperCase() || null;
 
@@ -358,10 +398,27 @@ export async function upsertTenant(data: TenantFormInput, id?: string) {
           }),
         ]);
 
+        const payrollUnitNames = await tx.payrollUnit.findMany({
+          where: {
+            tenantId: tenant.id,
+            ...(existingPayrollUnit
+              ? { id: { not: existingPayrollUnit.id } }
+              : {}),
+          },
+          select: { name: true },
+        });
+
         const payScheduleCode =
           existingPaySchedule?.code ?? normalizedPayScheduleCode ?? "MAIN";
         const payrollUnitCode = existingPayrollUnit?.code ?? "MAIN";
-        const payrollUnitName = normalizedPayrollUnitName ?? "Main Payroll";
+        const payrollUnitBaseName =
+          data.payrollUnitName?.trim() ||
+          formatPayFrequencyName(data.payFrequency) ||
+          "Main Payroll";
+        const payrollUnitName = buildUniquePayrollUnitName(
+          payrollUnitBaseName,
+          payrollUnitNames.map((payrollUnit) => payrollUnit.name),
+        );
         const timingDays =
           data.timingDays ?? existingPaySchedule?.timingDays ?? 2;
 

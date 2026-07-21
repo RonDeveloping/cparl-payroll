@@ -334,7 +334,7 @@ export default function EarningCodeForm({
                     }));
                   }}
                 />
-                Subject to CPP
+                Pensionable for CPP
               </label>
               <label className="inline-flex items-center gap-2">
                 <input
@@ -349,7 +349,7 @@ export default function EarningCodeForm({
                     }));
                   }}
                 />
-                Subject to EI
+                Insurable for EI
               </label>
             </div>
           </div>

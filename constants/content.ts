@@ -123,12 +123,12 @@ export const employeeFieldContent = {
   jobPayRate: {
     term: "Pay rate",
     description:
-      "Base rate used for auto-calculating pay and validating input reasonableness.",
+      "Per hour for hourly earning type or per period otherwise in each pay period.",
   },
   jobHoursPerWeek: {
     term: "Hours per week",
     description:
-      "Base hours used for auto-calculating pay and validating input reasonableness.",
+      "Benchmark working hours per week or  salary-exempt weekly insurable hours for EI purposes.",
   },
   nickname: {
     term: "Nickname",
@@ -145,7 +145,12 @@ export const employeeFieldContent = {
   payrollUnit: {
     term: "Payroll unit",
     description:
-      "Assigns this employee to the payroll unit used for pay schedule and payroll-run grouping.",
+      "Assigns this employee to the payroll unit for pay schedule and G/L mapping.",
+  },
+  deposit: {
+    term: "Deposit",
+    description:
+      "If any bank account allocated for direct deposit is unverified, the remaining net pay balance must default to a cheque payment.",
   },
 } as const;
 
@@ -158,7 +163,7 @@ export const earningCodeContent = {
   code: {
     term: "Name an Earning Code",
     description:
-      "Use a recognizable abbreviation (2-10 characters) for easy-to-read pay stubs and reports. It can use customized payroll treatment like taxability.",
+      "Use a recognizable abbreviation (2-10 characters) for easy-to-read pay stubs and reports or easy-to-call in adding earning type to an employee. It can link to customized payroll treatment like taxability.",
   },
   description: {
     term: "Code Description",
@@ -184,6 +189,11 @@ export const tenantFieldContent = {
     term: "Payroll unit",
     description:
       "Groups employees under a shared pay schedule and GL configuration.",
+  },
+  payrollUnitName: {
+    term: "Unit name",
+    description:
+      "The name will be called in employee compensation and payroll run procedure; if no unit name is entered, the selected pay frequency name is used and a numeric suffix may be added to ensure a unique unit name.",
   },
   frequency: {
     term: "Pay frequency",

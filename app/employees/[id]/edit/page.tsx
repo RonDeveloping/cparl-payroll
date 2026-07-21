@@ -6,6 +6,66 @@ import { getEarningCodeDescription } from "@/lib/earning-code-display";
 import formatPhone from "@/utils/formatters/phone";
 import formatPostalCode from "@/utils/formatters/postalCode";
 
+function titleCase(value: string | null | undefined): string {
+  if (!value) return "Not set";
+  return value
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function formatDayOfMonth(day: number | string | null | undefined): string {
+  if (day == null) return "Not set";
+
+  const numericDay =
+    typeof day === "number" ? day : Number.parseInt(String(day).trim(), 10);
+
+  if (Number.isNaN(numericDay)) return "Not set";
+  if (numericDay === -1) return "Last day";
+  if (numericDay <= 0) return "Not set";
+  if (numericDay >= 31) return "Last day";
+  return `${numericDay}`;
+}
+
+function summarizePayday(
+  frequency: string | null | undefined,
+  payWeekday: string | null | undefined,
+  payday: number | null | undefined,
+  payday2: number | null | undefined,
+): string {
+  const normalizedFrequency = (frequency || "").toUpperCase();
+
+  if (normalizedFrequency === "WEEKLY" || normalizedFrequency === "BIWEEKLY") {
+    return titleCase(payWeekday);
+  }
+
+  if (normalizedFrequency === "SEMIMONTHLY") {
+    return `${formatDayOfMonth(payday)} & ${formatDayOfMonth(payday2)}`;
+  }
+
+  return formatDayOfMonth(payday);
+}
+
+function summarizePeriodEnd(
+  frequency: string | null | undefined,
+  periodEndWeekday: string | null | undefined,
+  periodEndDay: number | null | undefined,
+  periodEndDay2: number | null | undefined,
+): string {
+  const normalizedFrequency = (frequency || "").toUpperCase();
+
+  if (normalizedFrequency === "WEEKLY" || normalizedFrequency === "BIWEEKLY") {
+    return titleCase(periodEndWeekday);
+  }
+
+  if (normalizedFrequency === "SEMIMONTHLY") {
+    return `${formatDayOfMonth(periodEndDay)} & ${formatDayOfMonth(periodEndDay2)}`;
+  }
+
+  return formatDayOfMonth(periodEndDay);
+}
+
 function getEmployerDisplayName(nameCached: unknown): string {
   const fallback = "Employer";
   if (!nameCached || typeof nameCached !== "object") return fallback;
@@ -34,6 +94,43 @@ function getEmployerDisplayName(nameCached: unknown): string {
   return fallback;
 }
 
+function getEmployeeEmergencyContact(phoneCached: unknown) {
+  if (!phoneCached || typeof phoneCached !== "object") {
+    return {
+      emergencyContactName: "",
+      emergencyContactGivenName: "",
+      emergencyContactFamilyName: "",
+      emergencyContactPhone: "",
+    };
+  }
+
+  const record = phoneCached as {
+    emergencyContactName?: unknown;
+    emergencyContactGivenName?: unknown;
+    emergencyContactFamilyName?: unknown;
+    emergencyContactPhone?: unknown;
+  };
+
+  return {
+    emergencyContactName:
+      typeof record.emergencyContactName === "string"
+        ? record.emergencyContactName
+        : "",
+    emergencyContactGivenName:
+      typeof record.emergencyContactGivenName === "string"
+        ? record.emergencyContactGivenName
+        : "",
+    emergencyContactFamilyName:
+      typeof record.emergencyContactFamilyName === "string"
+        ? record.emergencyContactFamilyName
+        : "",
+    emergencyContactPhone:
+      typeof record.emergencyContactPhone === "string"
+        ? formatPhone(record.emergencyContactPhone)
+        : "",
+  };
+}
+
 export default async function EditEmployeePage({
   params,
   searchParams,
@@ -43,6 +140,21 @@ export default async function EditEmployeePage({
 }) {
   const { id } = await params;
   const { tenantId } = await searchParams;
+  const fallbackPaySchedule = tenantId
+    ? await prisma.paySchedule.findFirst({
+        where: { tenantId, isActive: true },
+        orderBy: { updatedAt: "desc" },
+        select: {
+          frequency: true,
+          payWeekday: true,
+          payday: true,
+          payday2: true,
+          periodEndWeekday: true,
+          periodEndDay: true,
+          periodEndDay2: true,
+        },
+      })
+    : null;
   const earningCodeOptions = tenantId
     ? (
         await prisma.earningCode.findMany({
@@ -61,18 +173,53 @@ export default async function EditEmployeePage({
       }))
     : [];
   const payrollUnitOptions = tenantId
-    ? await prisma.payrollUnit.findMany({
-        where: { tenantId, isActive: true },
-        select: {
-          id: true,
-          code: true,
-          name: true,
-        },
-        orderBy: [{ code: "asc" }],
+    ? (
+        await prisma.payrollUnit.findMany({
+          where: { tenantId, isActive: true },
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            paySchedules: {
+              where: { isActive: true },
+              orderBy: { updatedAt: "desc" },
+              take: 1,
+              select: {
+                frequency: true,
+                payWeekday: true,
+                payday: true,
+                payday2: true,
+                periodEndWeekday: true,
+                periodEndDay: true,
+                periodEndDay2: true,
+              },
+            },
+          },
+          orderBy: [{ code: "asc" }],
+        })
+      ).map((unit) => {
+        const schedule = unit.paySchedules[0] ?? fallbackPaySchedule;
+        return {
+          id: unit.id,
+          code: unit.code,
+          name: unit.name,
+          paydaySummary: summarizePayday(
+            schedule?.frequency,
+            schedule?.payWeekday,
+            schedule?.payday,
+            schedule?.payday2,
+          ),
+          periodEndSummary: summarizePeriodEnd(
+            schedule?.frequency,
+            schedule?.periodEndWeekday,
+            schedule?.periodEndDay,
+            schedule?.periodEndDay2,
+          ),
+        };
       })
     : [];
-  const defaultSalaryEarningCode =
-    earningCodeOptions.find((earningCode) => earningCode.code === "SAL") ??
+  const defaultRegularEarningCode =
+    earningCodeOptions.find((earningCode) => earningCode.code === "REG") ??
     null;
   const employerName = tenantId
     ? await prisma.tenant
@@ -132,15 +279,30 @@ export default async function EditEmployeePage({
       employmentEndDate: "",
       employmentProvinceCode: "ON",
       terminationReason: undefined,
-      jobEarningCodeId: defaultSalaryEarningCode?.id,
+      jobEarningCodeId: defaultRegularEarningCode?.id,
       jobStartDate: "",
       jobPayRate: "",
       jobHoursPerWeek: "",
       jobEndDate: "",
+      federalClaim: "",
+      provincialClaim: "",
+      additionalTax: "",
+      dentalDeduction: "",
+      medicalDeduction: "",
+      otherVoluntaryDeduction: "",
+      wsibDeduction: "",
+      vacationTimeOff: "",
+      sickTimeOff: "",
+      personalTimeOff: "",
+      exemptions: "",
       additionalEarnings: [],
       status: "ACTIVE",
       email: "",
       phone: "",
+      emergencyContactName: "",
+      emergencyContactGivenName: "",
+      emergencyContactFamilyName: "",
+      emergencyContactPhone: "",
       street: "",
       city: "",
       province: "",
@@ -175,6 +337,7 @@ export default async function EditEmployeePage({
           employeeNumber: true,
           dateOfBirth: true,
           hireDate: true,
+          phoneCached: true,
           status: true,
         },
       })
@@ -185,6 +348,7 @@ export default async function EditEmployeePage({
           employeeNumber: true,
           dateOfBirth: true,
           hireDate: true,
+          phoneCached: true,
           status: true,
         },
       });
@@ -277,6 +441,7 @@ export default async function EditEmployeePage({
   }
 
   const initialData: ContactFormInput = {
+    ...getEmployeeEmergencyContact(employee?.phoneCached),
     givenName: contact.coreName,
     familyName: contact.kindName,
     middleName: "",
@@ -309,6 +474,29 @@ export default async function EditEmployeePage({
     jobEndDate: primaryJobAssignment?.endDate
       ? primaryJobAssignment.endDate.toISOString().slice(0, 10)
       : "",
+    federalClaim: "",
+    provincialClaim: "",
+    additionalTax: "",
+    dentalDeduction: "",
+    medicalDeduction: "",
+    otherVoluntaryDeduction: "",
+    wsibDeduction: "",
+    dentalContribution: "",
+    medicalContribution: "",
+    otherVoluntaryContribution: "",
+    wsibContribution: "",
+    dentalTax: false,
+    dentalEi: false,
+    medicalTax: false,
+    medicalEi: false,
+    otherVoluntaryTax: false,
+    otherVoluntaryEi: false,
+    wsibTax: false,
+    wsibEi: false,
+    vacationTimeOff: "",
+    sickTimeOff: "",
+    personalTimeOff: "",
+    exemptions: "",
     additionalEarnings: additionalJobAssignments.map((assignment) => ({
       jobEarningCodeId: assignment.earningCodeId,
       jobPayRate: assignment.payRate?.toString() || "",

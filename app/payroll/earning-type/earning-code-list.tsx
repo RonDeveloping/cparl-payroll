@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import type { EarningType } from "@prisma/client";
 import EarningCodeActions from "@/app/payroll/earning-type/earning-code-actions";
+import { Clarification } from "@/components/clarification";
 
 type EarningCodeFilter = "all" | "active" | "inactive";
 type EarningCodeSort =
@@ -294,7 +295,7 @@ export default function EarningCodeList({
           No earning codes match the selected filter.
         </p>
       ) : (
-        <div className="mt-4 overflow-x-auto">
+        <div className="mt-4 overflow-x-auto overflow-y-visible">
           <table className="min-w-full divide-y divide-slate-200 text-sm">
             <thead className="bg-slate-50">
               <tr>
@@ -314,10 +315,20 @@ export default function EarningCodeList({
                   Taxable
                 </th>
                 <th className="px-3 py-2 text-center font-semibold text-slate-700">
-                  CPP
+                  <span className="inline-flex justify-center">
+                    <Clarification
+                      term="CPP"
+                      description="Pensionable for Canada Pension Plan."
+                    />
+                  </span>
                 </th>
                 <th className="px-3 py-2 text-center font-semibold text-slate-700">
-                  EI
+                  <span className="inline-flex justify-center">
+                    <Clarification
+                      term="EI"
+                      description="Insurable for EI benefit."
+                    />
+                  </span>
                 </th>
                 <th className="px-3 py-2 text-right font-semibold text-slate-700">
                   Action

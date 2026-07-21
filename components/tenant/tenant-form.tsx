@@ -84,14 +84,14 @@ export function TenantForm({
   const showPayPeriodEndPicker = isMonthly;
   const unitNamePlaceholder =
     selectedPayFrequency === "MONTHLY"
-      ? "e.g. Main Monthly or Monthly_HQ"
+      ? "e.g. Monthly_HQ"
       : selectedPayFrequency === "SEMIMONTHLY"
-        ? "e.g. Main Semi-Monthly or SemiMonthly_HQ"
+        ? "e.g. SemiMonthly_HQ"
         : selectedPayFrequency === "BIWEEKLY"
-          ? "e.g. Main Biweekly or Biweekly_HQ"
+          ? "e.g. Biweekly_HQ"
           : selectedPayFrequency === "WEEKLY"
-            ? "e.g. Main Weekly or Weekly_HQ"
-            : "e.g. Main Payroll or Payroll_HQ";
+            ? "e.g. Weekly_HQ"
+            : "e.g. Payroll_HQ";
 
   const handlePostalCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPostalProgress(getPostalCodeProgress(e.target.value || ""));
@@ -255,7 +255,14 @@ export function TenantForm({
         </FormGrid>
       </FormSection>
 
-      <FormSection title="Payroll Unit">
+      <FormSection
+        title={
+          <Clarification
+            term={tenantFieldContent.payrollUnit.term}
+            description={tenantFieldContent.payrollUnit.description}
+          />
+        }
+      >
         <FormGrid>
           <SelectWithChanges<TenantFormInput>
             label={
@@ -279,8 +286,8 @@ export function TenantForm({
               <InputWithChanges<TenantFormInput>
                 label={
                   <Clarification
-                    term="Unit name"
-                    description={tenantFieldContent.payrollUnit.description}
+                    term={tenantFieldContent.payrollUnitName.term}
+                    description={tenantFieldContent.payrollUnitName.description}
                   />
                 }
                 name="payrollUnitName"

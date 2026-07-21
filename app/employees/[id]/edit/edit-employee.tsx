@@ -35,6 +35,8 @@ interface EditEmployeeFormProps {
     id: string;
     code: string;
     name: string;
+    paydaySummary: string;
+    periodEndSummary: string;
   }[];
   tenantId?: string;
   employerName?: string;
@@ -114,6 +116,7 @@ export default function EditEmployeeForm({
       registerWithOnBlurFormat<ContactFormInput>(register, {
         postalCode: formatPostalCode,
         phone: formatPhone,
+        emergencyContactPhone: formatPhone,
       }),
     [register],
   );
