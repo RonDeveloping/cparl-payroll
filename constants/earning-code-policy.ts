@@ -155,7 +155,7 @@ export const EARNING_CODE_POLICY_MATRIX: Record<
       },
     ],
   },
-  TAXABLE_BENEFIT: {
+  IN_KIND: {
     defaults: {
       isHourly: false,
       isTaxable: true,
@@ -176,7 +176,7 @@ export const EARNING_CODE_POLICY_MATRIX: Record<
       },
     ],
   },
-  REASONABLE_ALLOWANCE: {
+  PER_DIEM: {
     defaults: {
       isHourly: false,
       isTaxable: false,

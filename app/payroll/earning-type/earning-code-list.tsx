@@ -6,6 +6,10 @@ import type { EarningType } from "@prisma/client";
 import EarningCodeActions from "@/app/payroll/earning-type/earning-code-actions";
 import { Clarification } from "@/components/clarification";
 
+function formatEarningTypeForDisplay(value: EarningType): string {
+  return value.replace(/_/g, "-");
+}
+
 type EarningCodeFilter = "all" | "active" | "inactive";
 type EarningCodeSort =
   | "code-asc"
@@ -56,8 +60,8 @@ function getVisibleCountLabel(visibleCount: number, totalCount: number) {
   return `${visibleCount} of ${totalCount} earning codes`;
 }
 
-function isDefaultDescriptionCode(code: string) {
-  return code === "REG" || code === "SAL";
+function isDefaultCode(code: string) {
+  return code === "REG" || code === "SAL" || code === "BEN";
 }
 
 export default function EarningCodeList({
@@ -354,11 +358,7 @@ export default function EarningCodeList({
                     <td className="px-3 py-2 text-slate-700">
                       <div className="flex items-start justify-between gap-3">
                         <span>{earningCode.displayDescription}</span>
-                        {isDefaultDescriptionCode(earningCode.code) ? (
-                          <span className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                            Default
-                          </span>
-                        ) : earningCode.t4BoxNumber ? (
+                        {earningCode.t4BoxNumber ? (
                           <span
                             title={`Reported in T4 box ${earningCode.t4BoxNumber}`}
                             className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600"
@@ -369,7 +369,7 @@ export default function EarningCodeList({
                       </div>
                     </td>
                     <td className="px-3 py-2 text-slate-700">
-                      {earningCode.earningType}
+                      {formatEarningTypeForDisplay(earningCode.earningType)}
                     </td>
                     <td className="px-3 py-2 text-center text-slate-700">
                       {earningCode.isHourly ? "Yes" : "No"}
@@ -384,16 +384,25 @@ export default function EarningCodeList({
                       {earningCode.isSubjectToEI ? "Yes" : "No"}
                     </td>
                     <td className="px-3 py-2 text-right">
-                      <EarningCodeActions
-                        code={earningCode.code}
-                        earningCodeId={earningCode.id}
-                        tenantId={tenantId}
-                        editHref={editHref}
-                        isActive={earningCode.isActive}
-                        isProtectedCode={earningCode.isProtectedCode}
-                        deactivateEarningCode={deactivateEarningCode}
-                        deleteEarningCode={deleteEarningCode}
-                      />
+                      <div className="relative inline-block">
+                        {isDefaultCode(earningCode.code) ? (
+                          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50">
+                            <span className="text-xs font-medium text-emerald-700">
+                              Default
+                            </span>
+                          </div>
+                        ) : null}
+                        <EarningCodeActions
+                          code={earningCode.code}
+                          earningCodeId={earningCode.id}
+                          tenantId={tenantId}
+                          editHref={editHref}
+                          isActive={earningCode.isActive}
+                          isProtectedCode={earningCode.isProtectedCode}
+                          deactivateEarningCode={deactivateEarningCode}
+                          deleteEarningCode={deleteEarningCode}
+                        />
+                      </div>
                     </td>
                   </tr>
                 );

@@ -14,6 +14,10 @@ import {
   isCustomizedFromStandard,
 } from "@/constants/earning-code-policy";
 
+function formatEarningTypeForDisplay(value: EarningTypeValue): string {
+  return value.replace(/_/g, "-");
+}
+
 type EarningCodeFormProps = {
   tenantId: string;
   earningCodeId?: string;
@@ -64,11 +68,11 @@ const earningCodeSuggestions: Record<
   ],
   BONUS: [{ code: "BON", description: "Bonus" }],
   COMMISSION: [{ code: "COM", description: "Commission" }],
-  TAXABLE_BENEFIT: [
-    { code: "BEN", description: "Taxable benefit" },
+  IN_KIND: [
+    { code: "BEN", description: "In-kind benefit" },
     { code: "AUTO", description: "Automobile benefit" },
   ],
-  REASONABLE_ALLOWANCE: [
+  PER_DIEM: [
     { code: "ALW", description: "Allowance" },
     { code: "MEAL", description: "Meal allowance" },
     { code: "KM", description: "Kilometre allowance" },
@@ -110,11 +114,11 @@ const earningCodePlaceholders: Record<EarningTypeValue, EarningCodeSuggestion> =
       code: "e.g. COMM",
       description: "e.g. Sales commission",
     },
-    TAXABLE_BENEFIT: {
+    IN_KIND: {
       code: "e.g. AUTO",
-      description: "e.g. Automobile taxable benefit",
+      description: "e.g. Automobile in-kind benefit",
     },
-    REASONABLE_ALLOWANCE: {
+    PER_DIEM: {
       code: "e.g. MEAL",
       description: "e.g. Meal allowance",
     },
@@ -126,8 +130,8 @@ const earningCodePlaceholders: Record<EarningTypeValue, EarningCodeSuggestion> =
 
 const t4DetailBoxEarningTypes: readonly EarningTypeValue[] = [
   "COMMISSION",
-  "TAXABLE_BENEFIT",
-  "REASONABLE_ALLOWANCE",
+  "IN_KIND",
+  "PER_DIEM",
   "OTHER",
 ];
 
@@ -243,7 +247,7 @@ export default function EarningCodeForm({
             >
               {earningTypeOptions.map((value) => (
                 <option key={value} value={value}>
-                  {value}
+                  {formatEarningTypeForDisplay(value)}
                 </option>
               ))}
             </select>

@@ -10,6 +10,7 @@ type TooltipProps = {
   placement?: "top" | "bottom"; // support top/bottom
   align?: "center" | "start"; // horizontal alignment of tooltip bubble
   bottomAnchor?: boolean; // anchor tooltip bottom to the trigger bottom instead of above it
+  focusOnly?: boolean; // when true, show tooltip only on focus/blur and ignore mouse hover
 };
 
 export default function Tooltip({
@@ -19,6 +20,7 @@ export default function Tooltip({
   placement = "top",
   align = "center",
   bottomAnchor = false,
+  focusOnly = false,
 }: TooltipProps) {
   const [visible, setVisible] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
@@ -140,8 +142,8 @@ export default function Tooltip({
     <span
       ref={wrapperRef}
       className="relative inline-block"
-      onMouseEnter={onEnter}
-      onMouseLeave={onLeave}
+      onMouseEnter={focusOnly ? undefined : onEnter}
+      onMouseLeave={focusOnly ? undefined : onLeave}
       onFocus={onEnter}
       onBlur={onLeave}
     >

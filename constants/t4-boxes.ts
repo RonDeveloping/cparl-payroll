@@ -5,6 +5,7 @@ export type T4BoxOption = {
 };
 
 export const T4_BOX_OPTIONS: readonly T4BoxOption[] = [
+  { value: 20, label: "20 - Registered pension plan (RPP) contributions" },
   { value: 30, label: "30 - Board and lodging" },
   { value: 31, label: "31 - Special work site" },
   { value: 32, label: "32 - Travel in a prescribed zone" },
@@ -23,6 +24,8 @@ export const T4_BOX_OPTIONS: readonly T4BoxOption[] = [
     value: 43,
     label: "43 - Canadian Armed Forces personnel and police deduction",
   },
+  { value: 44, label: "44 - Union dues and professional membership dues" },
+  { value: 46, label: "46 - Charitable donations" },
   { value: 66, label: "66 - Eligible retiring allowance" },
   { value: 67, label: "67 - Non-eligible retiring allowance" },
   {
@@ -53,5 +56,42 @@ export const T4_BOX_OPTIONS: readonly T4BoxOption[] = [
   { value: 91, label: "91 - Security options deduction (110(1)(d))" },
   { value: 92, label: "92 - Security options deduction (110(1)(d.1))" },
   { value: 94, label: "94 - Indian Act (exempt income) - RPP contributions" },
+  { value: 95, label: "95 - Indian Act (exempt income) - Union dues" },
+] as const;
+
+// Subset used where the context is employee deduction reporting.
+export const T4_DEDUCTION_BOX_OPTIONS: readonly T4BoxOption[] = [
+  { value: 20, label: "20 - Registered pension plan (RPP) contributions" },
+  { value: 39, label: "39 - Security options deduction (110(1)(d))" },
+  { value: 41, label: "41 - Security options deduction (110(1)(d.1))" },
+  {
+    value: 43,
+    label: "43 - Canadian Armed Forces personnel and police deduction",
+  },
+  { value: 44, label: "44 - Union dues and professional membership dues" },
+  { value: 46, label: "46 - Charitable donations" },
+  {
+    value: 74,
+    label: "74 - Past service contributions (1989 or earlier, contributor)",
+  },
+  {
+    value: 75,
+    label: "75 - Past service contributions (1989 or earlier, non-contributor)",
+  },
+  {
+    value: 77,
+    label: "77 - Workers' compensation benefits repaid to employer",
+  },
+  {
+    value: 85,
+    label:
+      "85 - Employee-paid premiums for private health services plans (medical premium)",
+  },
+  { value: 91, label: "91 - Security options deduction (110(1)(d))" },
+  { value: 92, label: "92 - Security options deduction (110(1)(d.1))" },
+  {
+    value: 94,
+    label: "94 - Indian Act (exempt income) - RPP contributions",
+  },
   { value: 95, label: "95 - Indian Act (exempt income) - Union dues" },
 ] as const;

@@ -56,6 +56,35 @@ const additionalEarningInputSchema = z.object({
     }),
 });
 
+const contributorySelectionInputSchema = z.object({
+  contributoryCodeId: z.preprocess(
+    (val) => (val === "" ? undefined : val),
+    z.string().trim().min(1).optional(),
+  ),
+  deductionAmount: z
+    .string()
+    .trim()
+    .optional()
+    .refine(
+      (val) => !val || /^((\d+)|(\d{1,3}(,\d{3})+))(\.\d{1,2})?$/.test(val),
+      {
+        message:
+          "Deduction amount must be a valid amount with up to 2 decimals",
+      },
+    ),
+  participationAmount: z
+    .string()
+    .trim()
+    .optional()
+    .refine(
+      (val) => !val || /^((\d+)|(\d{1,3}(,\d{3})+))(\.\d{1,2})?$/.test(val),
+      {
+        message:
+          "Participation amount must be a valid amount with up to 2 decimals",
+      },
+    ),
+});
+
 function parseIsoDateUtc(value: string): Date | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return null;
@@ -468,6 +497,9 @@ export const contactSchema = z
       .optional(),
     bankAccounts: z.array(bankAccountInputSchema).default([]),
     additionalEarnings: z.array(additionalEarningInputSchema).default([]),
+    contributorySelections: z
+      .array(contributorySelectionInputSchema)
+      .default([]),
   })
   .superRefine((val, ctx) => {
     const hireDate = val.hireDate ? parseIsoDateUtc(val.hireDate) : null;
@@ -535,6 +567,20 @@ export const contactSchema = z
             earning.jobEarningCodeId ? "jobPayRate" : "jobEarningCodeId",
           ],
           message: "Earning code and pay rate must be provided together",
+        });
+      }
+    });
+
+    val.contributorySelections.forEach((selection, index) => {
+      const hasCode = Boolean(selection.contributoryCodeId);
+      const hasDeduction = Boolean(selection.deductionAmount?.trim());
+      const hasParticipation = Boolean(selection.participationAmount?.trim());
+
+      if (!hasCode && (hasDeduction || hasParticipation)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["contributorySelections", index, "contributoryCodeId"],
+          message: "Choose a contributory code when entering amounts",
         });
       }
     });

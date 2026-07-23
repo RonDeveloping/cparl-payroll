@@ -168,15 +168,38 @@ export const earningCodeContent = {
   description: {
     term: "Code Description",
     description:
-      "Short text shown on pay stubs and payroll reports to spell out the code in a way employees can recognize.",
+      "Short text shown on pay stubs and payroll reports to spell out the code in a way employees can recognize",
   },
   SAL: {
-    description: "Salary exempt from overtime pay, e.g. executives.",
+    description: "Salary exempt from overtime pay, e.g. executives",
   },
   REG: {
-    description: "Regular wage or salary, overtime-eligible.",
+    description: "Regular wage or salary, overtime-eligible",
+  },
+  BEN: {
+    description:
+      "In-kind benefit, e.g. group life insurance, personal use of company car",
   },
 } as const;
+
+export const contributoryCodeContent = {
+  earningCode: {
+    term: "Earning code (participation)",
+    description:
+      "Assign only for taxable employer contributions (e.g., group life insurance matches).",
+  },
+  employeeT4DeductionBox: {
+    term: "T4 box (deduction)",
+    description:
+      "Select the T4 box or code where this deduction must be reported at year-end. Examples: Box 20 (RPP), Box 44 (Union Dues), Box 46 (Charitable Donations), or Code 85 (Employee PHSP). Leave blank if this deduction does not report on a T4 (e.g., Group RRSP).",
+  },
+  employeeDeductionAtSource: {
+    term: "Tax at source",
+    description:
+      "Post: deducted after tax calculation and does not reduce taxable income. Before: deducted before tax calculation and reduces taxable income. Credit: treated as a tax-credit-type deduction when tax at source is calculated.",
+  },
+} as const;
+
 //SAL is for PEA: Professional (like lawyers, CPA, or engineers); Executive (managing people), and Administrative (business operations, high-level decision making)
 
 export const tenantFieldContent = {

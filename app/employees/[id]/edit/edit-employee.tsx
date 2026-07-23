@@ -11,6 +11,7 @@ import {
   contactSchema,
   ContactFormInput,
 } from "@/lib/validations/contact-schema";
+import { type TimeOffBenchmarkDraft } from "@/constants/time-off-policies";
 import { upsertContactPEA } from "@/lib/actions/contact";
 import { getFieldChanges, ChangeEntry, DirtyField } from "@/utils/formChanges";
 import { registerWithOnBlurFormat } from "@/utils/formRegister";
@@ -35,11 +36,49 @@ interface EditEmployeeFormProps {
     id: string;
     code: string;
     name: string;
+    frequency: string | null;
     paydaySummary: string;
     periodEndSummary: string;
   }[];
+  contributoryCodeOptions: readonly {
+    id: string;
+    code: string;
+    description: string;
+    employeeExcludedEarnings: string;
+    employeeCapAmount: string | null;
+    defaultDeductionAmount: string;
+    defaultParticipationAmount: string;
+  }[];
+  timeOffBenchmarkDraft?: TimeOffBenchmarkDraft;
   tenantId?: string;
   employerName?: string;
+}
+
+function getPayPeriodsPerYear(frequency: string | null | undefined): number {
+  const normalizedFrequency = (frequency || "").toUpperCase();
+
+  if (normalizedFrequency === "WEEKLY") return 52;
+  if (normalizedFrequency === "BIWEEKLY") return 26;
+  if (normalizedFrequency === "SEMIMONTHLY") return 24;
+  if (normalizedFrequency === "MONTHLY") return 12;
+
+  return 1;
+}
+
+function toAnnualAmountString(
+  value: string | null | undefined,
+  divisor: number,
+) {
+  const normalized = String(value || "")
+    .replace(/,/g, "")
+    .trim();
+  if (!normalized) return "";
+
+  const numeric = Number.parseFloat(normalized);
+  if (!Number.isFinite(numeric)) return "";
+
+  const annual = numeric * (divisor > 0 ? divisor : 1);
+  return annual.toFixed(2);
 }
 
 export default function EditEmployeeForm({
@@ -48,6 +87,8 @@ export default function EditEmployeeForm({
   bankAccountStatuses,
   earningCodeOptions,
   payrollUnitOptions,
+  contributoryCodeOptions,
+  timeOffBenchmarkDraft,
   tenantId,
   employerName,
 }: EditEmployeeFormProps) {
@@ -136,7 +177,31 @@ export default function EditEmployeeForm({
 
   const onSave = async (data: ContactFormInput) => {
     try {
-      const result = await upsertContactPEA(data, params.id, tenantId);
+      const selectedPayrollUnitFrequency =
+        payrollUnitOptions.find((option) => option.id === data.payrollUnitId)
+          ?.frequency ?? null;
+      const payPeriodsPerYear = getPayPeriodsPerYear(
+        selectedPayrollUnitFrequency,
+      );
+
+      const dataForSave: ContactFormInput = {
+        ...data,
+        contributorySelections: (data.contributorySelections || []).map(
+          (selection) => ({
+            ...selection,
+            deductionAmount: toAnnualAmountString(
+              selection.deductionAmount,
+              payPeriodsPerYear,
+            ),
+            participationAmount: toAnnualAmountString(
+              selection.participationAmount,
+              payPeriodsPerYear,
+            ),
+          }),
+        ),
+      };
+
+      const result = await upsertContactPEA(dataForSave, params.id, tenantId);
       if (result.success && result.data?.id) {
         try {
           window.sessionStorage.removeItem(draftStorageKey);
@@ -186,6 +251,8 @@ export default function EditEmployeeForm({
               bankAccountStatuses={bankAccountStatuses}
               earningCodeOptions={earningCodeOptions}
               payrollUnitOptions={payrollUnitOptions}
+              contributoryCodeOptions={contributoryCodeOptions}
+              timeOffBenchmarkDraft={timeOffBenchmarkDraft}
             />
           </form>
         </SmartFormProvider>

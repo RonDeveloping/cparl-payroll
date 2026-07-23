@@ -383,14 +383,16 @@ model Tenant {
   createdAt              DateTime @default(now()) @map("created_at")
   updatedAt              DateTime @updatedAt @map("updated_at")
 
-  members         TenantUser[]
-  settings        TenantSettings?
-  paySchedules    PaySchedule[]
-  payrollUnits    PayrollUnit[]
-  departments     Department[]
-  subscriptions   TenantSubscription[]
-  overtimeConfigs OvertimeConfig[]
-  holidayPolicies HolidayPolicy[]
+  members           TenantUser[]
+  settings          TenantSettings?
+  paySchedules      PaySchedule[]
+  payrollUnits      PayrollUnit[]
+  departments       Department[]
+  subscriptions     TenantSubscription[]
+  overtimeConfigs   OvertimeConfig[]
+  holidayPolicies   HolidayPolicy[]
+  contributoryCodes ContributoryCode[]
+  timeOffBenchmarkPolicies TenantTimeOffBenchmarkPolicy[]
 
   @@index([businessBn9, businessProgramId, programRefNum])
   @@map("tenant")
@@ -651,6 +653,7 @@ model Employee {
   payrollUnitAssignments PayrollUnitEmployee[]
   payrollRuns            PayrollRunEmployee[]
   bankAccounts           BankAccount[]
+  contributorySelections EmployeeContributorySelection[]
   vacationPolicies       VacPolicy[]
   vacationLedgerEntries  VacLedger[]
   holidayLedgerEntries   HolidayLedger[]
@@ -1047,12 +1050,69 @@ model EarningCode {
   createdAt      DateTime    @default(now()) @map("created_at")
   updatedAt      DateTime    @updatedAt @map("updated_at")
 
-  jobAssignments JobAssignment[]
+  jobAssignments    JobAssignment[]
+  contributoryCodes ContributoryCode[]
 
   @@unique([code, tenantId], name: "unique_earning_codes_per_tenant")
   @@map("earning_codes")
 }
 //suggest codes OVT(overtime), DBL(double), BON, VAC, SCK, BER(bereavement), JRY(jury), PFL(parental leave), CMN(commission), HOL, SEV(severance), RTP(retroactive pay), S10(shift differential), GTL(group term life), AUT(automobile), ALW(allowance), BEN(other benefit), INC(incentive)
+
+model ContributoryCode {
+  id          String                  @id @default(cuid())
+  tenantId    String                  @map("tenant_id")
+  code        String                  @map("code") // e.g. HLTH, RRSP
+  category    ContributoryCategory    @map("category")
+  description String                  @map("description")
+
+  // Employee deduction side
+  employeeDeductionMethod  ContributoryMethod @map("employee_deduction_method")
+  employeeDeductionRate    Decimal            @map("employee_deduction_rate") @db.Decimal(12, 4)
+  employeeExemptEarnings   Decimal            @default(0) @map("employee_exempt_earnings") @db.Decimal(12, 2)
+  employeeDeductionLimit   Decimal?           @map("employee_deduction_limit") @db.Decimal(12, 2)
+  employeeDeductionAtSource ContributoryTaxAtSource @default(POST_TAX) @map("employee_deduction_at_source")
+  employeeT4BoxNumber      Int?               @map("employee_t4_box_number")
+
+  // Employer participation side
+  employerParticipationMethod ContributoryMethod @default(NONE) @map("employer_participation_method")
+  employerParticipationRate   Decimal?           @map("employer_participation_rate") @db.Decimal(12, 4)
+  employerExemptEarnings      Decimal?           @map("employer_exempt_earnings") @db.Decimal(12, 2)
+  employerParticipationLimit  Decimal?           @map("employer_participation_limit") @db.Decimal(12, 2)
+
+  // Associated earning code (e.g. BENE) — optional FK
+  earningCodeId String?      @map("earning_code_id")
+  earningCode   EarningCode? @relation(fields: [earningCodeId], references: [id])
+  employeeSelections EmployeeContributorySelection[]
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([code, tenantId], name: "unique_contributory_codes_per_tenant")
+  @@index([tenantId])
+  @@map("contributory_codes")
+}
+
+model EmployeeContributorySelection {
+  id                    String   @id @default(cuid())
+  tenantId              String   @map("tenant_id")
+  employeeId            String   @map("employee_id")
+  contributoryCodeId    String   @map("contributory_code_id")
+  deductionAmount       Decimal  @default(0) @map("deduction_amount") @db.Decimal(12, 2)
+  participationAmount   Decimal  @default(0) @map("participation_amount") @db.Decimal(12, 2)
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  employee         Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  contributoryCode ContributoryCode @relation(fields: [contributoryCodeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, contributoryCodeId], name: "unique_employee_contributory_code")
+  @@index([tenantId, employeeId])
+  @@index([tenantId, contributoryCodeId])
+  @@map("employee_contributory_selection")
+}
 
 model VacPolicy {
   id                       String              @id @default(cuid())
@@ -1112,6 +1172,24 @@ model HolidayPolicy {
 
   @@unique([tenantId, provinceCode], name: "unique_holiday_policy_per_province")
   @@map("holiday_policy")
+}
+
+model TenantTimeOffBenchmarkPolicy {
+  id                   String            @id @default(cuid())
+  tenantId             String            @map("tenant_id")
+  policyType           TimeOffPolicyType @map("policy_type")
+  accrualFrequency     String?           @map("accrual_frequency")
+  accrualRatePercent   Decimal?          @map("accrual_rate_percent") @db.Decimal(8, 4)
+  annualAllowanceHours Decimal?          @map("annual_allowance_hours") @db.Decimal(8, 2)
+  hourCapHours         Decimal?          @map("hour_cap_hours") @db.Decimal(8, 2)
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, policyType], name: "unique_time_off_benchmark_policy_per_tenant")
+  @@index([tenantId])
+  @@map("tenant_time_off_benchmark_policy")
 }
 
 model HolidayLedger {
@@ -1224,8 +1302,8 @@ enum EarningType {
   VACATION   @map("vacation") //paid time off for vacation
   BONUS      @map("bonus") //Discretionary bonus, performance bonus, etc.
   COMMISSION @map("commission") //sales commission, referral bonus, etc.
-  TAXABLE_BENEFIT     @map("taxable_benefit") //e.g., company car, health insurance premiums paid by employer, etc. add to tax not net pay as in-kind.
-  REASONABLE_ALLOWANCE @map("reasonable_allowance") //e.g., meal allowance, travel allowance, etc. add to net pay not tax as reasonable under CRA guidelines.
+  IN_KIND     @map("in_kind") //e.g., company car, health insurance premiums paid by employer, etc. add to tax not net pay as in-kind.
+  PER_DIEM @map("per_diem") //e.g., meal allowance, travel allowance, etc. add to net pay not tax as reasonable under CRA guidelines.
   OTHER      @map("other")//e.g., severance, retroactive pay, etc.
 
   @@map("earning_type")
@@ -1237,6 +1315,32 @@ enum PayrollRunStatus {
   PAID      @map("paid")
 
   @@map("payroll_run_status")
+}
+
+enum ContributoryCategory {
+  HEALTH_INSURANCE @map("health_insurance") // e.g. medical, dental, vision
+  RETIREMENT_PLAN  @map("retirement_plan")  // e.g. RRSP, pension, DPSP
+  IN_KIND_BENEFIT  @map("in_kind_benefit")  // e.g. life insurance, AD&D insurance
+  PURE_DEDUCTION   @map("pure_deduction")   // e.g. union dues, charitable deduction
+
+  @@map("contributory_category")
+}
+
+enum ContributoryMethod {
+  FLAT_AMOUNT       @map("flat_amount")
+  PERCENT_OF_GROSS  @map("percent_of_gross")
+  PER_HOUR_WORKED   @map("per_hour_worked")
+  NONE              @map("none") // valid only for employer participation
+
+  @@map("contributory_method")
+}
+
+enum ContributoryTaxAtSource {
+  POST_TAX   @map("post_tax")
+  PRE_TAX    @map("pre_tax")
+  TAX_CREDIT @map("tax_credit")
+
+  @@map("contributory_tax_at_source")
 }
 
 enum DeductionType {
@@ -1478,6 +1582,14 @@ enum VacationLedgerEntryType {
   ADJUSTMENT @map("adjustment")
 
   @@map("vacation_ledger_entry_type")
+}
+
+enum TimeOffPolicyType {
+  VACATION @map("vacation")
+  SICK     @map("sick")
+  UNPAID   @map("unpaid")
+
+  @@map("time_off_policy_type")
 }
 
 enum SeveranceType {

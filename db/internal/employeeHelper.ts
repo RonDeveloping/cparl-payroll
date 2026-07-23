@@ -24,6 +24,15 @@ function parseIsoDate(value: string): Date | null {
   return parsed;
 }
 
+function parseMoney(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const normalized = value.replace(/,/g, "").trim();
+  if (!normalized) return null;
+
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export async function upsertEmployeePEAInternal(
   data: ContactFormInput,
   contactId: string,
@@ -53,6 +62,13 @@ export async function upsertEmployeePEAInternal(
       jobHoursPerWeek: earning.jobHoursPerWeek?.trim() || null,
     }))
     .filter((earning) => earning.jobEarningCodeId && earning.jobPayRate);
+  const contributorySelections = (data.contributorySelections || [])
+    .map((selection) => ({
+      contributoryCodeId: selection.contributoryCodeId?.trim() || null,
+      deductionAmount: parseMoney(selection.deductionAmount),
+      participationAmount: parseMoney(selection.participationAmount),
+    }))
+    .filter((selection) => selection.contributoryCodeId);
   const parsedJobStartDate = parseIsoDate(data.jobStartDate ?? "");
   const parsedJobEndDate = parseIsoDate(data.jobEndDate ?? "");
   const effectiveJobEndDate = parsedJobEndDate ?? parsedEmploymentEndDate;
@@ -314,6 +330,57 @@ export async function upsertEmployeePEAInternal(
       await tx.payrollUnitEmployee.update({
         where: { id: matchingActiveAssignment.id },
         data: { isPrimary: true },
+      });
+    }
+  }
+
+  await tx.employeeContributorySelection.deleteMany({
+    where: {
+      tenantId,
+      employeeId: employee.id,
+    },
+  });
+
+  if (contributorySelections.length > 0) {
+    const contributoryCodeIds = contributorySelections
+      .map((selection) => selection.contributoryCodeId)
+      .filter((id): id is string => Boolean(id));
+
+    const validCodes = await tx.contributoryCode.findMany({
+      where: {
+        tenantId,
+        id: { in: contributoryCodeIds },
+      },
+      select: { id: true },
+    });
+    const validIdSet = new Set(validCodes.map((code) => code.id));
+
+    const deduplicated = new Map<
+      string,
+      { deductionAmount: number; participationAmount: number }
+    >();
+
+    for (const selection of contributorySelections) {
+      const contributoryCodeId = selection.contributoryCodeId;
+      if (!contributoryCodeId || !validIdSet.has(contributoryCodeId)) continue;
+
+      deduplicated.set(contributoryCodeId, {
+        deductionAmount: selection.deductionAmount ?? 0,
+        participationAmount: selection.participationAmount ?? 0,
+      });
+    }
+
+    if (deduplicated.size > 0) {
+      await tx.employeeContributorySelection.createMany({
+        data: Array.from(deduplicated.entries()).map(
+          ([contributoryCodeId, values]) => ({
+            tenantId,
+            employeeId: employee.id,
+            contributoryCodeId,
+            deductionAmount: values.deductionAmount,
+            participationAmount: values.participationAmount,
+          }),
+        ),
       });
     }
   }

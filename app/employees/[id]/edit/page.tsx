@@ -5,6 +5,10 @@ import { ContactFormInput } from "@/lib/validations/contact-schema";
 import { getEarningCodeDescription } from "@/lib/earning-code-display";
 import formatPhone from "@/utils/formatters/phone";
 import formatPostalCode from "@/utils/formatters/postalCode";
+import {
+  createEmptyTimeOffBenchmarkDraft,
+  type TimeOffBenchmarkDraft,
+} from "@/constants/time-off-policies";
 
 function titleCase(value: string | null | undefined): string {
   if (!value) return "Not set";
@@ -15,17 +19,39 @@ function titleCase(value: string | null | undefined): string {
     .join(" ");
 }
 
-function formatDayOfMonth(day: number | string | null | undefined): string {
+function toOrdinal(day: number): string {
+  const abs = Math.abs(day);
+  const mod100 = abs % 100;
+  if (mod100 >= 11 && mod100 <= 13) return `${day}th`;
+
+  const mod10 = abs % 10;
+  if (mod10 === 1) return `${day}st`;
+  if (mod10 === 2) return `${day}nd`;
+  if (mod10 === 3) return `${day}rd`;
+  return `${day}th`;
+}
+
+function formatMonthRelation(shift: number | null | undefined): string {
+  if (shift === -1) return "previous month";
+  if (shift === 1) return "next month";
+  return "a month";
+}
+
+function formatPayrollDaySummary(
+  day: number | null | undefined,
+  monthShift: number | null | undefined,
+): string {
   if (day == null) return "Not set";
-
-  const numericDay =
-    typeof day === "number" ? day : Number.parseInt(String(day).trim(), 10);
-
-  if (Number.isNaN(numericDay)) return "Not set";
-  if (numericDay === -1) return "Last day";
-  if (numericDay <= 0) return "Not set";
-  if (numericDay >= 31) return "Last day";
-  return `${numericDay}`;
+  if (day === -1) return `Last day of ${formatMonthRelation(monthShift)}`;
+  if (day === -2) {
+    return `2nd-to-last day of ${formatMonthRelation(monthShift)}`;
+  }
+  if (day === -3) {
+    return `3rd-to-last day of ${formatMonthRelation(monthShift)}`;
+  }
+  if (day <= 0) return "Not set";
+  if (day >= 31) return `Last day of ${formatMonthRelation(monthShift)}`;
+  return `${toOrdinal(day)} day of ${formatMonthRelation(monthShift)}`;
 }
 
 function summarizePayday(
@@ -33,6 +59,9 @@ function summarizePayday(
   payWeekday: string | null | undefined,
   payday: number | null | undefined,
   payday2: number | null | undefined,
+  periodEndDay: number | null | undefined,
+  boundaryShift: number | null | undefined,
+  timingDays: number | null | undefined,
 ): string {
   const normalizedFrequency = (frequency || "").toUpperCase();
 
@@ -41,10 +70,41 @@ function summarizePayday(
   }
 
   if (normalizedFrequency === "SEMIMONTHLY") {
-    return `${formatDayOfMonth(payday)} & ${formatDayOfMonth(payday2)}`;
+    return `${formatPayrollDaySummary(payday, 0)} & ${formatPayrollDaySummary(
+      payday2,
+      0,
+    )}`;
   }
 
-  return formatDayOfMonth(payday);
+  if (normalizedFrequency === "MONTHLY" && payday == null) {
+    const endDay = periodEndDay ?? null;
+    const shift = boundaryShift ?? 0;
+    const lag = timingDays ?? null;
+
+    if (endDay != null && lag != null) {
+      const toComparableDay = (day: number) => (day < 0 ? 32 + day : day);
+      const toStoredDay = (day: number) => {
+        if (day === 31) return -1;
+        if (day === 30) return -2;
+        if (day === 29) return -3;
+        return day;
+      };
+
+      const normalizeComparable = (day: number) => {
+        let normalized = day;
+        while (normalized < 1) normalized += 31;
+        while (normalized > 31) normalized -= 31;
+        return normalized;
+      };
+
+      const comparablePayday = normalizeComparable(
+        toComparableDay(endDay) + shift * 31 - lag,
+      );
+      return formatPayrollDaySummary(toStoredDay(comparablePayday), 0);
+    }
+  }
+
+  return formatPayrollDaySummary(payday, 0);
 }
 
 function summarizePeriodEnd(
@@ -52,6 +112,8 @@ function summarizePeriodEnd(
   periodEndWeekday: string | null | undefined,
   periodEndDay: number | null | undefined,
   periodEndDay2: number | null | undefined,
+  boundaryShift: number | null | undefined,
+  boundaryShift2: number | null | undefined,
 ): string {
   const normalizedFrequency = (frequency || "").toUpperCase();
 
@@ -60,10 +122,46 @@ function summarizePeriodEnd(
   }
 
   if (normalizedFrequency === "SEMIMONTHLY") {
-    return `${formatDayOfMonth(periodEndDay)} & ${formatDayOfMonth(periodEndDay2)}`;
+    return `${formatPayrollDaySummary(
+      periodEndDay,
+      boundaryShift,
+    )} & ${formatPayrollDaySummary(periodEndDay2, boundaryShift2)}`;
   }
 
-  return formatDayOfMonth(periodEndDay);
+  return formatPayrollDaySummary(periodEndDay, boundaryShift);
+}
+
+function getPayPeriodsPerYear(frequency: string | null | undefined): number {
+  const normalizedFrequency = (frequency || "").toUpperCase();
+
+  if (normalizedFrequency === "WEEKLY") return 52;
+  if (normalizedFrequency === "BIWEEKLY") return 26;
+  if (normalizedFrequency === "SEMIMONTHLY") return 24;
+  if (normalizedFrequency === "MONTHLY") return 12;
+
+  return 1;
+}
+
+function formatPerPayAmount(
+  amount: { toString(): string } | number | null | undefined,
+  payPeriodsPerYear: number,
+): string {
+  if (amount == null) return "";
+
+  const numericAmount =
+    typeof amount === "number"
+      ? amount
+      : Number.parseFloat(amount.toString().replace(/,/g, "").trim());
+
+  if (!Number.isFinite(numericAmount)) return "";
+
+  const divisor = payPeriodsPerYear > 0 ? payPeriodsPerYear : 1;
+  const perPay = numericAmount / divisor;
+
+  return perPay.toLocaleString("en-CA", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 function getEmployerDisplayName(nameCached: unknown): string {
@@ -131,6 +229,56 @@ function getEmployeeEmergencyContact(phoneCached: unknown) {
   };
 }
 
+async function getTenantTimeOffBenchmarkDraft(
+  tenantId: string | undefined,
+): Promise<TimeOffBenchmarkDraft> {
+  const draft = createEmptyTimeOffBenchmarkDraft();
+  if (!tenantId) return draft;
+
+  const rows = await prisma.tenantTimeOffBenchmarkPolicy.findMany({
+    where: { tenantId },
+    select: {
+      policyType: true,
+      accrualFrequency: true,
+      accrualRatePercent: true,
+      annualAllowanceHours: true,
+      hourCapHours: true,
+    },
+  });
+
+  for (const row of rows) {
+    if (row.policyType === "VACATION") {
+      draft.frequency.vacationTimeOff = row.accrualFrequency || "";
+      draft.accrualRate.vacationTimeOff =
+        row.accrualRatePercent?.toString() || "";
+      draft.annualAllowance.vacationTimeOff =
+        row.annualAllowanceHours?.toString() || "";
+      draft.hourCap.vacationTimeOff = row.hourCapHours?.toString() || "";
+      continue;
+    }
+
+    if (row.policyType === "SICK") {
+      draft.frequency.sickTimeOff = row.accrualFrequency || "";
+      draft.accrualRate.sickTimeOff = row.accrualRatePercent?.toString() || "";
+      draft.annualAllowance.sickTimeOff =
+        row.annualAllowanceHours?.toString() || "";
+      draft.hourCap.sickTimeOff = row.hourCapHours?.toString() || "";
+      continue;
+    }
+
+    if (row.policyType === "UNPAID") {
+      draft.frequency.personalTimeOff = row.accrualFrequency || "";
+      draft.accrualRate.personalTimeOff =
+        row.accrualRatePercent?.toString() || "";
+      draft.annualAllowance.personalTimeOff =
+        row.annualAllowanceHours?.toString() || "";
+      draft.hourCap.personalTimeOff = row.hourCapHours?.toString() || "";
+    }
+  }
+
+  return draft;
+}
+
 export default async function EditEmployeePage({
   params,
   searchParams,
@@ -140,18 +288,22 @@ export default async function EditEmployeePage({
 }) {
   const { id } = await params;
   const { tenantId } = await searchParams;
+  const timeOffBenchmarkDraft = await getTenantTimeOffBenchmarkDraft(tenantId);
   const fallbackPaySchedule = tenantId
     ? await prisma.paySchedule.findFirst({
         where: { tenantId, isActive: true },
         orderBy: { updatedAt: "desc" },
         select: {
           frequency: true,
+          timingDays: true,
           payWeekday: true,
           payday: true,
           payday2: true,
+          boundaryShift: true,
           periodEndWeekday: true,
           periodEndDay: true,
           periodEndDay2: true,
+          boundaryShift2: true,
         },
       })
     : null;
@@ -186,12 +338,15 @@ export default async function EditEmployeePage({
               take: 1,
               select: {
                 frequency: true,
+                timingDays: true,
                 payWeekday: true,
                 payday: true,
                 payday2: true,
+                boundaryShift: true,
                 periodEndWeekday: true,
                 periodEndDay: true,
                 periodEndDay2: true,
+                boundaryShift2: true,
               },
             },
           },
@@ -203,19 +358,40 @@ export default async function EditEmployeePage({
           id: unit.id,
           code: unit.code,
           name: unit.name,
+          frequency: schedule?.frequency ?? null,
           paydaySummary: summarizePayday(
             schedule?.frequency,
             schedule?.payWeekday,
             schedule?.payday,
             schedule?.payday2,
+            schedule?.periodEndDay,
+            schedule?.boundaryShift,
+            schedule?.timingDays,
           ),
           periodEndSummary: summarizePeriodEnd(
             schedule?.frequency,
             schedule?.periodEndWeekday,
             schedule?.periodEndDay,
             schedule?.periodEndDay2,
+            schedule?.boundaryShift,
+            schedule?.boundaryShift2,
           ),
         };
+      })
+    : [];
+  const contributoryCodeOptions = tenantId
+    ? await prisma.contributoryCode.findMany({
+        where: { tenantId, isActive: true },
+        select: {
+          id: true,
+          code: true,
+          description: true,
+          employeeDeductionRate: true,
+          employeeExemptEarnings: true,
+          employeeDeductionLimit: true,
+          employerParticipationRate: true,
+        },
+        orderBy: [{ code: "asc" }],
       })
     : [];
   const defaultRegularEarningCode =
@@ -296,6 +472,13 @@ export default async function EditEmployeePage({
       personalTimeOff: "",
       exemptions: "",
       additionalEarnings: [],
+      contributorySelections: [
+        {
+          contributoryCodeId: "",
+          deductionAmount: "",
+          participationAmount: "",
+        },
+      ],
       status: "ACTIVE",
       email: "",
       phone: "",
@@ -316,6 +499,12 @@ export default async function EditEmployeePage({
         },
       ]),
     };
+    emptyData.vacationTimeOff =
+      timeOffBenchmarkDraft.accrualRate.vacationTimeOff;
+    emptyData.sickTimeOff = timeOffBenchmarkDraft.accrualRate.sickTimeOff;
+    emptyData.personalTimeOff =
+      timeOffBenchmarkDraft.accrualRate.personalTimeOff;
+
     return (
       <EditEmployeeForm
         paramsPromise={params}
@@ -323,6 +512,17 @@ export default async function EditEmployeePage({
         bankAccountStatuses={["UNVERIFIED"]}
         earningCodeOptions={earningCodeOptions}
         payrollUnitOptions={payrollUnitOptions}
+        contributoryCodeOptions={contributoryCodeOptions.map((option) => ({
+          id: option.id,
+          code: option.code,
+          description: option.description,
+          employeeExcludedEarnings: option.employeeExemptEarnings.toString(),
+          employeeCapAmount: option.employeeDeductionLimit?.toString() ?? null,
+          defaultDeductionAmount: option.employeeDeductionRate.toString(),
+          defaultParticipationAmount:
+            option.employerParticipationRate?.toString() ?? "",
+        }))}
+        timeOffBenchmarkDraft={timeOffBenchmarkDraft}
         tenantId={tenantId}
         employerName={employerName}
       />
@@ -422,6 +622,29 @@ export default async function EditEmployeePage({
         orderBy: [{ isPrimary: "desc" }, { priority: "asc" }],
       })
     : [];
+  const employeeContributorySelections = employee?.id
+    ? await prisma.employeeContributorySelection.findMany({
+        where: tenantId
+          ? { employeeId: employee.id, tenantId }
+          : { employeeId: employee.id },
+        select: {
+          contributoryCodeId: true,
+          deductionAmount: true,
+          participationAmount: true,
+        },
+        orderBy: { createdAt: "asc" },
+      })
+    : [];
+
+  const selectedPayrollUnitForContributoryDisplay =
+    payrollUnitAssignment?.payrollUnitId || payrollUnitOptions[0]?.id || null;
+  const selectedPayrollUnitFrequencyForContributoryDisplay =
+    payrollUnitOptions.find(
+      (option) => option.id === selectedPayrollUnitForContributoryDisplay,
+    )?.frequency ?? null;
+  const contributoryPayPeriodsPerYear = getPayPeriodsPerYear(
+    selectedPayrollUnitFrequencyForContributoryDisplay,
+  );
 
   const contact = await prisma.contact.findUnique({
     where: { id },
@@ -502,6 +725,17 @@ export default async function EditEmployeePage({
       jobPayRate: assignment.payRate?.toString() || "",
       jobHoursPerWeek: assignment.hoursPerWeek?.toString() || "",
     })),
+    contributorySelections: employeeContributorySelections.map((selection) => ({
+      contributoryCodeId: selection.contributoryCodeId,
+      deductionAmount: formatPerPayAmount(
+        selection.deductionAmount,
+        contributoryPayPeriodsPerYear,
+      ),
+      participationAmount: formatPerPayAmount(
+        selection.participationAmount,
+        contributoryPayPeriodsPerYear,
+      ),
+    })),
     status: employee?.status || "ACTIVE",
     email: contact.emails[0]?.emailAddress || "",
     phone: formatPhone(contact.phones[0]?.number) || "",
@@ -551,6 +785,16 @@ export default async function EditEmployeePage({
       bankAccountStatuses={bankAccountStatuses}
       earningCodeOptions={earningCodeOptions}
       payrollUnitOptions={payrollUnitOptions}
+      contributoryCodeOptions={contributoryCodeOptions.map((option) => ({
+        id: option.id,
+        code: option.code,
+        description: option.description,
+        employeeExcludedEarnings: option.employeeExemptEarnings.toString(),
+        employeeCapAmount: option.employeeDeductionLimit?.toString() ?? null,
+        defaultDeductionAmount: option.employeeDeductionRate.toString(),
+        defaultParticipationAmount:
+          option.employerParticipationRate?.toString() ?? "",
+      }))}
       tenantId={tenantId}
       employerName={employerName}
     />

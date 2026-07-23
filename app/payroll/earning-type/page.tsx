@@ -57,8 +57,8 @@ const protectedEarningCodeCodes = DEFAULT_EARNING_CODES.map(
 );
 const t4DetailBoxEarningTypes: readonly EarningType[] = [
   "COMMISSION",
-  "TAXABLE_BENEFIT",
-  "REASONABLE_ALLOWANCE",
+  "IN_KIND",
+  "PER_DIEM",
   "OTHER",
 ];
 const earningCodePattern = /^[A-Z0-9][A-Z0-9_-]{1,9}$/;

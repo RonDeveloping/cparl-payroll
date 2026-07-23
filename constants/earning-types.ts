@@ -8,8 +8,8 @@ export const EARNING_TYPE_OPTIONS = [
   "VACATION",
   "BONUS",
   "COMMISSION",
-  "TAXABLE_BENEFIT",
-  "REASONABLE_ALLOWANCE",
+  "IN_KIND",
+  "PER_DIEM",
   "OTHER",
 ] as const;
 
@@ -33,6 +33,15 @@ export const DEFAULT_EARNING_CODES = [
     isTaxable: true,
     isSubjectToCPP: true,
     isSubjectToEI: true,
+  },
+  {
+    code: "BEN",
+    description: earningCodeContent.BEN.description,
+    earningType: "IN_KIND",
+    isHourly: false,
+    isTaxable: true,
+    isSubjectToCPP: true,
+    isSubjectToEI: false,
   },
 ] as const;
 

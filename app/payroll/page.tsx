@@ -75,7 +75,8 @@ export default async function PayrollOverviewPage({
   const selectedTenant = normalizedTenantId
     ? (tenants.find((tenant) => tenant.id === normalizedTenantId) ?? null)
     : null;
-  const hasInvalidTenantSelection = Boolean(normalizedTenantId) && !selectedTenant;
+  const hasInvalidTenantSelection =
+    Boolean(normalizedTenantId) && !selectedTenant;
   const preferredTenant = normalizedTenantId
     ? selectedTenant
     : (activeTenants[0] ?? tenants[0] ?? null);
@@ -93,6 +94,12 @@ export default async function PayrollOverviewPage({
   const earningTypeHref = selectedTenantId
     ? `/payroll/earning-type?tenantId=${selectedTenantId}`
     : "/payroll/earning-type";
+  const contributoryCodesHref = selectedTenantId
+    ? `/payroll/contributory-codes?tenantId=${selectedTenantId}`
+    : "/payroll/contributory-codes";
+  const timeOffPoliciesHref = selectedTenantId
+    ? `/payroll/time-off-policies?tenantId=${selectedTenantId}`
+    : "/payroll/time-off-policies";
   const viewEmployeesHref = selectedTenantId
     ? `/employees?tenantId=${selectedTenantId}`
     : "/employees";
@@ -156,6 +163,18 @@ export default async function PayrollOverviewPage({
                 className="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:text-emerald-700"
               >
                 Earning Codes
+              </Link>
+              <Link
+                href={contributoryCodesHref}
+                className="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:text-emerald-700"
+              >
+                Contributory Codes
+              </Link>
+              <Link
+                href={timeOffPoliciesHref}
+                className="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:text-emerald-700"
+              >
+                Time-Off Policies
               </Link>
             </div>
           </div>
