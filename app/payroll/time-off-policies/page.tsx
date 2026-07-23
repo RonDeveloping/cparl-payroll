@@ -100,6 +100,22 @@ export default async function PayrollTimeOffPoliciesPage({
     const persisted = rowByPolicyType.get(row.policyType);
     if (!persisted) continue;
 
+    if (row.policyType === "SICK") {
+      initialDraft.frequency[row.key] = "Anniversary date";
+      initialDraft.accrualRate[row.key] = "";
+      initialDraft.annualAllowance[row.key] = "22.5";
+      initialDraft.hourCap[row.key] = "22.5";
+      continue;
+    }
+
+    if (row.policyType === "UNPAID") {
+      initialDraft.frequency[row.key] = "Anniversary date";
+      initialDraft.accrualRate[row.key] = "";
+      initialDraft.annualAllowance[row.key] = "22.5";
+      initialDraft.hourCap[row.key] = "22.5";
+      continue;
+    }
+
     initialDraft.frequency[row.key] = persisted.accrualFrequency || "";
     initialDraft.accrualRate[row.key] =
       persisted.accrualRatePercent?.toString() || "";
@@ -183,11 +199,12 @@ export default async function PayrollTimeOffPoliciesPage({
                 Payroll Setup
               </p>
               <h1 className="mt-2 text-3xl font-semibold text-slate-900">
-                Time-Off Benchmark Policies
+                Time-Off Code
               </h1>
               <p className="mt-2 text-slate-600">
-                Configure default accrual settings for {employerName}. Use these
-                values as your baseline when setting up employees.
+                Configure default Ontario statutory leave codes, including
+                vacation paid and vacation accrued, for {employerName}. Use
+                these values as your baseline when setting up employees.
               </p>
             </div>
             <Link

@@ -174,7 +174,7 @@ export default async function PayrollOverviewPage({
                 href={timeOffPoliciesHref}
                 className="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:text-emerald-700"
               >
-                Time-Off Policies
+                Time-Off Code
               </Link>
             </div>
           </div>
